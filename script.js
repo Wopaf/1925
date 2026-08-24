@@ -23,15 +23,23 @@ function slugify(str) {
 }
 
 const RAW_CARDS = [
-  ['Matthias-Chef', 'Matthias Chef', 'common'],
-  ['Matthias-Pizza', 'Matthias Pizza', 'rare'],
-  ['Matthias-3Cannes', 'Matthias 3 Cannes', 'rare'],
+  ['Matthias-Chef', 'Chef Matthias Chef', 'common'],
+  ['Matthias-Pizza', 'Matthias Pizzaziolo', 'rare'],
+  ['Matthias-3Cannes', 'Matthias 3 Cannes', 'epic'],
   ['Matthias-Puant', 'Matthias Puant', 'legendary'],
 
   ['Valentin-Cuisinier', 'Valentin Cuisinier', 'common'],
   ['Valentin-Crepier', 'Valentin Crêpier', 'rare'],
   ['Valentin-Informatiicien', 'Valentin Informaticien', 'epic'],
   ['Valentin-Laitier', 'Valentin Laitier', 'legendary'],
+
+  ['Denis-Cuisinier', 'Denis Cuisinier', 'common'],
+  ['Denis-Sparring', 'Denis Sparring', 'rare'],
+  ['Denis-Commando', 'Denis Commando', 'epic'],
+  ['Denis-Attrapeur', 'Denis Attrapeur', 'legendary'],
+
+  ['Elodie-Cuisiniere', 'Elodie Cuisinière', 'common'],
+  ['Elodie-Fantome', 'Elodie Fantôme de diane', 'legendary'],
 ];
 
 const CARD_DEFS = RAW_CARDS.map(([file, name, rarity]) => ({
@@ -42,7 +50,7 @@ const CARD_DEFS = RAW_CARDS.map(([file, name, rarity]) => ({
   character: file.split('-')[0],
 }));
 
-const RARITY_WEIGHTS = { common: 60, rare: 25, epic: 12, legendary: 3 };
+const RARITY_WEIGHTS = { common: 40, rare: 30, epic: 20, legendary: 10 };
 const RARITY_LABELS = { common: 'Commune', rare: 'Rare', epic: 'Épique', legendary: 'Légendaire' };
 const CREDIT_INTERVAL_MS = 10 * 60 * 1000; // 1 crédit toutes les 10 minutes
 const BOOSTER_COST = 5;
@@ -52,9 +60,9 @@ const STARTING_CREDITS = 10;
 const BOOSTER_SLOTS = [
   ['common', 'rare'],
   ['common', 'rare'],
-  ['common', 'rare'],
-  ['common', 'rare', 'epic'],
-  ['epic', 'rare'],
+  ['common', 'rare','epic'],
+  ['common', 'rare', 'epic', 'legendary'],
+  ['epic', 'legendary'],
 ];
 const CARDS_PER_BOOSTER = BOOSTER_SLOTS.length;
 
@@ -63,11 +71,13 @@ const CARDS_PER_BOOSTER = BOOSTER_SLOTS.length;
 const RECYCLE_RULES = {
   common: { minOwned: 4, cost: 3, reward: 1 },
   rare: { minOwned: 3, cost: 2, reward: 1 },
-  epic: { minOwned: 2, cost: 1, reward: 5 },
+  epic: { minOwned: 2, cost: 1, reward: 2 },
   legendary: { minOwned: 2, cost: 1, reward: 10 },
 };
 
 const RECYCLE_ICON_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor"><path d="M160-479q0 85 42.5 158T318-204q14 9 19.5 24.5T335-150q-8 15-24.5 19.5T279-134q-93-54-146-146T80-479q0-26 3.5-51t9.5-50l-13 8q-14 9-30 4.5T26-586q-8-14-3.5-30.5T41-641l121-70q14-8 30.5-3.5T217-696l70 120q8 14 3.5 30.5T272-521q-14 8-30.5 3.5T217-536l-34-59q-11 28-17 57t-6 59Zm320-321q-41 0-81 10.5T323-759q-15 8-31.5 5.5T267-770q-9-16-4-32.5t21-25.5q45-26 94.5-39T480-880q79 0 151.5 29.5T761-765v-15q0-17 11.5-28.5T801-820q17 0 28.5 11.5T841-780v140q0 17-11.5 28.5T801-600H661q-17 0-28.5-11.5T621-640q0-17 11.5-28.5T661-680h69q-46-57-111-88.5T480-800Zm242 531q38-44 58-97t20-111q0-17 11.5-30t28.5-13q17 0 28.5 13t11.5 30q0 65-20.5 125.5T800-239q-39 52-92.5 89T591-95l10 6q14 8 18 24.5T615-34q-8 14-24 18t-30-4L439-90q-14-8-18.5-24.5T424-145l70-121q8-14 24-18t30 4q14 8 18.5 24.5T563-225l-37 63q57-8 107.5-35.5T722-269Z"/></svg>';
+
+const LOCK_ICON_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor"><path d="M240-80q-33 0-56.5-23.5T160-160v-400q0-33 23.5-56.5T240-640h40v-80q0-83 58.5-141.5T480-920q83 0 141.5 58.5T680-720v80h40q33 0 56.5 23.5T800-560v400q0 33-23.5 56.5T720-80H240Zm0-80h480v-400H240v400Zm296.5-143.5Q560-327 560-360t-23.5-56.5Q513-440 480-440t-56.5 23.5Q400-393 400-360t23.5 56.5Q447-280 480-280t56.5-23.5ZM360-640h240v-80q0-50-35-85t-85-35q-50 0-85 35t-35 85v80ZM240-160v-400 400Z"/></svg>';
 
 const AVATAR_OPTIONS = ['pplouis.png', 'ppmat.png', 'ppvalentin.png', 'ppdenis.png', 'ppelo.png', 'ppval.png'];
 
@@ -445,10 +455,20 @@ function weightedRandomRarity(allowedRarities) {
   return allowedRarities[allowedRarities.length - 1];
 }
 
-function drawCard(allowedRarities) {
+function drawCard(allowedRarities, excludeIds) {
   const rarity = weightedRandomRarity(allowedRarities);
-  const pool = CARD_DEFS.filter((c) => c.rarity === rarity);
-  return pool[Math.floor(Math.random() * pool.length)];
+  const pool = CARD_DEFS.filter((c) => c.rarity === rarity && !excludeIds.has(c.id));
+  const finalPool = pool.length > 0 ? pool : CARD_DEFS.filter((c) => c.rarity === rarity);
+  return finalPool[Math.floor(Math.random() * finalPool.length)];
+}
+
+function drawBoosterCards() {
+  const excludeIds = new Set();
+  return BOOSTER_SLOTS.map((allowedRarities) => {
+    const card = drawCard(allowedRarities, excludeIds);
+    excludeIds.add(card.id);
+    return card;
+  });
 }
 
 openBoosterBtn.addEventListener('click', async () => {
@@ -461,7 +481,7 @@ openBoosterBtn.addEventListener('click', async () => {
   boosterPack.classList.add('opening');
 
   state.credits -= BOOSTER_COST;
-  const drawn = BOOSTER_SLOTS.map(drawCard);
+  const drawn = drawBoosterCards();
   drawn.forEach((card) => {
     state.cards[card.id] = (state.cards[card.id] || 0) + 1;
   });
@@ -630,7 +650,7 @@ function cardTileHtml(card) {
       <div class="card-tile rarity-${card.rarity}">
         <img src="${img}" alt="${alt}" />
         ${recyclable ? `<span class="recycle-badge" title="Recyclage disponible">${RECYCLE_ICON_SVG}</span>` : ''}
-        ${owned ? `<span class="card-count">x${count}</span>` : '<span class="lock-icon">🔒</span>'}
+        ${owned ? `<span class="card-count">x${count}</span>` : `<span class="lock-icon">${LOCK_ICON_SVG}</span>`}
       </div>
       <div class="card-caption">
         <span class="card-caption-name">${owned ? escapeHtml(card.name) : '???'}</span>
@@ -643,13 +663,17 @@ function renderCollection() {
   if (!state) return;
   const filtered = currentFilter === 'all' ? CARD_DEFS : CARD_DEFS.filter((c) => c.rarity === currentFilter);
 
-  const characters = [...new Set(filtered.map((c) => c.character))];
-  cardGrid.innerHTML = characters
-    .map((character) => {
-      const tiles = filtered.filter((c) => c.character === character).map(cardTileHtml).join('');
-      return `<div class="card-group-title">${escapeHtml(character)}</div>${tiles}`;
-    })
-    .join('');
+  if (currentFilter === 'all') {
+    const characters = [...new Set(filtered.map((c) => c.character))];
+    cardGrid.innerHTML = characters
+      .map((character) => {
+        const tiles = filtered.filter((c) => c.character === character).map(cardTileHtml).join('');
+        return `<div class="card-group-title">${escapeHtml(character)}</div>${tiles}`;
+      })
+      .join('');
+  } else {
+    cardGrid.innerHTML = filtered.map(cardTileHtml).join('');
+  }
 
   const uniqueOwned = Object.keys(state.cards).length;
   collectionProgress.textContent = `${uniqueOwned}/${CARD_DEFS.length}`;

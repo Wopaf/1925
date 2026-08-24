@@ -459,7 +459,7 @@ button, input {
 
 .card-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 18px 12px;
 }
 .card-group-title {
@@ -479,6 +479,7 @@ button, input {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  min-width: 0;
   transition: transform .15s ease;
 }
 .card-tile-wrap:not(.locked) { cursor: pointer; }
@@ -498,9 +499,11 @@ button, input {
 .lock-icon {
   position: absolute; inset: 0;
   display: flex; align-items: center; justify-content: center;
-  font-size: 20px;
-  text-shadow: 0 2px 8px rgba(0,0,0,.7);
+  color: #fff;
+  opacity: .5;
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,.7));
 }
+.lock-icon svg { width: 28px; height: 28px; }
 .recycle-badge {
   position: absolute;
   top: 6px; right: 6px;
@@ -763,11 +766,12 @@ button, input {
 .booster-reveal {
   width: 100%;
   max-width: 460px;
-  max-height: calc(100vh - 48px);
+  height: 100%;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 22px;
 }
 .reveal-progress { display: flex; gap: 8px; }
