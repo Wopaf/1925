@@ -54,7 +54,7 @@ const RARITY_WEIGHTS = { common: 40, rare: 30, epic: 20, legendary: 10 };
 const RARITY_LABELS = { common: 'Commune', rare: 'Rare', epic: 'Épique', legendary: 'Légendaire' };
 const CREDIT_INTERVAL_MS = 10 * 60 * 1000; // 1 crédit toutes les 10 minutes
 const BOOSTER_COST = 30;
-const STARTING_CREDITS = 10;
+const STARTING_CREDITS = 30;
 
 // Raretés autorisées pour chacune des 5 cartes d'un booster (dans l'ordre du tirage)
 const BOOSTER_SLOTS = [
@@ -328,6 +328,7 @@ auth.onAuthStateChanged(async (user) => {
     showScreen('loadingScreen');
     try {
       await loadUserData(user);
+      await persistUser();
     } catch (err) {
       console.error('Lecture des données joueur refusée :', err);
       showScreen('authScreen');
@@ -932,6 +933,7 @@ async function renderLeaderboard() {
       })
       .join('');
   } catch (e) {
+    console.error('Chargement du classement refusé :', e);
     leaderboard.innerHTML = '<p class="leaderboard-empty">Impossible de charger le classement.</p>';
   }
 }
