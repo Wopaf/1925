@@ -505,6 +505,7 @@ openBoosterBtn.addEventListener('click', async () => {
     showToast('Pas assez de crédits !');
     return;
   }
+  new Audio('medias/buy.wav').play().catch(() => {});
   openBoosterBtn.disabled = true;
   boosterPack.classList.add('opening');
 
@@ -583,6 +584,7 @@ function updateWheelUI() {
 
 spinWheelBtn.addEventListener('click', async () => {
   if (!state || wheelSpinning || !isWheelAvailable()) return;
+  new Audio('medias/wheel.wav').play().catch(() => {});
   wheelSpinning = true;
   spinWheelBtn.disabled = true;
   wheelHint.textContent = '';
@@ -663,6 +665,12 @@ function updateRevealProgress() {
 
 async function showRevealCard() {
   const card = revealQueue[revealIndex];
+  const revealSound = card.rarity === 'legendary'
+    ? 'card-reveal-legendary.wav'
+    : card.rarity === 'epic'
+      ? 'card-reveal-epic.wav'
+      : 'card-reveal.wav';
+  new Audio(`medias/${revealSound}`).play().catch(() => {});
   updateRevealProgress();
   revealRarityLabel.className = 'reveal-rarity-label';
   revealRarityLabel.textContent = '';
@@ -687,7 +695,7 @@ async function showRevealCard() {
   wrap.classList.add('shown');
   await wait(250);
   wrap.classList.add('flipped'); // triggers the cardFlip keyframes (1.3s, anticipation + overshoot)
-  await wait(1300);
+  await wait(600); // card front becomes visible partway through the flip, no need to wait for full settle
   revealRarityLabel.textContent = RARITY_LABELS[card.rarity];
   revealRarityLabel.classList.add(`rarity-${card.rarity}`, 'shown');
   revealRays.classList.add(`rarity-${card.rarity}`, 'shown');
@@ -711,6 +719,7 @@ async function showBoosterReveal(cards) {
 
 revealBoosterArt.addEventListener('click', async () => {
   if (revealBoosterArt.classList.contains('spinning')) return;
+  new Audio('medias/booster-openning.wav').play().catch(() => {});
   revealBoosterArt.classList.add('spinning');
   revealHint.classList.add('hidden');
   await wait(1600); // matches the boosterOpenSpin CSS animation duration
@@ -726,6 +735,7 @@ revealCards.addEventListener('click', (e) => {
 
   revealIndex += 1;
   if (revealIndex >= revealQueue.length) {
+    new Audio('medias/woosh.wav').play().catch(() => {});
     finishBoosterReveal();
     return;
   }
@@ -747,7 +757,12 @@ async function finishBoosterReveal() {
 //  NAVIGATION
 // ============================================================
 document.querySelectorAll('.nav-btn').forEach((btn) => {
-  btn.addEventListener('click', () => switchView(btn.dataset.view));
+  btn.addEventListener('click', () => {
+    const sound = new Audio('medias/clic.wav');
+    sound.volume = 0.3;
+    sound.play().catch(() => {});
+    switchView(btn.dataset.view);
+  });
 });
 
 function switchView(view) {
@@ -875,6 +890,7 @@ recycleBtn.addEventListener('click', async () => {
   const rule = RECYCLE_RULES[card.rarity];
   if (count < rule.minOwned) return;
 
+  new Audio('medias/recycling.wav').play().catch(() => {});
   state.cards[detailCardId] = count - rule.cost;
   state.credits += rule.reward;
 
