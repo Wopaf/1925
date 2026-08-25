@@ -53,7 +53,7 @@ const CARD_DEFS = RAW_CARDS.map(([file, name, rarity]) => ({
 const RARITY_WEIGHTS = { common: 40, rare: 30, epic: 20, legendary: 10 };
 const RARITY_LABELS = { common: 'Commune', rare: 'Rare', epic: 'Épique', legendary: 'Légendaire' };
 const CREDIT_INTERVAL_MS = 10 * 60 * 1000; // 1 crédit toutes les 10 minutes
-const BOOSTER_COST = 5;
+const BOOSTER_COST = 30;
 const STARTING_CREDITS = 10;
 
 // Raretés autorisées pour chacune des 5 cartes d'un booster (dans l'ordre du tirage)
@@ -69,10 +69,10 @@ const CARDS_PER_BOOSTER = BOOSTER_SLOTS.length;
 // Recyclage des doublons : minOwned = nb d'exemplaires requis pour débloquer le recyclage,
 // cost = nb d'exemplaires consommés, reward = crédits obtenus (garde toujours >= 1 exemplaire)
 const RECYCLE_RULES = {
-  common: { minOwned: 4, cost: 3, reward: 1 },
-  rare: { minOwned: 3, cost: 2, reward: 1 },
-  epic: { minOwned: 2, cost: 1, reward: 2 },
-  legendary: { minOwned: 2, cost: 1, reward: 10 },
+  common: { minOwned: 2, cost: 1, reward: 1 },
+  rare: { minOwned: 2, cost: 1, reward: 3 },
+  epic: { minOwned: 2, cost: 1, reward: 10 },
+  legendary: { minOwned: 2, cost: 1, reward: 30 },
 };
 
 const RECYCLE_ICON_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor"><path d="M160-479q0 85 42.5 158T318-204q14 9 19.5 24.5T335-150q-8 15-24.5 19.5T279-134q-93-54-146-146T80-479q0-26 3.5-51t9.5-50l-13 8q-14 9-30 4.5T26-586q-8-14-3.5-30.5T41-641l121-70q14-8 30.5-3.5T217-696l70 120q8 14 3.5 30.5T272-521q-14 8-30.5 3.5T217-536l-34-59q-11 28-17 57t-6 59Zm320-321q-41 0-81 10.5T323-759q-15 8-31.5 5.5T267-770q-9-16-4-32.5t21-25.5q45-26 94.5-39T480-880q79 0 151.5 29.5T761-765v-15q0-17 11.5-28.5T801-820q17 0 28.5 11.5T841-780v140q0 17-11.5 28.5T801-600H661q-17 0-28.5-11.5T621-640q0-17 11.5-28.5T661-680h69q-46-57-111-88.5T480-800Zm242 531q38-44 58-97t20-111q0-17 11.5-30t28.5-13q17 0 28.5 13t11.5 30q0 65-20.5 125.5T800-239q-39 52-92.5 89T591-95l10 6q14 8 18 24.5T615-34q-8 14-24 18t-30-4L439-90q-14-8-18.5-24.5T424-145l70-121q8-14 24-18t30 4q14 8 18.5 24.5T563-225l-37 63q57-8 107.5-35.5T722-269Z"/></svg>';
@@ -80,6 +80,22 @@ const RECYCLE_ICON_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -96
 const LOCK_ICON_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor"><path d="M240-80q-33 0-56.5-23.5T160-160v-400q0-33 23.5-56.5T240-640h40v-80q0-83 58.5-141.5T480-920q83 0 141.5 58.5T680-720v80h40q33 0 56.5 23.5T800-560v400q0 33-23.5 56.5T720-80H240Zm0-80h480v-400H240v400Zm296.5-143.5Q560-327 560-360t-23.5-56.5Q513-440 480-440t-56.5 23.5Q400-393 400-360t23.5 56.5Q447-280 480-280t56.5-23.5ZM360-640h240v-80q0-50-35-85t-85-35q-50 0-85 35t-35 85v80ZM240-160v-400 400Z"/></svg>';
 
 const AVATAR_OPTIONS = ['pplouis.png', 'ppmat.png', 'ppvalentin.png', 'ppdenis.png', 'ppelo.png', 'ppval.png'];
+
+// Roue quotidienne : 11 cases (1 perdu, 3x1, 3x3, 3x10, 1x30 crédits), tirage équiprobable
+const WHEEL_SLOTS = [
+  { type: 'credits', amount: 1 },
+  { type: 'credits', amount: 3 },
+  { type: 'credits', amount: 10 },
+  { type: 'credits', amount: 1 },
+  { type: 'credits', amount: 30 },
+  { type: 'credits', amount: 3 },
+  { type: 'credits', amount: 10 },
+  { type: 'credits', amount: 1 },
+  { type: 'lose' },
+  { type: 'credits', amount: 3 },
+  { type: 'credits', amount: 10 },
+];
+const WHEEL_COLORS = { lose: '#454a54', 1: '#8a94a3', 3: '#0ac8b9', 10: '#a855f7', 30: '#e8b923' };
 
 // ============================================================
 //  DOM REFS
@@ -115,6 +131,7 @@ const openBoosterBtn = el('openBoosterBtn');
 const boosterPack = el('boosterPack');
 const addCreditsBtn = el('addCreditsBtn');
 const resetCardsBtn = el('resetCardsBtn');
+const resetWheelBtn = el('resetWheelBtn');
 const statOwned = el('statOwned');
 const statUnique = el('statUnique');
 
@@ -140,6 +157,14 @@ const cardDetailCount = el('cardDetailCount');
 const recycleBtn = el('recycleBtn');
 const recycleHint = el('recycleHint');
 
+const openWheelBtn = el('openWheelBtn');
+const wheelModal = el('wheelModal');
+const closeWheelModalBtn = el('closeWheelModal');
+const wheelDial = el('wheelDial');
+const wheelLabels = el('wheelLabels');
+const spinWheelBtn = el('spinWheelBtn');
+const wheelHint = el('wheelHint');
+
 const welcomeBackModal = el('welcomeBackModal');
 const welcomeBackText = el('welcomeBackText');
 const closeWelcomeBack = el('closeWelcomeBack');
@@ -150,7 +175,7 @@ const toast = el('toast');
 //  APP STATE
 // ============================================================
 let state = null; // { uid, email, displayName, credits, lastClaim, cards }
-let currentFilter = 'all';
+let currentFilter = null;
 let tickInterval = null;
 let toastTimeout = null;
 
@@ -337,6 +362,7 @@ async function loadUserData(user) {
       lastClaim: data.lastClaim || Date.now(),
       cards: data.cards || {},
       avatar: AVATAR_OPTIONS.includes(data.avatar) ? data.avatar : AVATAR_OPTIONS[0],
+      lastWheelSpinDate: data.lastWheelSpinDate || null,
     };
   } else {
     state = {
@@ -347,6 +373,7 @@ async function loadUserData(user) {
       lastClaim: Date.now(),
       cards: {},
       avatar: AVATAR_OPTIONS[0],
+      lastWheelSpinDate: null,
     };
     await persistUser();
   }
@@ -368,6 +395,7 @@ function persistUser() {
     lastClaim: state.lastClaim,
     cards: state.cards,
     avatar: state.avatar,
+    lastWheelSpinDate: state.lastWheelSpinDate,
   }).catch((err) => {
     console.error('Sauvegarde des données joueur refusée :', err);
     showToast('Erreur de sauvegarde — vérifiez les règles Firebase.');
@@ -495,6 +523,101 @@ openBoosterBtn.addEventListener('click', async () => {
   openBoosterBtn.disabled = false;
 });
 
+// ============================================================
+//  ROUE QUOTIDIENNE
+// ============================================================
+function buildWheelDial() {
+  const seg = 360 / WHEEL_SLOTS.length;
+  const gradient = WHEEL_SLOTS
+    .map((slot, i) => `${WHEEL_COLORS[slot.type === 'lose' ? 'lose' : slot.amount]} ${i * seg}deg ${(i + 1) * seg}deg`)
+    .join(', ');
+  wheelDial.style.background = `conic-gradient(from 0deg, ${gradient})`;
+
+  wheelLabels.innerHTML = WHEEL_SLOTS
+    .map((slot, i) => {
+      const angle = i * seg + seg / 2;
+      const label = slot.type === 'lose' ? '✕' : `+${slot.amount}`;
+      return `<span class="wheel-label" style="transform: translate(-50%,-50%) rotate(${angle}deg) translateY(-95px)">${label}</span>`;
+    })
+    .join('');
+}
+buildWheelDial();
+
+function todayKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+}
+
+function isWheelAvailable() {
+  return !state.lastWheelSpinDate || state.lastWheelSpinDate !== todayKey();
+}
+
+function updateWheelHomeUI() {
+  if (!state) return;
+  openWheelBtn.classList.toggle('claimed', !isWheelAvailable());
+}
+
+let wheelSpinning = false;
+let wheelRotation = 0;
+
+openWheelBtn.addEventListener('click', () => {
+  if (!state) return;
+  updateWheelUI();
+  wheelModal.classList.remove('hidden');
+  wheelModal.getBoundingClientRect(); // force layout so the fade/scale-in transition plays
+  wheelModal.classList.add('open');
+});
+
+async function closeWheelModal() {
+  wheelModal.classList.remove('open');
+  await wait(300); // matches the CSS transition duration
+  wheelModal.classList.add('hidden');
+}
+closeWheelModalBtn.addEventListener('click', closeWheelModal);
+
+function updateWheelUI() {
+  const available = isWheelAvailable();
+  spinWheelBtn.disabled = !available || wheelSpinning;
+  wheelHint.textContent = available ? 'Tente ta chance une fois par jour !' : 'Reviens demain pour un nouveau tour !';
+}
+
+spinWheelBtn.addEventListener('click', async () => {
+  if (!state || wheelSpinning || !isWheelAvailable()) return;
+  wheelSpinning = true;
+  spinWheelBtn.disabled = true;
+  wheelHint.textContent = '';
+
+  const seg = 360 / WHEEL_SLOTS.length;
+  const index = Math.floor(Math.random() * WHEEL_SLOTS.length);
+  const slot = WHEEL_SLOTS[index];
+  const segCenter = index * seg + seg / 2;
+  const jitter = (Math.random() - 0.5) * (seg * 0.7);
+  const targetAngle = segCenter + jitter;
+  const currentMod = ((wheelRotation % 360) + 360) % 360;
+  let delta = (360 - targetAngle - currentMod) % 360;
+  if (delta < 0) delta += 360;
+  wheelRotation += delta + 360 * 6;
+  wheelDial.style.transform = `rotate(${wheelRotation}deg)`;
+
+  await wait(4600); // matches the wheel-dial CSS transition duration
+  wheelSpinning = false;
+
+  state.lastWheelSpinDate = todayKey();
+  if (slot.type === 'lose') {
+    wheelHint.textContent = 'Perdu ! Retente ta chance demain.';
+    showToast('Roue : perdu cette fois-ci !');
+  } else {
+    state.credits += slot.amount;
+    updateCreditUI();
+    updateHomeStats();
+    wheelHint.textContent = `Gagné : +${slot.amount} crédit${slot.amount > 1 ? 's' : ''} !`;
+    showToast(`Roue : +${slot.amount} crédit${slot.amount > 1 ? 's' : ''} !`);
+  }
+  await persistUser();
+  updateWheelHomeUI();
+  spinWheelBtn.disabled = true;
+});
+
 addCreditsBtn.addEventListener('click', async () => {
   if (!state) return;
   state.credits += 10;
@@ -512,6 +635,14 @@ resetCardsBtn.addEventListener('click', async () => {
   renderCollection();
   await persistUser();
   showToast('Collection réinitialisée (dev)');
+});
+
+resetWheelBtn.addEventListener('click', async () => {
+  if (!state) return;
+  state.lastWheelSpinDate = null;
+  updateWheelHomeUI();
+  await persistUser();
+  showToast('Roue réinitialisée (dev)');
 });
 
 function wait(ms) {
@@ -634,7 +765,7 @@ document.querySelectorAll('.filter-chip').forEach((chip) => {
   chip.addEventListener('click', () => {
     document.querySelectorAll('.filter-chip').forEach((c) => c.classList.remove('active'));
     chip.classList.add('active');
-    currentFilter = chip.dataset.rarity;
+    currentFilter = chip.dataset.rarity === 'default' ? null : chip.dataset.rarity;
     renderCollection();
   });
 });
@@ -661,9 +792,9 @@ function cardTileHtml(card) {
 
 function renderCollection() {
   if (!state) return;
-  const filtered = currentFilter === 'all' ? CARD_DEFS : CARD_DEFS.filter((c) => c.rarity === currentFilter);
+  const filtered = (currentFilter === null || currentFilter === 'all') ? CARD_DEFS : CARD_DEFS.filter((c) => c.rarity === currentFilter);
 
-  if (currentFilter === 'all') {
+  if (currentFilter === null) {
     const characters = [...new Set(filtered.map((c) => c.character))];
     cardGrid.innerHTML = characters
       .map((character) => {
@@ -807,6 +938,7 @@ function renderAll() {
   el('boosterCost').textContent = BOOSTER_COST;
   updateHomeStats();
   updateCreditUI();
+  updateWheelHomeUI();
   renderCollection();
   switchView('home');
 }

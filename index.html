@@ -85,7 +85,15 @@
           <div class="dev-tools">
             <button id="addCreditsBtn" class="btn-dev" type="button">+10 crédits</button>
             <button id="resetCardsBtn" class="btn-dev" type="button">Réinitialiser cartes</button>
+            <button id="resetWheelBtn" class="btn-dev" type="button">Réinitialiser roue</button>
           </div>
+        </div>
+
+        <div class="wheel-zone">
+          <button id="openWheelBtn" class="btn-wheel" type="button">
+            <span class="wheel-icon">🎡</span>
+            <span>Roue quotidienne</span>
+          </button>
         </div>
 
         <div class="home-stats">
@@ -101,7 +109,8 @@
           <span id="collectionProgress">0/0</span>
         </div>
         <div class="rarity-filters">
-          <button class="filter-chip active" data-rarity="all">Toutes</button>
+          <button class="filter-chip active" data-rarity="default" aria-label="Tri par défaut"><svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="currentColor"><path d="M160-240q-17 0-28.5-11.5T120-280q0-17 11.5-28.5T160-320h160q17 0 28.5 11.5T360-280q0 17-11.5 28.5T320-240H160Zm0-200q-17 0-28.5-11.5T120-480q0-17 11.5-28.5T160-520h400q17 0 28.5 11.5T600-480q0 17-11.5 28.5T560-440H160Zm0-200q-17 0-28.5-11.5T120-680q0-17 11.5-28.5T160-720h640q17 0 28.5 11.5T840-680q0 17-11.5 28.5T800-640H160Z"/></svg></button>
+          <button class="filter-chip" data-rarity="all">Toutes</button>
           <button class="filter-chip" data-rarity="common">Commune</button>
           <button class="filter-chip" data-rarity="rare">Rare</button>
           <button class="filter-chip" data-rarity="epic">Épique</button>
@@ -183,6 +192,22 @@
       <div id="avatarGrid" class="avatar-grid"></div>
       <button id="saveProfileBtn" class="btn-primary" type="button">Enregistrer</button>
       <button id="logoutBtn" class="btn-dev profile-logout-btn" type="button">Déconnexion</button>
+    </div>
+  </div>
+
+  <!-- Daily wheel modal -->
+  <div id="wheelModal" class="modal hidden">
+    <div class="wheel-panel">
+      <button id="closeWheelModal" class="icon-btn card-detail-close" type="button">✕</button>
+      <h3 class="wheel-title">Roue quotidienne</h3>
+      <div class="wheel-stage">
+        <div class="wheel-pointer"></div>
+        <div id="wheelDial" class="wheel-dial">
+          <div id="wheelLabels" class="wheel-labels"></div>
+        </div>
+      </div>
+      <button id="spinWheelBtn" class="btn-primary btn-large" type="button">Lancer la roue</button>
+      <p id="wheelHint" class="wheel-hint"></p>
     </div>
   </div>
 
