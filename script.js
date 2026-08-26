@@ -23,14 +23,14 @@ function slugify(str) {
 }
 
 const RAW_CARDS = [
-  ['Matthias-Chef', 'Chef Matthias Chef', 'common'],
-  ['Matthias-Pizza', 'Matthias Pizzaziolo', 'rare'],
+  ['Matthias-ChefMatthias', 'Chef Matthias Chef', 'common'],
+  ['Matthias-Pizzaiolo', 'Matthias Pizzaziolo', 'rare'],
   ['Matthias-3Cannes', 'Matthias 3 Cannes', 'epic'],
   ['Matthias-Puant', 'Matthias Puant', 'legendary'],
 
   ['Valentin-Cuisinier', 'Valentin Cuisinier', 'common'],
   ['Valentin-Crepier', 'Valentin Crêpier', 'rare'],
-  ['Valentin-Informatiicien', 'Valentin Informaticien', 'epic'],
+  ['Valentin-Informaticien', 'Valentin Informaticien', 'epic'],
   ['Valentin-Laitier', 'Valentin Laitier', 'legendary'],
 
   ['Denis-Cuisinier', 'Denis Cuisinier', 'common'],
@@ -40,6 +40,10 @@ const RAW_CARDS = [
 
   ['Elodie-Cuisiniere', 'Elodie Cuisinière', 'common'],
   ['Elodie-Fantome', 'Elodie Fantôme de diane', 'legendary'],
+
+  ['Anais-Receptioniste', 'Anaïs Réceptioniste', 'common'],
+  ['Anais-DanceFloor', 'Anaïs Dancefloor', 'epic'],
+  ['Anais-Camisole', 'Anaïs Camisole', 'legendary'],
 ];
 
 const CARD_DEFS = RAW_CARDS.map(([file, name, rarity]) => ({
@@ -48,11 +52,53 @@ const CARD_DEFS = RAW_CARDS.map(([file, name, rarity]) => ({
   file: `${file}.png`,
   rarity,
   character: file.split('-')[0],
+  type: 'character',
 }));
+
+// ============================================================
+//  LIEUX (cartes de lieu à effet passif)
+// ============================================================
+// Chaque personnage est rattaché à un lieu ; ce lieu, une fois équipé,
+// booste les chances d'obtenir les personnages qui lui sont liés.
+const CHARACTER_LOCATIONS = {
+  Matthias: 'cuisine',
+  Valentin: 'cuisine',
+  Denis: 'cuisine',
+  Elodie: 'cuisine',
+  Anais: 'reception',
+};
+const LOCATION_ICONS = { cuisine: '🍳', salle: '🍽️', reception: '🛎️' };
+// Artwork des cartes lieu (facultatif tant que les visuels n'existent pas : fallback icône)
+const LOCATION_CARD_FILES = { cuisine: 'La Cuisine.png', salle: 'La Salle.png', reception: 'La Réception.png' };
+// Fond d'écran d'accueil affiché (N&B, 15% d'opacité) quand le lieu est équipé
+const LOCATION_BG_FILES = { cuisine: 'Cuisine-BG.png', salle: 'Salle-BG.png', reception: 'Réception-BG.png' };
+const LOCATION_BONUS = 0.10; // +10% de chance relative pour les personnages du lieu équipé
+const LOCATION_CARD_RARITY = 'epic';
+
+const RAW_LOCATIONS = [
+  ['cuisine', 'La Cuisine', "Offre un bonus de +10% de chance d'obtenir des personnages de la Cuisine dans vos prochains boosters."],
+  ['salle', 'La Salle', "Offre un bonus de +10% de chance d'obtenir des personnages de la Salle dans vos prochains boosters."],
+  ['reception', 'La Réception', "Offre un bonus de +10% de chance d'obtenir des personnages de la Réception dans vos prochains boosters."],
+];
+
+const LOCATION_CARD_DEFS = RAW_LOCATIONS.map(([locationId, name, description]) => ({
+  id: `lieu-${locationId}`,
+  name,
+  rarity: LOCATION_CARD_RARITY,
+  character: 'Lieux',
+  type: 'lieu',
+  location: locationId,
+  icon: LOCATION_ICONS[locationId],
+  file: LOCATION_CARD_FILES[locationId] || null,
+  description,
+}));
+
+const ALL_CARD_DEFS = [...CARD_DEFS, ...LOCATION_CARD_DEFS];
 
 const RARITY_WEIGHTS = { common: 40, rare: 30, epic: 20, legendary: 10 };
 const RARITY_LABELS = { common: 'Commune', rare: 'Rare', epic: 'Épique', legendary: 'Légendaire' };
 const CREDIT_INTERVAL_MS = 10 * 60 * 1000; // 1 crédit toutes les 10 minutes
+const LOADING_SCREEN_MIN_MS = 1000; // durée d'affichage supplémentaire de l'écran de chargement
 const BOOSTER_COST = 30;
 const STARTING_CREDITS = 30;
 
@@ -79,7 +125,7 @@ const RECYCLE_ICON_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -96
 
 const LOCK_ICON_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor"><path d="M240-80q-33 0-56.5-23.5T160-160v-400q0-33 23.5-56.5T240-640h40v-80q0-83 58.5-141.5T480-920q83 0 141.5 58.5T680-720v80h40q33 0 56.5 23.5T800-560v400q0 33-23.5 56.5T720-80H240Zm0-80h480v-400H240v400Zm296.5-143.5Q560-327 560-360t-23.5-56.5Q513-440 480-440t-56.5 23.5Q400-393 400-360t23.5 56.5Q447-280 480-280t56.5-23.5ZM360-640h240v-80q0-50-35-85t-85-35q-50 0-85 35t-35 85v80ZM240-160v-400 400Z"/></svg>';
 
-const AVATAR_OPTIONS = ['pplouis.png', 'ppmat.png', 'ppvalentin.png', 'ppdenis.png', 'ppelo.png', 'ppval.png'];
+const AVATAR_OPTIONS = ['PP/Matthias.PNG', 'PP/Valentin.PNG', 'PP/Denis.PNG', 'PP/Elodie.png', 'PP/Anais.PNG', 'PP/Louis.PNG', 'PP/Louann.PNG', 'PP/Val.PNG', 'PP/Bichu.PNG', 'PP/Emilie.PNG'];
 
 // Roue quotidienne : 11 cases (1 perdu, 3x1, 3x3, 3x10, 1x30 crédits), tirage équiprobable
 const WHEEL_SLOTS = [
@@ -132,6 +178,7 @@ const boosterPack = el('boosterPack');
 const addCreditsBtn = el('addCreditsBtn');
 const resetCardsBtn = el('resetCardsBtn');
 const resetWheelBtn = el('resetWheelBtn');
+const unlockAllCardsBtn = el('unlockAllCardsBtn');
 const statOwned = el('statOwned');
 const statUnique = el('statUnique');
 
@@ -151,11 +198,25 @@ const revealRays = el('revealRays');
 const cardDetailModal = el('cardDetailModal');
 const closeCardDetail = el('closeCardDetail');
 const cardDetailImg = el('cardDetailImg');
+const cardDetailLieuArt = el('cardDetailLieuArt');
+const cardDetailLieuIcon = el('cardDetailLieuIcon');
+const cardDetailEffect = el('cardDetailEffect');
 const cardDetailName = el('cardDetailName');
 const cardDetailRarity = el('cardDetailRarity');
 const cardDetailCount = el('cardDetailCount');
 const recycleBtn = el('recycleBtn');
 const recycleHint = el('recycleHint');
+
+const homeLieuBg = el('homeLieuBg');
+const lieuSlotBtn = el('lieuSlotBtn');
+const lieuSlotArt = el('lieuSlotArt');
+const lieuSlotCaption = el('lieuSlotCaption');
+const lieuSlotEffect = el('lieuSlotEffect');
+const lieuModal = el('lieuModal');
+const closeLieuModalBtn = el('closeLieuModal');
+const lieuList = el('lieuList');
+const lieuHint = el('lieuHint');
+const unequipLieuBtn = el('unequipLieuBtn');
 
 const openWheelBtn = el('openWheelBtn');
 const wheelModal = el('wheelModal');
@@ -338,12 +399,15 @@ auth.onAuthStateChanged(async (user) => {
       return;
     }
     renderAll();
+    await wait(LOADING_SCREEN_MIN_MS);
     showScreen('appShell');
+    revealHomeLieuBg();
     startCreditTimer();
     await processOfflineCredits(true);
   } else {
     stopCreditTimer();
     state = null;
+    await wait(LOADING_SCREEN_MIN_MS);
     showScreen('authScreen');
   }
 });
@@ -364,6 +428,7 @@ async function loadUserData(user) {
       cards: data.cards || {},
       avatar: AVATAR_OPTIONS.includes(data.avatar) ? data.avatar : AVATAR_OPTIONS[0],
       lastWheelSpinDate: data.lastWheelSpinDate || null,
+      equippedLieuId: data.equippedLieuId || null,
     };
   } else {
     state = {
@@ -375,6 +440,7 @@ async function loadUserData(user) {
       cards: {},
       avatar: AVATAR_OPTIONS[0],
       lastWheelSpinDate: null,
+      equippedLieuId: null,
     };
     await persistUser();
   }
@@ -397,6 +463,7 @@ function persistUser() {
     cards: state.cards,
     avatar: state.avatar,
     lastWheelSpinDate: state.lastWheelSpinDate,
+    equippedLieuId: state.equippedLieuId,
   }).catch((err) => {
     console.error('Sauvegarde des données joueur refusée :', err);
     showToast('Erreur de sauvegarde — vérifiez les règles Firebase.');
@@ -404,6 +471,7 @@ function persistUser() {
 
   const publicSave = db.ref(`publicProfiles/${state.uid}`).set({
     displayName: state.displayName,
+    avatar: state.avatar,
     uniqueCount,
     totalCount,
     credits: state.credits,
@@ -484,17 +552,39 @@ function weightedRandomRarity(allowedRarities) {
   return allowedRarities[allowedRarities.length - 1];
 }
 
-function drawCard(allowedRarities, excludeIds) {
+function weightedPickCard(pool, boostLocation) {
+  const weights = pool.map((c) => (
+    boostLocation && c.type === 'character' && CHARACTER_LOCATIONS[c.character] === boostLocation
+      ? 1 + LOCATION_BONUS
+      : 1
+  ));
+  const total = weights.reduce((a, b) => a + b, 0);
+  let r = Math.random() * total;
+  for (let i = 0; i < pool.length; i++) {
+    if (r < weights[i]) return pool[i];
+    r -= weights[i];
+  }
+  return pool[pool.length - 1];
+}
+
+function drawCard(allowedRarities, excludeIds, boostLocation) {
   const rarity = weightedRandomRarity(allowedRarities);
-  const pool = CARD_DEFS.filter((c) => c.rarity === rarity && !excludeIds.has(c.id));
-  const finalPool = pool.length > 0 ? pool : CARD_DEFS.filter((c) => c.rarity === rarity);
-  return finalPool[Math.floor(Math.random() * finalPool.length)];
+  const pool = ALL_CARD_DEFS.filter((c) => c.rarity === rarity && !excludeIds.has(c.id));
+  const finalPool = pool.length > 0 ? pool : ALL_CARD_DEFS.filter((c) => c.rarity === rarity);
+  return weightedPickCard(finalPool, boostLocation);
+}
+
+function getEquippedLocation() {
+  if (!state || !state.equippedLieuId) return null;
+  const lieu = LOCATION_CARD_DEFS.find((c) => c.id === state.equippedLieuId);
+  return lieu ? lieu.location : null;
 }
 
 function drawBoosterCards() {
   const excludeIds = new Set();
+  const boostLocation = getEquippedLocation();
   return BOOSTER_SLOTS.map((allowedRarities) => {
-    const card = drawCard(allowedRarities, excludeIds);
+    const card = drawCard(allowedRarities, excludeIds, boostLocation);
     excludeIds.add(card.id);
     return card;
   });
@@ -556,7 +646,7 @@ function isWheelAvailable() {
 
 function updateWheelHomeUI() {
   if (!state) return;
-  openWheelBtn.classList.toggle('claimed', !isWheelAvailable());
+  openWheelBtn.classList.toggle('hidden', !isWheelAvailable());
 }
 
 let wheelSpinning = false;
@@ -621,6 +711,103 @@ spinWheelBtn.addEventListener('click', async () => {
   spinWheelBtn.disabled = true;
 });
 
+// ============================================================
+//  LIEUX (équipement depuis l'accueil)
+// ============================================================
+function getOwnedLieuCards() {
+  if (!state) return [];
+  return LOCATION_CARD_DEFS.filter((c) => (state.cards[c.id] || 0) > 0);
+}
+
+function updateLieuSlotUI() {
+  if (!state) return;
+  const equipped = state.equippedLieuId ? LOCATION_CARD_DEFS.find((c) => c.id === state.equippedLieuId) : null;
+  lieuSlotBtn.classList.remove('equipped', 'lieu-cuisine', 'lieu-salle', 'lieu-reception');
+  if (equipped) {
+    lieuSlotArt.innerHTML = cardArtHtml(equipped, escapeHtml(equipped.name));
+    lieuSlotCaption.textContent = equipped.name;
+    lieuSlotBtn.classList.add('equipped', `lieu-${equipped.location}`);
+    lieuSlotEffect.textContent = equipped.description;
+    lieuSlotEffect.classList.remove('hidden');
+  } else {
+    lieuSlotArt.innerHTML = '<span class="lieu-slot-empty-icon">➕</span>';
+    lieuSlotCaption.textContent = 'Ajouter un lieu';
+    lieuSlotEffect.classList.add('hidden');
+  }
+
+  const bgFile = equipped ? LOCATION_BG_FILES[equipped.location] : 'main-bg.png';
+  homeLieuBg.style.backgroundImage = bgFile ? `url("medias/${encodeURIComponent(bgFile)}")` : '';
+}
+
+async function revealHomeLieuBg() {
+  homeLieuBg.classList.add('no-transition');
+  homeLieuBg.classList.remove('visible');
+  homeLieuBg.getBoundingClientRect(); // force reflow so opacity:0 applies instantly, without transition
+  homeLieuBg.classList.remove('no-transition');
+  await wait(500);
+  homeLieuBg.classList.add('visible');
+}
+
+function lieuTileHtml(card) {
+  const owned = (state.cards[card.id] || 0) > 0;
+  const equipped = state.equippedLieuId === card.id;
+  const art = owned ? cardArtHtml(card, escapeHtml(card.name)) : `<img src="medias/dos-cartes.png" alt="carte non obtenue" />`;
+  return `
+    <div class="card-tile-wrap ${owned ? '' : 'locked'} ${equipped ? 'lieu-tile-equipped' : ''}" ${owned ? `data-lieu-id="${card.id}"` : ''}>
+      <div class="card-tile rarity-${card.rarity}">
+        ${art}
+        ${owned ? '' : `<span class="lock-icon">${LOCK_ICON_SVG}</span>`}
+      </div>
+      <div class="card-caption">
+        <span class="card-caption-name">${owned ? escapeHtml(card.name) : '???'}</span>
+        <span class="card-caption-rarity rarity-${card.rarity}">${RARITY_LABELS[card.rarity]}</span>
+      </div>
+    </div>`;
+}
+
+function renderLieuList() {
+  lieuList.innerHTML = LOCATION_CARD_DEFS.map(lieuTileHtml).join('');
+  lieuHint.textContent = getOwnedLieuCards().length
+    ? ''
+    : "Vous ne possédez aucune carte lieu pour l'instant. Ouvrez des boosters pour en trouver !";
+  unequipLieuBtn.classList.toggle('hidden', !state.equippedLieuId);
+}
+
+lieuSlotBtn.addEventListener('click', () => {
+  if (!state) return;
+  renderLieuList();
+  lieuModal.classList.remove('hidden');
+  lieuModal.getBoundingClientRect(); // force layout so the fade/scale-in transition plays
+  lieuModal.classList.add('open');
+});
+
+async function closeLieuModal() {
+  lieuModal.classList.remove('open');
+  await wait(300); // matches the CSS transition duration
+  lieuModal.classList.add('hidden');
+}
+closeLieuModalBtn.addEventListener('click', closeLieuModal);
+
+lieuList.addEventListener('click', async (e) => {
+  const tile = e.target.closest('.card-tile-wrap[data-lieu-id]');
+  if (!tile || !state) return;
+  state.equippedLieuId = tile.dataset.lieuId;
+  updateLieuSlotUI();
+  renderLieuList();
+  await persistUser();
+  showToast('Lieu équipé !');
+  closeLieuModal();
+});
+
+unequipLieuBtn.addEventListener('click', async () => {
+  if (!state) return;
+  state.equippedLieuId = null;
+  updateLieuSlotUI();
+  renderLieuList();
+  await persistUser();
+  showToast('Lieu retiré.');
+});
+
 addCreditsBtn.addEventListener('click', async () => {
   if (!state) return;
   state.credits += 10;
@@ -646,6 +833,17 @@ resetWheelBtn.addEventListener('click', async () => {
   updateWheelHomeUI();
   await persistUser();
   showToast('Roue réinitialisée (dev)');
+});
+
+unlockAllCardsBtn.addEventListener('click', async () => {
+  if (!state) return;
+  ALL_CARD_DEFS.forEach((card) => {
+    state.cards[card.id] = state.cards[card.id] || 1;
+  });
+  updateHomeStats();
+  renderCollection();
+  await persistUser();
+  showToast('Toutes les cartes débloquées (dev)');
 });
 
 function wait(ms) {
@@ -686,7 +884,7 @@ async function showRevealCard() {
         <img src="medias/dos-cartes.png" alt="dos de carte" />
       </div>
       <div class="reveal-card-face reveal-card-front">
-        <img src="medias/${card.file}" alt="${escapeHtml(card.name)}" />
+        ${cardArtHtml(card, escapeHtml(card.name))}
       </div>
     </div>`;
   revealCards.appendChild(wrap);
@@ -757,21 +955,39 @@ async function finishBoosterReveal() {
 // ============================================================
 //  NAVIGATION
 // ============================================================
+const devTools = el('devTools');
+const DEV_TOOLS_UNLOCK_TAPS = 10;
+const DEV_TOOLS_TAP_TIMEOUT_MS = 2000;
+let homeTapCount = 0;
+let homeTapTimeout = null;
+
 document.querySelectorAll('.nav-btn').forEach((btn) => {
   btn.addEventListener('click', () => {
     const sound = new Audio('medias/clic.wav');
     sound.volume = 0.3;
     sound.play().catch(() => {});
     switchView(btn.dataset.view);
+
+    if (btn.dataset.view === 'home' && devTools.classList.contains('hidden')) {
+      homeTapCount += 1;
+      clearTimeout(homeTapTimeout);
+      homeTapTimeout = setTimeout(() => { homeTapCount = 0; }, DEV_TOOLS_TAP_TIMEOUT_MS);
+      if (homeTapCount >= DEV_TOOLS_UNLOCK_TAPS) {
+        homeTapCount = 0;
+        devTools.classList.remove('hidden');
+        showToast('Outils dev activés');
+      }
+    }
   });
 });
 
-function switchView(view) {
+function switchView(view, { instant } = {}) {
   document.querySelectorAll('.view').forEach((v) => v.classList.remove('active'));
   el(`view-${view}`).classList.add('active');
   document.querySelectorAll('.nav-btn').forEach((b) => b.classList.toggle('active', b.dataset.view === view));
   if (view === 'collection') renderCollection();
   if (view === 'community') renderLeaderboard();
+  if (view === 'home' && !instant) revealHomeLieuBg();
 }
 
 // ============================================================
@@ -786,16 +1002,22 @@ document.querySelectorAll('.filter-chip').forEach((chip) => {
   });
 });
 
+function cardArtHtml(card, alt) {
+  if (card.type === 'lieu' && !card.file) {
+    return `<div class="lieu-art lieu-${card.location}"><span class="lieu-art-icon">${card.icon}</span></div>`;
+  }
+  return `<img src="medias/${encodeURIComponent(card.file)}" alt="${alt}" />`;
+}
+
 function cardTileHtml(card) {
   const count = state.cards[card.id] || 0;
   const owned = count > 0;
   const recyclable = owned && count >= RECYCLE_RULES[card.rarity].minOwned;
-  const img = owned ? `medias/${card.file}` : 'medias/dos-cartes.png';
-  const alt = owned ? escapeHtml(card.name) : 'carte non obtenue';
+  const art = owned ? cardArtHtml(card, escapeHtml(card.name)) : `<img src="medias/dos-cartes.png" alt="carte non obtenue" />`;
   return `
     <div class="card-tile-wrap ${owned ? '' : 'locked'}" ${owned ? `data-card-id="${card.id}"` : ''}>
       <div class="card-tile rarity-${card.rarity}">
-        <img src="${img}" alt="${alt}" />
+        ${art}
         ${recyclable ? `<span class="recycle-badge" title="Recyclage disponible">${RECYCLE_ICON_SVG}</span>` : ''}
         ${owned ? `<span class="card-count">x${count}</span>` : `<span class="lock-icon">${LOCK_ICON_SVG}</span>`}
       </div>
@@ -808,7 +1030,8 @@ function cardTileHtml(card) {
 
 function renderCollection() {
   if (!state) return;
-  const filtered = (currentFilter === null || currentFilter === 'all') ? CARD_DEFS : CARD_DEFS.filter((c) => c.rarity === currentFilter);
+  const filtered = (currentFilter === null || currentFilter === 'all') ? ALL_CARD_DEFS : ALL_CARD_DEFS.filter((c) => c.rarity === currentFilter);
+  cardGrid.classList.toggle('hide-captions', currentFilter !== null);
 
   if (currentFilter === null) {
     const characters = [...new Set(filtered.map((c) => c.character))];
@@ -823,7 +1046,7 @@ function renderCollection() {
   }
 
   const uniqueOwned = Object.keys(state.cards).length;
-  collectionProgress.textContent = `${uniqueOwned}/${CARD_DEFS.length}`;
+  collectionProgress.textContent = `${uniqueOwned}/${ALL_CARD_DEFS.length}`;
 }
 
 // ============================================================
@@ -854,15 +1077,30 @@ async function closeCardDetailModal() {
 
 function renderCardDetail() {
   if (!state || !detailCardId) return;
-  const card = CARD_DEFS.find((c) => c.id === detailCardId);
+  const card = ALL_CARD_DEFS.find((c) => c.id === detailCardId);
   const count = state.cards[detailCardId] || 0;
   if (!card || count <= 0) {
     cardDetailModal.classList.add('hidden');
     return;
   }
 
-  cardDetailImg.src = `medias/${card.file}`;
-  cardDetailImg.alt = card.name;
+  if (card.type === 'lieu' && !card.file) {
+    cardDetailImg.classList.add('hidden');
+    cardDetailLieuArt.className = `lieu-art lieu-${card.location}`;
+    cardDetailLieuArt.classList.remove('hidden');
+    cardDetailLieuIcon.textContent = card.icon;
+  } else {
+    cardDetailLieuArt.classList.add('hidden');
+    cardDetailImg.classList.remove('hidden');
+    cardDetailImg.src = `medias/${encodeURIComponent(card.file)}`;
+    cardDetailImg.alt = card.name;
+  }
+  if (card.type === 'lieu') {
+    cardDetailEffect.textContent = card.description;
+    cardDetailEffect.classList.remove('hidden');
+  } else {
+    cardDetailEffect.classList.add('hidden');
+  }
   cardDetailName.textContent = card.name;
   cardDetailRarity.textContent = RARITY_LABELS[card.rarity];
   cardDetailRarity.className = `card-detail-rarity rarity-${card.rarity}`;
@@ -886,7 +1124,7 @@ function renderCardDetail() {
 
 recycleBtn.addEventListener('click', async () => {
   if (!state || !detailCardId) return;
-  const card = CARD_DEFS.find((c) => c.id === detailCardId);
+  const card = ALL_CARD_DEFS.find((c) => c.id === detailCardId);
   const count = state.cards[detailCardId] || 0;
   const rule = RECYCLE_RULES[card.rarity];
   if (count < rule.minOwned) return;
@@ -924,11 +1162,13 @@ async function renderLeaderboard() {
     leaderboard.innerHTML = rows
       .map((r, i) => {
         const rankClass = i === 0 ? 'top1' : i === 1 ? 'top2' : i === 2 ? 'top3' : '';
+        const avatar = AVATAR_OPTIONS.includes(r.avatar) ? r.avatar : AVATAR_OPTIONS[0];
         return `
           <div class="leaderboard-row ${rankClass}">
             <span class="leaderboard-rank">${i + 1}</span>
+            <img class="leaderboard-avatar" src="medias/${avatar}" alt="" />
             <span class="leaderboard-name">${escapeHtml(r.displayName || 'Joueur')}</span>
-            <span class="leaderboard-count">${r.uniqueCount || 0}/${CARD_DEFS.length}</span>
+            <span class="leaderboard-count">${r.uniqueCount || 0}/${ALL_CARD_DEFS.length}</span>
           </div>`;
       })
       .join('');
@@ -946,7 +1186,7 @@ function updateHomeStats() {
   const uniqueOwned = Object.keys(state.cards).length;
   const totalOwned = Object.values(state.cards).reduce((a, b) => a + b, 0);
   statOwned.textContent = totalOwned;
-  statUnique.textContent = `${uniqueOwned}/${CARD_DEFS.length}`;
+  statUnique.textContent = `${uniqueOwned}/${ALL_CARD_DEFS.length}`;
   creditsValue.textContent = state.credits;
 }
 
@@ -957,6 +1197,7 @@ function renderAll() {
   updateHomeStats();
   updateCreditUI();
   updateWheelHomeUI();
+  updateLieuSlotUI();
   renderCollection();
-  switchView('home');
+  switchView('home', { instant: true });
 }

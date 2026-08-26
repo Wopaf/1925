@@ -52,9 +52,13 @@
   <div id="appShell" class="screen hidden">
     <header class="topbar">
       <div class="player-info">
-        <img id="avatarImg" class="avatar" src="medias/ppval.png" alt="avatar" />
+        <img id="avatarImg" class="avatar" src="medias/PP/Val.PNG" alt="avatar" />
         <span id="playerName">Joueur</span>
       </div>
+      <button id="openWheelBtn" class="btn-wheel hidden" type="button">
+        <span class="wheel-icon">🎡</span>
+        <span>Roue quotidienne</span>
+      </button>
       <div class="currency-pill">
         <span class="coin-icon">🪙</span>
         <span id="creditsValue">0</span>
@@ -64,6 +68,7 @@
     <main class="views">
       <!-- HOME -->
       <section id="view-home" class="view active">
+        <div id="homeLieuBg" class="home-lieu-bg"></div>
         <div class="next-credit-card">
           <div class="next-credit-row">
             <span>Prochain crédit dans</span>
@@ -82,19 +87,25 @@
           <button id="openBoosterBtn" class="btn-primary btn-large">
             Ouvrir un booster — <span class="coin-icon">🪙</span><span id="boosterCost">5</span>
           </button>
-          <div class="dev-tools">
+          <div id="devTools" class="dev-tools hidden">
             <button id="addCreditsBtn" class="btn-dev" type="button">+10 crédits</button>
             <button id="resetCardsBtn" class="btn-dev" type="button">Réinitialiser cartes</button>
             <button id="resetWheelBtn" class="btn-dev" type="button">Réinitialiser roue</button>
+            <button id="unlockAllCardsBtn" class="btn-dev" type="button">Débloquer toutes les cartes</button>
           </div>
         </div>
 
-        <div class="wheel-zone">
-          <button id="openWheelBtn" class="btn-wheel" type="button">
-            <span class="wheel-icon">🎡</span>
-            <span>Roue quotidienne</span>
+        <div class="ornate-divider"><span class="ornate-divider-diamond">◆</span></div>
+
+        <div class="lieu-zone">
+          <button id="lieuSlotBtn" class="lieu-slot-card" type="button">
+            <div id="lieuSlotArt" class="lieu-slot-art"><span class="lieu-slot-empty-icon">➕</span></div>
+            <span id="lieuSlotCaption" class="lieu-slot-caption">Ajouter un lieu</span>
+            <span id="lieuSlotEffect" class="lieu-slot-effect hidden"></span>
           </button>
         </div>
+
+        <div class="ornate-divider"><span class="ornate-divider-diamond">◆</span></div>
 
         <div class="home-stats">
           <div class="stat-box"><span id="statOwned">0</span><small>Cartes possédées</small></div>
@@ -170,10 +181,12 @@
       <button id="closeCardDetail" class="icon-btn card-detail-close" type="button">✕</button>
       <div class="card-detail-art">
         <img id="cardDetailImg" class="cardDetailImg" src="" alt="" />
+        <div id="cardDetailLieuArt" class="lieu-art hidden"><span id="cardDetailLieuIcon" class="lieu-art-icon"></span></div>
       </div>
       <h3 id="cardDetailName" class="card-detail-name"></h3>
       <span id="cardDetailRarity" class="card-detail-rarity"></span>
       <span id="cardDetailCount" class="card-detail-count"></span>
+      <p id="cardDetailEffect" class="card-detail-effect hidden"></p>
       <button id="recycleBtn" class="btn-recycle hidden" type="button"></button>
       <p id="recycleHint" class="recycle-hint hidden"></p>
     </div>
@@ -208,6 +221,17 @@
       </div>
       <button id="spinWheelBtn" class="btn-primary btn-large" type="button">Lancer la roue</button>
       <p id="wheelHint" class="wheel-hint"></p>
+    </div>
+  </div>
+
+  <!-- Lieu equip modal -->
+  <div id="lieuModal" class="modal hidden">
+    <div class="lieu-panel">
+      <button id="closeLieuModal" class="icon-btn card-detail-close" type="button">✕</button>
+      <h3 class="lieu-panel-title">Choisir un lieu</h3>
+      <div id="lieuList" class="lieu-list"></div>
+      <p id="lieuHint" class="lieu-hint"></p>
+      <button id="unequipLieuBtn" class="btn-dev lieu-unequip-btn hidden" type="button">Retirer le lieu actif</button>
     </div>
   </div>
 
