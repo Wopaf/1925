@@ -1100,8 +1100,12 @@ resetCardsBtn.addEventListener('click', async () => {
   if (!confirm('Réinitialiser toutes les cartes possédées ? Cette action est irréversible.')) return;
   state.cards = {};
   state.johnnyDonated = false;
+  state.equippedLieuId = null;
+  state.credits = STARTING_CREDITS;
   updateHomeStats();
   updateJohnnyPanel();
+  updateLieuSlotUI();
+  updateCreditUI();
   renderCollection();
   await persistUser();
   showToast('Collection réinitialisée (dev)');
@@ -1544,7 +1548,7 @@ submitGiftBtn.addEventListener('click', async () => {
       fromAvatar: state.avatar,
       toUid: giftTarget.uid,
       toName: giftTarget.displayName || 'Joueur',
-      toAvatar: giftTarget.avatar,
+      toAvatar: giftTarget.avatar || AVATAR_OPTIONS[0],
       cardId: giftCardId,
       claimed: false,
       createdAt: Date.now(),
