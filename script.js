@@ -69,7 +69,7 @@ const RAW_CARDS = [
   ['Louis-3Vallees', 'Louis 3 Vallées', 'legendary'],
 
   ['Val-Salle', 'Val Salle', 'common'],
-  ['Val-Sale', 'Val Salé', 'rare'],
+  ['Val-Sale', 'Val Sale', 'rare'],
   ['Val-Skibidi', 'Val Skibidi', 'epic'],
   ['Val-NewBeach', 'Val New Beach', 'legendary'],
 ];
