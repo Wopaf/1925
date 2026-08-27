@@ -35,6 +35,7 @@ const RAW_CARDS = [
 
   ['Denis-Cuisinier', 'Denis Cuisinier', 'common'],
   ['Denis-Sparring', 'Denis Sparring', 'rare'],
+  ['Denis-Attrapeur', 'Denis Attrapeur de Mouche', 'epic'],
   ['Denis-Marines', 'Denis Marines', 'legendary'],
 
   ['Elodie-Cuisniere', 'Elodie Cuisinière', 'common'],
@@ -44,9 +45,11 @@ const RAW_CARDS = [
 
   ['Anais-Receptioniste', 'Anaïs Réceptioniste', 'common'],
   ['Anais-DanceFloor', 'Anaïs Dancefloor', 'rare'],
-  ['Anais-Camisole', 'Anaïs Camisole', 'legendary'],
+  ['Anais-Camisole', 'Anaïs Camisole', 'epic'],
+  ['Anais-Joker', 'Anaïs Joker', 'legendary'],
 
-  ['Bichu-Plongeuse', 'Bichu Plongeuse', 'common'],  
+  ['Bichu-Plongeuse', 'Bichu Plongeuse', 'common'],
+  ['Bichu-Baba', 'Bichu Baba Ganoush', 'rare'],
   ['Bichu-paleo', 'Bichu Paléolithique', 'epic'],
   ['Bichu-Camtard', 'Bichu Camtard', 'legendary'],
 
@@ -85,6 +88,7 @@ const CARD_DEFS = RAW_CARDS.map(([file, name, rarity]) => ({
 // ============================================================
 const RAW_SPECIAL_CARDS = [
   ['Gabin-maitre', 'Gabin Maître des horloges', 'legendary'],
+  ['Johnny', 'Johnny 50 Euros', 'legendary'],
 ];
 
 const SPECIAL_CARD_DEFS = RAW_SPECIAL_CARDS.map(([file, name, rarity]) => ({
@@ -131,7 +135,7 @@ const LOCATION_CARD_DEFS = RAW_LOCATIONS.map(([locationId, name, description]) =
   id: `lieu-${locationId}`,
   name,
   rarity: LOCATION_CARD_RARITY,
-  character: 'Lieux',
+  character: 'Cartes Lieux',
   type: 'lieu',
   location: locationId,
   icon: LOCATION_ICONS[locationId],
@@ -141,19 +145,28 @@ const LOCATION_CARD_DEFS = RAW_LOCATIONS.map(([locationId, name, description]) =
 
 const ALL_CARD_DEFS = [...CARD_DEFS, ...SPECIAL_CARD_DEFS, ...LOCATION_CARD_DEFS];
 
-const RARITY_WEIGHTS = { common: 40, rare: 30, epic: 20, legendary: 10 };
+const RARITY_WEIGHTS = { common: 50, rare: 30, epic: 15, legendary: 5 };
 const RARITY_LABELS = { common: 'Commune', rare: 'Rare', epic: 'Épique', legendary: 'Légendaire' };
-const CREDIT_INTERVAL_MS = 10 * 60 * 1000; // 1 crédit toutes les 10 minutes
+const CREDIT_INTERVAL_MS = 10 * 60 * 1000; // 1 crédit de réserve toutes les 10 minutes
+const RESERVE_MAX = 60; // capacité maximale de la réserve de crédits
 const LOADING_SCREEN_MIN_MS = 1000; // durée d'affichage supplémentaire de l'écran de chargement
 const BOOSTER_COST = 30;
-const STARTING_CREDITS = 30;
+const STARTING_CREDITS = 60;
+const JOHNNY_DONATION_COST = 50;
+const DAILY_QUEST_REWARD = 20;
+const DAILY_QUEST_RECYCLE_RARITIES = ['common', 'rare', 'epic'];
+const DAILY_QUEST_LIST = [
+  { id: 'openBooster', label: 'Ouvrir un booster' },
+  { id: 'recycleCard', label: 'Recycler une carte' },
+  { id: 'tradeCard', label: 'Échanger une carte avec un autre joueur' },
+];
 
 // Raretés autorisées pour chacune des 5 cartes d'un booster (dans l'ordre du tirage)
 const BOOSTER_SLOTS = [
   ['common', 'rare'],
+  ['common'],
   ['common', 'rare'],
-  ['common', 'rare','epic'],
-  ['common', 'rare', 'epic', 'legendary'],
+  ['common', 'rare', 'epic'],
   ['epic', 'legendary'],
 ];
 const CARDS_PER_BOOSTER = BOOSTER_SLOTS.length;
@@ -220,6 +233,8 @@ const saveProfileBtn = el('saveProfileBtn');
 const nextCreditTimer = el('nextCreditTimer');
 const creditProgressBar = el('creditProgressBar');
 const creditProgressFill = el('creditProgressFill');
+const reserveValue = el('reserveValue');
+const claimReserveBtn = el('claimReserveBtn');
 const openBoosterBtn = el('openBoosterBtn');
 const boosterPack = el('boosterPack');
 const addCreditsBtn = el('addCreditsBtn');
@@ -228,6 +243,11 @@ const resetWheelBtn = el('resetWheelBtn');
 const unlockAllCardsBtn = el('unlockAllCardsBtn');
 const statOwned = el('statOwned');
 const statUnique = el('statUnique');
+const johnnyDivider = el('johnnyDivider');
+const johnnyPanel = el('johnnyPanel');
+const donateJohnnyBtn = el('donateJohnnyBtn');
+const dailyQuestList = el('dailyQuestList');
+const claimDailyQuestBtn = el('claimDailyQuestBtn');
 
 const collectionProgress = el('collectionProgress');
 const cardGrid = el('cardGrid');
@@ -247,6 +267,7 @@ const revealProgress = el('revealProgress');
 const revealHint = el('revealHint');
 const revealBoosterArt = el('revealBoosterArt');
 const revealRarityLabel = el('revealRarityLabel');
+const revealNewBadge = el('revealNewBadge');
 const revealRays = el('revealRays');
 
 const cardDetailModal = el('cardDetailModal');
@@ -264,6 +285,7 @@ const recycleHint = el('recycleHint');
 const homeLieuBg = el('homeLieuBg');
 const lieuSlotBtn = el('lieuSlotBtn');
 const lieuSlotArt = el('lieuSlotArt');
+const lieuSlotPassifLabel = el('lieuSlotPassifLabel');
 const lieuSlotCaption = el('lieuSlotCaption');
 const lieuSlotEffect = el('lieuSlotEffect');
 const lieuModal = el('lieuModal');
@@ -280,17 +302,13 @@ const wheelLabels = el('wheelLabels');
 const spinWheelBtn = el('spinWheelBtn');
 const wheelHint = el('wheelHint');
 
-const welcomeBackModal = el('welcomeBackModal');
-const welcomeBackText = el('welcomeBackText');
-const closeWelcomeBack = el('closeWelcomeBack');
-
 const toast = el('toast');
 
 // ============================================================
 //  APP STATE
 // ============================================================
 let state = null; // { uid, email, displayName, credits, lastClaim, cards }
-let currentFilter = null;
+let currentFilter = 'all';
 let tickInterval = null;
 let toastTimeout = null;
 let latestPublicProfiles = [];
@@ -516,8 +534,10 @@ auth.onAuthStateChanged(async (user) => {
     await wait(LOADING_SCREEN_MIN_MS);
     showScreen('appShell');
     revealHomeLieuBg();
+    if (accrueReserve() > 0) {
+      await persistUser();
+    }
     startCreditTimer();
-    await processOfflineCredits(true);
     startTradesListener();
   } else {
     stopCreditTimer();
@@ -541,10 +561,16 @@ async function loadUserData(user) {
       displayName: data.displayName || user.displayName || user.email.split('@')[0],
       credits: typeof data.credits === 'number' ? data.credits : STARTING_CREDITS,
       lastClaim: data.lastClaim || Date.now(),
+      reserve: typeof data.reserve === 'number' ? data.reserve : 0,
       cards: data.cards || {},
       avatar: AVATAR_OPTIONS.includes(data.avatar) ? data.avatar : AVATAR_OPTIONS[0],
       lastWheelSpinDate: data.lastWheelSpinDate || null,
       equippedLieuId: data.equippedLieuId || null,
+      johnnyDonated: !!data.johnnyDonated,
+      dailyQuestDate: data.dailyQuestDate || null,
+      dailyQuestRecycleRarity: data.dailyQuestRecycleRarity || null,
+      dailyQuestProgress: data.dailyQuestProgress || { openBooster: false, recycleCard: false, tradeCard: false },
+      dailyQuestClaimed: !!data.dailyQuestClaimed,
     };
   } else {
     state = {
@@ -553,10 +579,16 @@ async function loadUserData(user) {
       displayName: user.displayName || user.email.split('@')[0],
       credits: STARTING_CREDITS,
       lastClaim: Date.now(),
+      reserve: 0,
       cards: {},
       avatar: AVATAR_OPTIONS[0],
       lastWheelSpinDate: null,
       equippedLieuId: null,
+      johnnyDonated: false,
+      dailyQuestDate: null,
+      dailyQuestRecycleRarity: null,
+      dailyQuestProgress: { openBooster: false, recycleCard: false, tradeCard: false },
+      dailyQuestClaimed: false,
     };
     await persistUser();
   }
@@ -576,10 +608,16 @@ function persistUser() {
     email: state.email,
     credits: state.credits,
     lastClaim: state.lastClaim,
+    reserve: state.reserve,
     cards: state.cards,
     avatar: state.avatar,
     lastWheelSpinDate: state.lastWheelSpinDate,
     equippedLieuId: state.equippedLieuId,
+    johnnyDonated: state.johnnyDonated,
+    dailyQuestDate: state.dailyQuestDate,
+    dailyQuestRecycleRarity: state.dailyQuestRecycleRarity,
+    dailyQuestProgress: state.dailyQuestProgress,
+    dailyQuestClaimed: state.dailyQuestClaimed,
   }).catch((err) => {
     console.error('Sauvegarde des données joueur refusée :', err);
     showToast('Erreur de sauvegarde — vérifiez les règles Firebase.');
@@ -601,41 +639,46 @@ function persistUser() {
 }
 
 // ============================================================
-//  CREDITS (gain automatique + rattrapage hors-ligne)
+//  RÉSERVE DE CRÉDITS (accumulation passive + récupération manuelle)
 // ============================================================
-function elapsedCreditTicks() {
-  const elapsed = Date.now() - state.lastClaim;
-  return Math.floor(elapsed / CREDIT_INTERVAL_MS);
-}
-
-async function processOfflineCredits(isInitialLoad) {
-  const ticks = elapsedCreditTicks();
-  if (ticks > 0) {
-    state.credits += ticks;
-    state.lastClaim += ticks * CREDIT_INTERVAL_MS;
-    await persistUser();
-    updateHomeStats();
-    updateCreditUI();
-    if (isInitialLoad) {
-      welcomeBackText.textContent = `Pendant votre absence, vous avez gagné ${ticks} crédit${ticks > 1 ? 's' : ''} !`;
-      welcomeBackModal.classList.remove('hidden');
-    } else {
-      showToast(`+${ticks} crédit${ticks > 1 ? 's' : ''} !`);
-      flyCoinToCredits(creditProgressBar, ticks);
-    }
+// Le timer remplit une réserve (plafonnée à RESERVE_MAX) même hors-ligne ;
+// les crédits ne sont ajoutés au solde que lorsque le joueur clique sur "Récupérer".
+function accrueReserve() {
+  if (!state) return 0;
+  if (state.reserve >= RESERVE_MAX) {
+    state.lastClaim = Date.now();
+    return 0;
   }
+  const ticks = Math.floor((Date.now() - state.lastClaim) / CREDIT_INTERVAL_MS);
+  if (ticks <= 0) return 0;
+  const added = Math.min(ticks, RESERVE_MAX - state.reserve);
+  state.reserve += added;
+  state.lastClaim += ticks * CREDIT_INTERVAL_MS;
+  return added;
 }
 
-closeWelcomeBack.addEventListener('click', () => welcomeBackModal.classList.add('hidden'));
-welcomeBackModal.addEventListener('click', (e) => { if (e.target === welcomeBackModal) welcomeBackModal.classList.add('hidden'); });
+async function claimReserve() {
+  if (!state || state.reserve <= 0) return;
+  const amount = state.reserve;
+  state.credits += amount;
+  state.reserve = 0;
+  state.lastClaim = Date.now();
+  await persistUser();
+  updateHomeStats();
+  updateCreditUI();
+  showToast(`+${amount} crédit${amount > 1 ? 's' : ''} !`);
+  flyCoinToCredits(creditProgressBar, amount);
+}
+
+claimReserveBtn.addEventListener('click', claimReserve);
 
 function startCreditTimer() {
   stopCreditTimer();
   updateCreditUI();
   tickInterval = setInterval(async () => {
     if (!state) return;
-    if (elapsedCreditTicks() > 0) {
-      await processOfflineCredits(false);
+    if (accrueReserve() > 0) {
+      await persistUser();
     }
     updateCreditUI();
   }, 1000);
@@ -651,10 +694,13 @@ function stopCreditTimer() {
 function updateCreditUI() {
   if (!state) return;
   creditsValue.textContent = state.credits;
+  reserveValue.textContent = `${state.reserve} / ${RESERVE_MAX}`;
+  claimReserveBtn.disabled = state.reserve <= 0;
   const elapsed = Date.now() - state.lastClaim;
-  const remaining = CREDIT_INTERVAL_MS - elapsed;
-  nextCreditTimer.textContent = formatDuration(remaining);
-  const pct = Math.min(100, Math.max(0, (elapsed / CREDIT_INTERVAL_MS) * 100));
+  const reserveFull = state.reserve >= RESERVE_MAX;
+  nextCreditTimer.textContent = reserveFull ? 'Réserve pleine' : formatDuration(CREDIT_INTERVAL_MS - elapsed);
+  const fractional = reserveFull ? 0 : elapsed / CREDIT_INTERVAL_MS;
+  const pct = Math.min(100, Math.max(0, ((state.reserve + fractional) / RESERVE_MAX) * 100));
   creditProgressFill.style.width = `${pct}%`;
 }
 
@@ -721,17 +767,50 @@ openBoosterBtn.addEventListener('click', async () => {
 
   state.credits -= BOOSTER_COST;
   const drawn = drawBoosterCards();
+  const newCardIds = new Set();
   drawn.forEach((card) => {
+    if (!state.cards[card.id]) newCardIds.add(card.id);
     state.cards[card.id] = (state.cards[card.id] || 0) + 1;
   });
 
+  markDailyQuest('openBooster');
   updateCreditUI();
   updateHomeStats();
   await persistUser();
 
-  showBoosterReveal(drawn);
+  showBoosterReveal(drawn, newCardIds);
   boosterPack.classList.remove('opening');
   openBoosterBtn.disabled = false;
+});
+
+// ============================================================
+//  DON À JOHNNY (récompense unique)
+// ============================================================
+function updateJohnnyPanel() {
+  if (!state) return;
+  johnnyDivider.classList.toggle('hidden', !!state.johnnyDonated);
+  johnnyPanel.classList.toggle('hidden', !!state.johnnyDonated);
+}
+
+donateJohnnyBtn.addEventListener('click', async () => {
+  if (!state || state.johnnyDonated) return;
+  if (state.credits < JOHNNY_DONATION_COST) {
+    showToast('Pas assez de crédits !');
+    return;
+  }
+  state.credits -= JOHNNY_DONATION_COST;
+  state.johnnyDonated = true;
+  const johnnyId = SPECIAL_CARD_DEFS.find((c) => c.character === 'Johnny').id;
+  state.cards[johnnyId] = (state.cards[johnnyId] || 0) + 1;
+
+  updateCreditUI();
+  updateHomeStats();
+  updateJohnnyPanel();
+  renderCollection();
+  await persistUser();
+
+  showToast('Johnny vous offre sa carte légendaire !');
+  openCardDetail(johnnyId);
 });
 
 // ============================================================
@@ -758,6 +837,69 @@ function todayKey() {
   const d = new Date();
   return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
 }
+
+// ============================================================
+//  QUÊTES QUOTIDIENNES
+// ============================================================
+function ensureDailyQuests() {
+  if (!state) return;
+  const today = todayKey();
+  if (state.dailyQuestDate !== today) {
+    state.dailyQuestDate = today;
+    state.dailyQuestRecycleRarity = DAILY_QUEST_RECYCLE_RARITIES[Math.floor(Math.random() * DAILY_QUEST_RECYCLE_RARITIES.length)];
+    state.dailyQuestProgress = { openBooster: false, recycleCard: false, tradeCard: false };
+    state.dailyQuestClaimed = false;
+  }
+}
+
+function markDailyQuest(questId, rarity) {
+  if (!state) return;
+  ensureDailyQuests();
+  if (state.dailyQuestProgress[questId]) return;
+  if (questId === 'recycleCard' && rarity !== state.dailyQuestRecycleRarity) return;
+  state.dailyQuestProgress[questId] = true;
+  updateDailyQuestsUI();
+}
+
+function allDailyQuestsDone() {
+  if (!state) return false;
+  return DAILY_QUEST_LIST.every((q) => state.dailyQuestProgress[q.id]);
+}
+
+function updateDailyQuestsUI() {
+  if (!state) return;
+  ensureDailyQuests();
+  dailyQuestList.innerHTML = DAILY_QUEST_LIST.map((q) => {
+    const done = !!state.dailyQuestProgress[q.id];
+    const label = q.id === 'recycleCard'
+      ? `Recycler une carte ${RARITY_LABELS[state.dailyQuestRecycleRarity]}`
+      : q.label;
+    return `
+      <li class="daily-quest-item ${done ? 'done' : ''}">
+        <span class="daily-quest-check">${done ? '✓' : ''}</span>
+        <span>${escapeHtml(label)}</span>
+      </li>`;
+  }).join('');
+  const allDone = allDailyQuestsDone();
+  claimDailyQuestBtn.disabled = !allDone || state.dailyQuestClaimed;
+  claimDailyQuestBtn.textContent = state.dailyQuestClaimed
+    ? 'Récompense récupérée'
+    : `Récupérer ${DAILY_QUEST_REWARD} Crédits`;
+}
+
+claimDailyQuestBtn.addEventListener('click', async () => {
+  if (!state) return;
+  ensureDailyQuests();
+  if (!allDailyQuestsDone() || state.dailyQuestClaimed) return;
+  state.dailyQuestClaimed = true;
+  state.credits += DAILY_QUEST_REWARD;
+  updateCreditUI();
+  updateHomeStats();
+  updateDailyQuestsUI();
+  await persistUser();
+  showToast(`+${DAILY_QUEST_REWARD} crédits !`);
+  flyCoinToCredits(claimDailyQuestBtn, DAILY_QUEST_REWARD);
+});
 
 function isWheelAvailable() {
   return !state.lastWheelSpinDate || state.lastWheelSpinDate !== todayKey();
@@ -845,12 +987,14 @@ function updateLieuSlotUI() {
   lieuSlotBtn.classList.remove('equipped', 'lieu-cuisine', 'lieu-salle', 'lieu-reception');
   if (equipped) {
     lieuSlotArt.innerHTML = cardArtHtml(equipped, escapeHtml(equipped.name));
+    lieuSlotPassifLabel.classList.remove('hidden');
     lieuSlotCaption.textContent = equipped.name;
     lieuSlotBtn.classList.add('equipped', `lieu-${equipped.location}`);
     lieuSlotEffect.textContent = equipped.description;
     lieuSlotEffect.classList.remove('hidden');
   } else {
     lieuSlotArt.innerHTML = '<span class="lieu-slot-empty-icon">➕</span>';
+    lieuSlotPassifLabel.classList.add('hidden');
     lieuSlotCaption.textContent = 'Ajouter un lieu';
     lieuSlotEffect.classList.add('hidden');
   }
@@ -942,7 +1086,9 @@ resetCardsBtn.addEventListener('click', async () => {
   if (!state) return;
   if (!confirm('Réinitialiser toutes les cartes possédées ? Cette action est irréversible.')) return;
   state.cards = {};
+  state.johnnyDonated = false;
   updateHomeStats();
+  updateJohnnyPanel();
   renderCollection();
   await persistUser();
   showToast('Collection réinitialisée (dev)');
@@ -973,6 +1119,7 @@ function wait(ms) {
 
 let revealQueue = [];
 let revealIndex = 0;
+let revealNewCardIds = new Set();
 
 function updateRevealProgress() {
   revealProgress.innerHTML = revealQueue
@@ -994,6 +1141,8 @@ async function showRevealCard() {
   updateRevealProgress();
   revealRarityLabel.className = 'reveal-rarity-label';
   revealRarityLabel.textContent = '';
+  revealNewBadge.className = 'reveal-new-badge';
+  revealNewBadge.textContent = '';
   revealRays.className = 'reveal-rays';
 
   revealCards.innerHTML = '';
@@ -1019,15 +1168,22 @@ async function showRevealCard() {
   revealRarityLabel.textContent = RARITY_LABELS[card.rarity];
   revealRarityLabel.classList.add(`rarity-${card.rarity}`, 'shown');
   revealRays.classList.add(`rarity-${card.rarity}`, 'shown');
+  if (revealNewCardIds.has(card.id)) {
+    revealNewBadge.textContent = 'Nouvelle carte !';
+    revealNewBadge.classList.add('shown');
+  }
 }
 
-async function showBoosterReveal(cards) {
+async function showBoosterReveal(cards, newCardIds = new Set()) {
   revealQueue = cards;
   revealIndex = 0;
+  revealNewCardIds = newCardIds;
   revealCards.innerHTML = '';
   revealProgress.innerHTML = '';
   revealRarityLabel.className = 'reveal-rarity-label';
   revealRarityLabel.textContent = '';
+  revealNewBadge.className = 'reveal-new-badge';
+  revealNewBadge.textContent = '';
   revealRays.className = 'reveal-rays';
   revealHint.textContent = "Touche le booster pour l'ouvrir";
   revealHint.classList.remove('hidden');
@@ -1255,6 +1411,7 @@ recycleBtn.addEventListener('click', async () => {
   state.cards[detailCardId] = count - rule.cost;
   state.credits += rule.reward;
   flyCoinToCredits(recycleBtn, rule.reward);
+  markDailyQuest('recycleCard', card.rarity);
 
   updateCreditUI();
   updateHomeStats();
@@ -1443,6 +1600,7 @@ async function applyMyCompletedTrades() {
         if (state.cards[trade.giveCardId] <= 0) delete state.cards[trade.giveCardId];
       }
       state.cards[trade.wantCardId] = (state.cards[trade.wantCardId] || 0) + 1;
+      markDailyQuest('tradeCard');
       await persistUser();
       await db.ref(`trades/${id}`).update({ fromApplied: true, status: 'completed', updatedAt: Date.now() });
       updateHomeStats();
@@ -1462,6 +1620,7 @@ async function acceptTrade(id, trade) {
   state.cards[trade.wantCardId] -= 1;
   if (state.cards[trade.wantCardId] <= 0) delete state.cards[trade.wantCardId];
   state.cards[trade.giveCardId] = (state.cards[trade.giveCardId] || 0) + 1;
+  markDailyQuest('tradeCard');
   await persistUser();
   await db.ref(`trades/${id}`).update({ toApplied: true, status: 'accepted', updatedAt: Date.now() });
   updateHomeStats();
@@ -1565,6 +1724,8 @@ function renderAll() {
   updateCreditUI();
   updateWheelHomeUI();
   updateLieuSlotUI();
+  updateJohnnyPanel();
+  updateDailyQuestsUI();
   renderCollection();
   switchView('home', { instant: true });
 }

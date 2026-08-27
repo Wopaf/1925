@@ -71,10 +71,14 @@
         <div id="homeLieuBg" class="home-lieu-bg"></div>
         <div class="next-credit-card">
           <div class="next-credit-row">
-            <span class="next-credit-label"><img class="coin-icon" src="medias/Credit.png" alt="crédit" />Prochain crédit dans</span>
-            <span id="nextCreditTimer">--:--:--</span>
+            <span class="next-credit-label"><img class="coin-icon" src="medias/Credit.png" alt="crédit" />Réserve de crédits</span>
+            <span id="reserveValue">0 / 60</span>
           </div>
           <div id="creditProgressBar" class="progress-bar"><div id="creditProgressFill" class="progress-fill"></div></div>
+          <div class="next-credit-row next-credit-row-sub">
+            <span class="next-credit-label">Prochain crédit <span id="nextCreditTimer">--:--:--</span></span>
+            <button id="claimReserveBtn" class="btn-claim" type="button" disabled>Récupérer</button>
+          </div>
         </div>
 
         <div class="booster-zone">
@@ -97,12 +101,36 @@
 
         <div class="ornate-divider"><span class="ornate-divider-diamond">◆</span></div>
 
+        <h2 class="home-section-title">Quêtes Quotidiennes</h2>
+        <p class="home-section-subtitle">Remplissez chaque jour vos objectifs pour remporter des crédits supplémentaires.</p>
+        <div class="daily-quest-panel">
+          <ul id="dailyQuestList" class="daily-quest-list"></ul>
+          <button id="claimDailyQuestBtn" class="btn-claim" type="button" disabled>Récupérer 20 Crédits</button>
+        </div>
+
+        <div class="ornate-divider"><span class="ornate-divider-diamond">◆</span></div>
+
+        <h2 class="home-section-title">Carte Lieu</h2>
+        <p class="home-section-subtitle">Obtenez des passifs uniques grâce aux cartes lieux.</p>
         <div class="lieu-zone">
           <button id="lieuSlotBtn" class="lieu-slot-card" type="button">
-            <div id="lieuSlotArt" class="lieu-slot-art"><span class="lieu-slot-empty-icon">➕</span></div>
+            <div class="lieu-receptacle">
+              <div id="lieuSlotArt" class="lieu-slot-art"><span class="lieu-slot-empty-icon">➕</span></div>
+            </div>
+            <span id="lieuSlotPassifLabel" class="lieu-slot-passif-label hidden">Passif</span>
             <span id="lieuSlotCaption" class="lieu-slot-caption">Ajouter un lieu</span>
             <span id="lieuSlotEffect" class="lieu-slot-effect hidden"></span>
           </button>
+        </div>
+
+        <div id="johnnyDivider" class="ornate-divider hidden"><span class="ornate-divider-diamond">◆</span></div>
+
+        <div id="johnnyPanel" class="johnny-panel hidden">
+          <h2 class="home-section-title">Quête de Johnny</h2>
+          <p class="home-section-subtitle">Johnny a besoin de vous !</p>
+          <img src="medias/CadreJohnny.png" alt="Johnny" class="johnny-frame" />
+          <p class="johnny-text">Salut ! C’est Johnny !<br />J’ai besoin de 50 crédits<br />Pour faire un album de Rock’n Roll ! !</p>
+          <button id="donateJohnnyBtn" class="btn-primary" type="button">Donner 50 Crédits</button>
         </div>
 
         <div class="ornate-divider"><span class="ornate-divider-diamond">◆</span></div>
@@ -120,8 +148,8 @@
           <span id="collectionProgress">0/0</span>
         </div>
         <div class="rarity-filters">
-          <button class="filter-chip active" data-rarity="default" aria-label="Tri par défaut"><svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="currentColor"><path d="M160-240q-17 0-28.5-11.5T120-280q0-17 11.5-28.5T160-320h160q17 0 28.5 11.5T360-280q0 17-11.5 28.5T320-240H160Zm0-200q-17 0-28.5-11.5T120-480q0-17 11.5-28.5T160-520h400q17 0 28.5 11.5T600-480q0 17-11.5 28.5T560-440H160Zm0-200q-17 0-28.5-11.5T120-680q0-17 11.5-28.5T160-720h640q17 0 28.5 11.5T840-680q0 17-11.5 28.5T800-640H160Z"/></svg></button>
-          <button class="filter-chip" data-rarity="all">Toutes</button>
+          <button class="filter-chip" data-rarity="default" aria-label="Tri par défaut"><svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="currentColor"><path d="M160-240q-17 0-28.5-11.5T120-280q0-17 11.5-28.5T160-320h160q17 0 28.5 11.5T360-280q0 17-11.5 28.5T320-240H160Zm0-200q-17 0-28.5-11.5T120-480q0-17 11.5-28.5T160-520h400q17 0 28.5 11.5T600-480q0 17-11.5 28.5T560-440H160Zm0-200q-17 0-28.5-11.5T120-680q0-17 11.5-28.5T160-720h640q17 0 28.5 11.5T840-680q0 17-11.5 28.5T800-640H160Z"/></svg></button>
+          <button class="filter-chip active" data-rarity="all">Toutes</button>
           <button class="filter-chip" data-rarity="common">Commune</button>
           <button class="filter-chip" data-rarity="rare">Rare</button>
           <button class="filter-chip" data-rarity="epic">Épique</button>
@@ -172,6 +200,7 @@
         <div id="revealCards" class="reveal-cards"></div>
       </div>
       <div id="revealRarityLabel" class="reveal-rarity-label"></div>
+      <div id="revealNewBadge" class="reveal-new-badge"></div>
       <p id="revealHint" class="reveal-hint">Touche le booster pour l'ouvrir</p>
     </div>
   </div>
@@ -244,19 +273,10 @@
       <p class="lieu-hint">Choisis la carte que tu offres, puis celle que tu veux recevoir.</p>
       <p class="trade-picker-label">Ta carte</p>
       <div id="tradeMyCards" class="card-grid trade-pick-grid"></div>
+      <div class="ornate-divider"><span class="ornate-divider-diamond">◆</span></div>
       <p class="trade-picker-label">Sa carte</p>
       <div id="tradeTheirCards" class="card-grid trade-pick-grid"></div>
       <button id="submitTradeBtn" class="btn-primary" type="button" disabled>Proposer l'échange</button>
-    </div>
-  </div>
-
-  <!-- Welcome back modal -->
-  <div id="welcomeBackModal" class="modal hidden">
-    <div class="modal-card">
-      <div class="modal-icon"><img src="medias/Credit.png" alt="crédits" /></div>
-      <h2>Bon retour !</h2>
-      <p id="welcomeBackText"></p>
-      <button id="closeWelcomeBack" class="btn-primary">Super !</button>
     </div>
   </div>
 
