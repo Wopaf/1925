@@ -890,8 +890,8 @@ button, input {
 
 /* ---- Community ---- */
 .community-hint { color: var(--text-dim); font-size: 13px; margin-bottom: 14px; }
-.leaderboard { display: flex; flex-direction: column; gap: 8px; }
-.leaderboard-row {
+.player-list { display: flex; flex-direction: column; gap: 8px; }
+.player-row {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -900,14 +900,7 @@ button, input {
   padding: 12px 14px;
   border: 1px solid var(--border-hex);
 }
-.leaderboard-rank {
-  width: 26px;
-  font-weight: 800;
-  color: var(--text-dim);
-  text-align: center;
-  flex-shrink: 0;
-}
-.leaderboard-avatar {
+.player-avatar {
   width: 32px;
   height: 32px;
   border-radius: 50%;
@@ -915,19 +908,14 @@ button, input {
   border: 1.5px solid var(--border-hex);
   flex-shrink: 0;
 }
-.leaderboard-row.top1 { border-color: rgba(200,170,110,.5); }
-.leaderboard-row.top1 .leaderboard-rank { color: var(--accent); }
-.leaderboard-row.top2 .leaderboard-rank { color: #cfd8dc; }
-.leaderboard-row.top3 .leaderboard-rank { color: #b98d5e; }
-.leaderboard-name { flex: 1; font-weight: 600; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.leaderboard-count { color: var(--accent-2); font-weight: 700; font-size: 13px; }
-.leaderboard-empty { color: var(--text-dim); text-align: center; padding: 30px 0; font-size: 13px; }
+.player-name { flex: 1; font-weight: 600; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.player-count { color: var(--accent-2); font-weight: 700; font-size: 13px; }
+.player-list-empty { color: var(--text-dim); text-align: center; padding: 30px 0; font-size: 13px; }
 
-/* ---- Trades ---- */
-.trades-section { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
-.trades-section:empty { margin-bottom: 0; }
-.trade-group-title { font-size: 12px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: .05em; margin-top: 4px; }
-.trade-row {
+/* ---- Cadeaux ---- */
+.gifts-section { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+.gifts-section:empty { margin-bottom: 0; }
+.gift-row {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -936,25 +924,11 @@ button, input {
   padding: 10px 12px;
   border: 1px solid var(--border-hex);
 }
-.trade-row-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.trade-row-name { font-weight: 600; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.trade-row-cards { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-dim); }
-.trade-row-cards img { width: 26px; height: 26px; object-fit: contain; border-radius: 4px; background: var(--bg-app); }
-.trade-row-status { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
-.trade-row-status.status-accepted, .trade-row-status.status-completed { color: var(--rarity-rare); }
-.trade-row-status.status-declined, .trade-row-status.status-cancelled { color: #ff8080; }
-.trade-row-actions { display: flex; gap: 6px; flex-shrink: 0; }
-.trade-row-actions button {
-  border: 1px solid var(--border-hex);
-  background: var(--bg-app);
-  color: var(--text-main);
-  font-size: 11px;
-  font-weight: 700;
-  padding: 6px 10px;
-  border-radius: 8px;
-  cursor: pointer;
-}
-.trade-row-actions button.trade-accept { border-color: var(--accent); color: var(--accent); }
+.gift-row-thumb { flex: none; width: 34px; height: 34px; }
+.gift-row-thumb img { width: 100%; height: 100%; object-fit: contain; border-radius: 4px; background: var(--bg-app); }
+.gift-row-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.gift-row-text { font-weight: 600; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gift-row-date { font-size: 11px; color: var(--text-dim); }
 
 /* ============================================================
    BOTTOM NAV
@@ -1108,21 +1082,21 @@ button, input {
 .lieu-hint { color: var(--text-dim); font-size: 12px; line-height: 1.5; }
 .lieu-unequip-btn { width: 100%; }
 
-#tradeModal {
+#sendGiftModal {
   opacity: 0;
   transition: opacity .25s ease;
 }
-#tradeModal.open { opacity: 1; }
-#tradeModal .trade-panel {
+#sendGiftModal.open { opacity: 1; }
+#sendGiftModal .gift-panel {
   transition: opacity .3s ease, transform .3s cubic-bezier(.2,.8,.2,1);
   opacity: 0;
   transform: scale(.85) translateY(14px);
 }
-#tradeModal.open .trade-panel {
+#sendGiftModal.open .gift-panel {
   opacity: 1;
   transform: scale(1) translateY(0);
 }
-.trade-panel {
+.gift-panel {
   position: relative;
   background: var(--bg-card);
   border-radius: 22px;
@@ -1138,16 +1112,31 @@ button, input {
   align-items: center;
   gap: 10px;
 }
-.trade-picker-label { align-self: flex-start; font-size: 12px; color: var(--text-dim); font-weight: 600; margin-top: 6px; }
-.trade-pick-grid {
+.gift-pick-grid {
   grid-template-columns: repeat(4, minmax(0, 1fr));
   width: 100%;
   gap: 14px 8px;
 }
-.trade-pick-grid .card-tile-wrap.selected .card-tile { border-color: var(--accent); box-shadow: 0 8px 18px rgba(0,0,0,.4), 0 0 0 2px rgba(200,170,110,.5); }
-.trade-pick-grid .card-tile { border: 2px solid transparent; }
-.trade-pick-empty { grid-column: 1 / -1; color: var(--text-dim); font-size: 12px; padding: 8px 0; }
-#submitTradeBtn { margin-top: 6px; }
+.gift-pick-grid .card-tile-wrap.selected .card-tile { border-color: var(--accent); box-shadow: 0 8px 18px rgba(0,0,0,.4), 0 0 0 2px rgba(200,170,110,.5); }
+.gift-pick-grid .card-tile { border: 2px solid transparent; }
+.gift-pick-empty { grid-column: 1 / -1; color: var(--text-dim); font-size: 12px; padding: 8px 0; }
+#submitGiftBtn { margin-top: 6px; }
+
+#giftReceivedModal {
+  opacity: 0;
+  transition: opacity .25s ease;
+}
+#giftReceivedModal.open { opacity: 1; }
+#giftReceivedModal .card-detail {
+  transition: opacity .3s ease, transform .3s cubic-bezier(.2,.8,.2,1);
+  opacity: 0;
+  transform: scale(.85) translateY(14px);
+}
+#giftReceivedModal.open .card-detail {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+}
+.gift-received-from { color: var(--text-dim); font-size: 13px; margin-bottom: 10px; }
 
 #cardDetailModal {
   opacity: 0;

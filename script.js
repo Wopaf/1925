@@ -60,6 +60,7 @@ const RAW_CARDS = [
 
   ['Louann-Serveuse', 'Louann Serveuse', 'common'],
   ['Louann-Taxi', 'Louann Taxi', 'rare'],
+  ['Louann-Casino', 'Louann Casino', 'epic'],
   ['Louann-Fashion', 'Louann Fashion Week', 'legendary'],
 
   ['Louis-Serveur', 'Louis Serveur', 'common'],
@@ -89,6 +90,7 @@ const CARD_DEFS = RAW_CARDS.map(([file, name, rarity]) => ({
 const RAW_SPECIAL_CARDS = [
   ['Gabin-maitre', 'Gabin Maître des horloges', 'legendary'],
   ['Johnny', 'Johnny 50 Euros', 'legendary'],
+  ['Elodie-Fantome', 'Elodie Fantôme de Diane', 'legendary'],
 ];
 
 const SPECIAL_CARD_DEFS = RAW_SPECIAL_CARDS.map(([file, name, rarity]) => ({
@@ -151,14 +153,14 @@ const CREDIT_INTERVAL_MS = 10 * 60 * 1000; // 1 crédit de réserve toutes les 1
 const RESERVE_MAX = 60; // capacité maximale de la réserve de crédits
 const LOADING_SCREEN_MIN_MS = 1000; // durée d'affichage supplémentaire de l'écran de chargement
 const BOOSTER_COST = 30;
-const STARTING_CREDITS = 60;
+const STARTING_CREDITS = 100;
 const JOHNNY_DONATION_COST = 50;
 const DAILY_QUEST_REWARD = 20;
 const DAILY_QUEST_RECYCLE_RARITIES = ['common', 'rare', 'epic'];
 const DAILY_QUEST_LIST = [
   { id: 'openBooster', label: 'Ouvrir un booster' },
   { id: 'recycleCard', label: 'Recycler une carte' },
-  { id: 'tradeCard', label: 'Échanger une carte avec un autre joueur' },
+  { id: 'giftCard', label: 'Offrir une carte à un autre joueur' },
 ];
 
 // Raretés autorisées pour chacune des 5 cartes d'un booster (dans l'ordre du tirage)
@@ -252,14 +254,19 @@ const claimDailyQuestBtn = el('claimDailyQuestBtn');
 const collectionProgress = el('collectionProgress');
 const cardGrid = el('cardGrid');
 
-const leaderboard = el('leaderboard');
-const tradesSection = el('tradesSection');
-const tradeModal = el('tradeModal');
-const closeTradeModalBtn = el('closeTradeModal');
-const tradePartnerName = el('tradePartnerName');
-const tradeMyCards = el('tradeMyCards');
-const tradeTheirCards = el('tradeTheirCards');
-const submitTradeBtn = el('submitTradeBtn');
+const playerList = el('playerList');
+const giftsSection = el('giftsSection');
+const sendGiftModal = el('sendGiftModal');
+const closeSendGiftModalBtn = el('closeSendGiftModal');
+const giftPartnerName = el('giftPartnerName');
+const giftMyCards = el('giftMyCards');
+const submitGiftBtn = el('submitGiftBtn');
+const giftReceivedModal = el('giftReceivedModal');
+const giftReceivedArt = el('giftReceivedArt');
+const giftReceivedName = el('giftReceivedName');
+const giftReceivedRarity = el('giftReceivedRarity');
+const giftReceivedFrom = el('giftReceivedFrom');
+const closeGiftReceivedModalBtn = el('closeGiftReceivedModal');
 
 const boosterModal = el('boosterModal');
 const revealCards = el('revealCards');
@@ -308,13 +315,17 @@ const toast = el('toast');
 //  APP STATE
 // ============================================================
 let state = null; // { uid, email, displayName, credits, lastClaim, cards }
+let isNewAccountThisSession = false;
 let currentFilter = 'all';
 let tickInterval = null;
 let toastTimeout = null;
 let latestPublicProfiles = [];
-let allTrades = {};
-let tradesRef = null;
-const applyingTradeIds = new Set();
+let giftsRef = null;
+const claimingGiftIds = new Set();
+let giftTarget = null; // { uid, displayName, avatar }
+let giftCardId = null;
+let pendingGiftQueue = [];
+let giftModalShowing = false;
 
 // ============================================================
 //  UTILITIES
@@ -538,10 +549,10 @@ auth.onAuthStateChanged(async (user) => {
       await persistUser();
     }
     startCreditTimer();
-    startTradesListener();
+    startGiftsListener();
   } else {
     stopCreditTimer();
-    stopTradesListener();
+    stopGiftsListener();
     state = null;
     await wait(LOADING_SCREEN_MIN_MS);
     showScreen('authScreen');
@@ -569,10 +580,11 @@ async function loadUserData(user) {
       johnnyDonated: !!data.johnnyDonated,
       dailyQuestDate: data.dailyQuestDate || null,
       dailyQuestRecycleRarity: data.dailyQuestRecycleRarity || null,
-      dailyQuestProgress: data.dailyQuestProgress || { openBooster: false, recycleCard: false, tradeCard: false },
+      dailyQuestProgress: data.dailyQuestProgress || { openBooster: false, recycleCard: false, giftCard: false },
       dailyQuestClaimed: !!data.dailyQuestClaimed,
     };
   } else {
+    isNewAccountThisSession = true;
     state = {
       uid: user.uid,
       email: user.email,
@@ -587,7 +599,7 @@ async function loadUserData(user) {
       johnnyDonated: false,
       dailyQuestDate: null,
       dailyQuestRecycleRarity: null,
-      dailyQuestProgress: { openBooster: false, recycleCard: false, tradeCard: false },
+      dailyQuestProgress: { openBooster: false, recycleCard: false, giftCard: false },
       dailyQuestClaimed: false,
     };
     await persistUser();
@@ -788,8 +800,9 @@ openBoosterBtn.addEventListener('click', async () => {
 // ============================================================
 function updateJohnnyPanel() {
   if (!state) return;
-  johnnyDivider.classList.toggle('hidden', !!state.johnnyDonated);
-  johnnyPanel.classList.toggle('hidden', !!state.johnnyDonated);
+  const hide = state.johnnyDonated || isNewAccountThisSession;
+  johnnyDivider.classList.toggle('hidden', hide);
+  johnnyPanel.classList.toggle('hidden', hide);
 }
 
 donateJohnnyBtn.addEventListener('click', async () => {
@@ -847,7 +860,7 @@ function ensureDailyQuests() {
   if (state.dailyQuestDate !== today) {
     state.dailyQuestDate = today;
     state.dailyQuestRecycleRarity = DAILY_QUEST_RECYCLE_RARITIES[Math.floor(Math.random() * DAILY_QUEST_RECYCLE_RARITIES.length)];
-    state.dailyQuestProgress = { openBooster: false, recycleCard: false, tradeCard: false };
+    state.dailyQuestProgress = { openBooster: false, recycleCard: false, giftCard: false };
     state.dailyQuestClaimed = false;
   }
 }
@@ -1263,7 +1276,7 @@ function switchView(view, { instant } = {}) {
   el(`view-${view}`).classList.add('active');
   document.querySelectorAll('.nav-btn').forEach((b) => b.classList.toggle('active', b.dataset.view === view));
   if (view === 'collection') renderCollection();
-  if (view === 'community') { renderLeaderboard(); renderTradesSection(); }
+  if (view === 'community') { renderPlayerList(); renderGiftsHistory(); }
   if (view === 'home' && !instant) revealHomeLieuBg();
 }
 
@@ -1425,59 +1438,53 @@ closeCardDetail.addEventListener('click', closeCardDetailModal);
 cardDetailModal.addEventListener('click', (e) => { if (e.target === cardDetailModal) closeCardDetailModal(); });
 
 // ============================================================
-//  COMMUNITY / LEADERBOARD
+//  COMMUNITY / PLAYER LIST
 // ============================================================
-async function renderLeaderboard() {
-  leaderboard.innerHTML = '<p class="leaderboard-empty">Chargement...</p>';
+async function renderPlayerList() {
+  playerList.innerHTML = '<p class="player-list-empty">Chargement...</p>';
   try {
-    const snap = await db.ref('publicProfiles').orderByChild('uniqueCount').limitToLast(50).once('value');
+    const snap = await db.ref('publicProfiles').once('value');
     const rows = [];
     snap.forEach((child) => rows.push({ uid: child.key, ...child.val() }));
-    rows.reverse();
+    rows.sort((a, b) => (a.displayName || '').localeCompare(b.displayName || ''));
     latestPublicProfiles = rows;
 
     if (!rows.length) {
-      leaderboard.innerHTML = '<p class="leaderboard-empty">Aucun joueur pour le moment.</p>';
+      playerList.innerHTML = '<p class="player-list-empty">Aucun joueur pour le moment.</p>';
       return;
     }
 
-    leaderboard.innerHTML = rows
-      .map((r, i) => {
-        const rankClass = i === 0 ? 'top1' : i === 1 ? 'top2' : i === 2 ? 'top3' : '';
+    playerList.innerHTML = rows
+      .map((r) => {
         const avatar = AVATAR_OPTIONS.includes(r.avatar) ? r.avatar : AVATAR_OPTIONS[0];
         const isMe = state && r.uid === state.uid;
         return `
-          <div class="leaderboard-row ${rankClass}" data-uid="${r.uid}" ${isMe ? '' : 'role="button"'}>
-            <span class="leaderboard-rank">${i + 1}</span>
-            <img class="leaderboard-avatar" src="medias/${avatar}" alt="" />
-            <span class="leaderboard-name">${escapeHtml(r.displayName || 'Joueur')}${isMe ? ' (toi)' : ''}</span>
-            <span class="leaderboard-count">${r.uniqueCount || 0}/${ALL_CARD_DEFS.length}</span>
+          <div class="player-row" data-uid="${r.uid}" ${isMe ? '' : 'role="button"'}>
+            <img class="player-avatar" src="medias/${avatar}" alt="" />
+            <span class="player-name">${escapeHtml(r.displayName || 'Joueur')}${isMe ? ' (toi)' : ''}</span>
+            <span class="player-count">${r.uniqueCount || 0}/${ALL_CARD_DEFS.length}</span>
           </div>`;
       })
       .join('');
   } catch (e) {
-    console.error('Chargement du classement refusé :', e);
-    leaderboard.innerHTML = '<p class="leaderboard-empty">Impossible de charger le classement.</p>';
+    console.error('Chargement des joueurs refusé :', e);
+    playerList.innerHTML = '<p class="player-list-empty">Impossible de charger la liste des joueurs.</p>';
   }
 }
 
-leaderboard.addEventListener('click', (e) => {
-  const row = e.target.closest('.leaderboard-row[data-uid]');
+playerList.addEventListener('click', (e) => {
+  const row = e.target.closest('.player-row[data-uid]');
   if (!row || !state) return;
   const uid = row.dataset.uid;
   if (uid === state.uid) return;
   const profile = latestPublicProfiles.find((p) => p.uid === uid);
-  if (profile) openTradeModal(profile);
+  if (profile) openSendGiftModal(profile);
 });
 
 // ============================================================
-//  ÉCHANGES ENTRE JOUEURS
+//  CADEAUX ENTRE JOUEURS
 // ============================================================
-let tradeTarget = null; // { uid, displayName, avatar, cards }
-let tradeGiveId = null;
-let tradeWantId = null;
-
-function tradePickTileHtml(card, count, selected) {
+function giftPickTileHtml(card, count, selected) {
   return `
     <div class="card-tile-wrap ${selected ? 'selected' : ''}" data-pick-id="${card.id}">
       <div class="card-tile rarity-${card.rarity}">
@@ -1490,219 +1497,181 @@ function tradePickTileHtml(card, count, selected) {
     </div>`;
 }
 
-function renderTradePickers() {
+function renderGiftPicker() {
   const myOwned = ALL_CARD_DEFS.filter((c) => (state.cards[c.id] || 0) > 0);
-  tradeMyCards.innerHTML = myOwned.length
-    ? myOwned.map((c) => tradePickTileHtml(c, state.cards[c.id], c.id === tradeGiveId)).join('')
-    : '<p class="trade-pick-empty">Tu ne possèdes aucune carte à offrir.</p>';
-
-  const theirCards = (tradeTarget && tradeTarget.cards) || {};
-  const theirOwned = ALL_CARD_DEFS.filter((c) => (theirCards[c.id] || 0) > 0);
-  tradeTheirCards.innerHTML = theirOwned.length
-    ? theirOwned.map((c) => tradePickTileHtml(c, theirCards[c.id], c.id === tradeWantId)).join('')
-    : '<p class="trade-pick-empty">Ce joueur ne possède aucune carte pour l\'instant.</p>';
-
-  submitTradeBtn.disabled = !(tradeGiveId && tradeWantId);
+  giftMyCards.innerHTML = myOwned.length
+    ? myOwned.map((c) => giftPickTileHtml(c, state.cards[c.id], c.id === giftCardId)).join('')
+    : '<p class="gift-pick-empty">Tu ne possèdes aucune carte à offrir.</p>';
+  submitGiftBtn.disabled = !giftCardId;
 }
 
-tradeMyCards.addEventListener('click', (e) => {
+giftMyCards.addEventListener('click', (e) => {
   const tile = e.target.closest('.card-tile-wrap[data-pick-id]');
   if (!tile) return;
-  tradeGiveId = tile.dataset.pickId === tradeGiveId ? null : tile.dataset.pickId;
-  renderTradePickers();
+  giftCardId = tile.dataset.pickId === giftCardId ? null : tile.dataset.pickId;
+  renderGiftPicker();
 });
 
-tradeTheirCards.addEventListener('click', (e) => {
-  const tile = e.target.closest('.card-tile-wrap[data-pick-id]');
-  if (!tile) return;
-  tradeWantId = tile.dataset.pickId === tradeWantId ? null : tile.dataset.pickId;
-  renderTradePickers();
-});
-
-function openTradeModal(profile) {
+function openSendGiftModal(profile) {
   if (!state) return;
-  tradeTarget = profile;
-  tradeGiveId = null;
-  tradeWantId = null;
-  tradePartnerName.textContent = profile.displayName || 'Joueur';
-  renderTradePickers();
-  tradeModal.classList.remove('hidden');
-  tradeModal.getBoundingClientRect(); // force layout so the fade/scale-in transition plays
-  tradeModal.classList.add('open');
+  giftTarget = profile;
+  giftCardId = null;
+  giftPartnerName.textContent = profile.displayName || 'Joueur';
+  renderGiftPicker();
+  sendGiftModal.classList.remove('hidden');
+  sendGiftModal.getBoundingClientRect(); // force layout so the fade/scale-in transition plays
+  sendGiftModal.classList.add('open');
 }
 
-async function closeTradeModal() {
-  tradeModal.classList.remove('open');
+async function closeSendGiftModal() {
+  sendGiftModal.classList.remove('open');
   await wait(300); // matches the CSS transition duration
-  tradeModal.classList.add('hidden');
+  sendGiftModal.classList.add('hidden');
 }
-closeTradeModalBtn.addEventListener('click', closeTradeModal);
-tradeModal.addEventListener('click', (e) => { if (e.target === tradeModal) closeTradeModal(); });
+closeSendGiftModalBtn.addEventListener('click', closeSendGiftModal);
+sendGiftModal.addEventListener('click', (e) => { if (e.target === sendGiftModal) closeSendGiftModal(); });
 
-submitTradeBtn.addEventListener('click', async () => {
-  if (!state || !tradeTarget || !tradeGiveId || !tradeWantId) return;
-  submitTradeBtn.disabled = true;
-  const newRef = db.ref('trades').push();
-  await newRef.set({
-    fromUid: state.uid,
-    fromName: state.displayName,
-    fromAvatar: state.avatar,
-    toUid: tradeTarget.uid,
-    toName: tradeTarget.displayName || 'Joueur',
-    toAvatar: tradeTarget.avatar,
-    giveCardId: tradeGiveId,
-    wantCardId: tradeWantId,
-    status: 'pending',
-    fromApplied: false,
-    toApplied: false,
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-  }).catch((err) => {
-    console.error('Proposition d\'échange refusée :', err);
-    showToast('Erreur — impossible de proposer cet échange.');
-  });
-  showToast('Échange proposé !');
-  closeTradeModal();
-});
+submitGiftBtn.addEventListener('click', async () => {
+  if (!state || !giftTarget || !giftCardId) return;
+  if ((state.cards[giftCardId] || 0) < 1) return;
+  submitGiftBtn.disabled = true;
 
-function startTradesListener() {
-  stopTradesListener();
-  tradesRef = db.ref('trades');
-  tradesRef.on('value', (snap) => {
-    allTrades = snap.val() || {};
-    applyMyCompletedTrades();
-    renderTradesSection();
-  }, (err) => {
-    console.error('Lecture des échanges refusée :', err);
-  });
-}
-
-function stopTradesListener() {
-  if (tradesRef) {
-    tradesRef.off();
-    tradesRef = null;
-  }
-  allTrades = {};
-}
-
-// Chaque joueur applique lui-même sa moitié de l'échange sur ses propres cartes
-// (les règles Firebase n'autorisent probablement qu'un joueur à écrire ses propres
-// données) : le destinataire applique tout de suite en acceptant, l'expéditeur
-// applique dès que son client détecte le statut 'accepted', que ce soit en direct
-// ou à sa prochaine connexion.
-async function applyMyCompletedTrades() {
-  if (!state) return;
-  for (const [id, trade] of Object.entries(allTrades)) {
-    if (trade.fromUid === state.uid && trade.status === 'accepted' && !trade.fromApplied && !applyingTradeIds.has(id)) {
-      applyingTradeIds.add(id);
-      if ((state.cards[trade.giveCardId] || 0) >= 1) {
-        state.cards[trade.giveCardId] -= 1;
-        if (state.cards[trade.giveCardId] <= 0) delete state.cards[trade.giveCardId];
-      }
-      state.cards[trade.wantCardId] = (state.cards[trade.wantCardId] || 0) + 1;
-      markDailyQuest('tradeCard');
-      await persistUser();
-      await db.ref(`trades/${id}`).update({ fromApplied: true, status: 'completed', updatedAt: Date.now() });
-      updateHomeStats();
-      renderCollection();
-      showToast('Échange finalisé : nouvelle carte reçue !');
-      applyingTradeIds.delete(id);
-    }
-  }
-}
-
-async function acceptTrade(id, trade) {
-  if (!state) return;
-  if ((state.cards[trade.wantCardId] || 0) < 1) {
-    showToast('Tu ne possèdes plus cette carte.');
+  const newRef = db.ref('gifts').push();
+  try {
+    await newRef.set({
+      fromUid: state.uid,
+      fromName: state.displayName,
+      fromAvatar: state.avatar,
+      toUid: giftTarget.uid,
+      toName: giftTarget.displayName || 'Joueur',
+      toAvatar: giftTarget.avatar,
+      cardId: giftCardId,
+      claimed: false,
+      createdAt: Date.now(),
+    });
+  } catch (err) {
+    console.error('Envoi du cadeau refusé :', err);
+    showToast('Erreur — impossible d\'envoyer ce cadeau.');
+    submitGiftBtn.disabled = false;
     return;
   }
-  state.cards[trade.wantCardId] -= 1;
-  if (state.cards[trade.wantCardId] <= 0) delete state.cards[trade.wantCardId];
-  state.cards[trade.giveCardId] = (state.cards[trade.giveCardId] || 0) + 1;
-  markDailyQuest('tradeCard');
+
+  state.cards[giftCardId] -= 1;
+  if (state.cards[giftCardId] <= 0) delete state.cards[giftCardId];
+  markDailyQuest('giftCard');
   await persistUser();
-  await db.ref(`trades/${id}`).update({ toApplied: true, status: 'accepted', updatedAt: Date.now() });
   updateHomeStats();
   renderCollection();
-  showToast('Échange accepté !');
+  showToast('Cadeau envoyé !');
+  closeSendGiftModal();
+});
+
+// Cadeaux entrants pour ce joueur : listener scopé sur toUid (pas besoin de lire
+// tout l'arbre "gifts" comme le faisait l'ancien système d'échange). child_added
+// se déclenche pour chaque cadeau déjà présent à la connexion (rattrapage hors-ligne)
+// puis pour chaque nouveau cadeau en direct si le joueur est déjà connecté.
+function startGiftsListener() {
+  stopGiftsListener();
+  if (!state) return;
+  giftsRef = db.ref('gifts').orderByChild('toUid').equalTo(state.uid);
+  giftsRef.on('child_added', (snap) => {
+    const gift = snap.val();
+    const id = snap.key;
+    if (!gift || gift.claimed || claimingGiftIds.has(id)) return;
+    claimGift(id, gift);
+  }, (err) => {
+    console.error('Lecture des cadeaux refusée :', err);
+  });
 }
 
-async function declineTrade(id) {
-  await db.ref(`trades/${id}`).update({ status: 'declined', updatedAt: Date.now() });
-  showToast('Échange refusé.');
-}
-
-async function cancelTrade(id) {
-  await db.ref(`trades/${id}`).update({ status: 'cancelled', updatedAt: Date.now() });
-  showToast('Échange annulé.');
-}
-
-function tradeCardThumb(cardId) {
-  const card = ALL_CARD_DEFS.find((c) => c.id === cardId);
-  if (!card) return '<span>?</span>';
-  return cardArtHtml(card, escapeHtml(card.name));
-}
-
-function tradeRowHtml(id, trade, mode) {
-  const cardsHtml = `${tradeCardThumb(trade.giveCardId)}<span>⇄</span>${tradeCardThumb(trade.wantCardId)}`;
-  const otherName = mode === 'incoming' ? trade.fromName : trade.toName;
-  let actionsHtml = '';
-  if (mode === 'incoming') {
-    actionsHtml = `
-      <button type="button" class="trade-accept" data-accept="${id}">Accepter</button>
-      <button type="button" data-decline="${id}">Refuser</button>`;
-  } else if (mode === 'outgoing') {
-    actionsHtml = `<button type="button" data-cancel="${id}">Annuler</button>`;
-  } else {
-    actionsHtml = `<span class="trade-row-status status-${trade.status}">${TRADE_STATUS_LABELS[trade.status] || trade.status}</span>`;
+function stopGiftsListener() {
+  if (giftsRef) {
+    giftsRef.off();
+    giftsRef = null;
   }
+}
+
+async function claimGift(id, gift) {
+  if (!state || gift.toUid !== state.uid || gift.claimed) return;
+  claimingGiftIds.add(id);
+  state.cards[gift.cardId] = (state.cards[gift.cardId] || 0) + 1;
+  await persistUser();
+  await db.ref(`gifts/${id}`).update({ claimed: true, claimedAt: Date.now() }).catch((err) => {
+    console.error('Confirmation du cadeau refusée :', err);
+  });
+  updateHomeStats();
+  renderCollection();
+  pendingGiftQueue.push(gift);
+  showNextGiftModal();
+  claimingGiftIds.delete(id);
+}
+
+function showNextGiftModal() {
+  if (giftModalShowing) return;
+  const gift = pendingGiftQueue.shift();
+  if (!gift) return;
+  giftModalShowing = true;
+  const card = ALL_CARD_DEFS.find((c) => c.id === gift.cardId);
+  if (card) {
+    giftReceivedArt.innerHTML = cardArtHtml(card, escapeHtml(card.name));
+    giftReceivedName.textContent = card.name;
+    giftReceivedRarity.textContent = RARITY_LABELS[card.rarity];
+    giftReceivedRarity.className = `card-detail-rarity rarity-${card.rarity}`;
+  }
+  giftReceivedFrom.textContent = `Offert par ${gift.fromName || 'un joueur'}`;
+  giftReceivedModal.classList.remove('hidden');
+  giftReceivedModal.getBoundingClientRect(); // force layout so the fade/scale-in transition plays
+  giftReceivedModal.classList.add('open');
+}
+
+async function closeGiftReceivedModal() {
+  giftReceivedModal.classList.remove('open');
+  await wait(300); // matches the CSS transition duration
+  giftReceivedModal.classList.add('hidden');
+  giftModalShowing = false;
+  showNextGiftModal();
+}
+closeGiftReceivedModalBtn.addEventListener('click', closeGiftReceivedModal);
+
+function giftHistoryRowHtml(gift) {
+  const sent = gift.fromUid === state.uid;
+  const otherName = sent ? gift.toName : gift.fromName;
+  const card = ALL_CARD_DEFS.find((c) => c.id === gift.cardId);
+  const thumb = card ? cardArtHtml(card, escapeHtml(card.name)) : '<span>?</span>';
+  const date = gift.createdAt ? new Date(gift.createdAt).toLocaleDateString() : '';
   return `
-    <div class="trade-row">
-      <div class="trade-row-info">
-        <span class="trade-row-name">${mode === 'incoming' ? 'De ' : mode === 'outgoing' ? 'À ' : ''}${escapeHtml(otherName || 'Joueur')}</span>
-        <span class="trade-row-cards">${cardsHtml}</span>
+    <div class="gift-row">
+      <div class="gift-row-thumb">${thumb}</div>
+      <div class="gift-row-info">
+        <span class="gift-row-text">${sent ? 'Envoyé à' : 'Reçu de'} ${escapeHtml(otherName || 'Joueur')}</span>
+        <span class="gift-row-date">${date}</span>
       </div>
-      <div class="trade-row-actions">${actionsHtml}</div>
     </div>`;
 }
 
-const TRADE_STATUS_LABELS = { completed: 'Terminé', declined: 'Refusé', cancelled: 'Annulé' };
-
-function renderTradesSection() {
+async function renderGiftsHistory() {
   if (!state) return;
-  const entries = Object.entries(allTrades);
-  const incoming = entries.filter(([, t]) => t.toUid === state.uid && t.status === 'pending');
-  const outgoing = entries.filter(([, t]) => t.fromUid === state.uid && t.status === 'pending');
-  const history = entries
-    .filter(([, t]) => (t.fromUid === state.uid || t.toUid === state.uid) && t.status !== 'pending' && t.status !== 'accepted')
-    .sort(([, a], [, b]) => (b.updatedAt || 0) - (a.updatedAt || 0))
-    .slice(0, 10);
+  giftsSection.innerHTML = '<p class="player-list-empty">Chargement...</p>';
+  try {
+    const [sentSnap, receivedSnap] = await Promise.all([
+      db.ref('gifts').orderByChild('fromUid').equalTo(state.uid).once('value'),
+      db.ref('gifts').orderByChild('toUid').equalTo(state.uid).once('value'),
+    ]);
+    const entries = [];
+    sentSnap.forEach((child) => entries.push({ id: child.key, ...child.val() }));
+    receivedSnap.forEach((child) => {
+      if (!entries.some((e) => e.id === child.key)) entries.push({ id: child.key, ...child.val() });
+    });
+    entries.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
 
-  let html = '';
-  if (incoming.length) {
-    html += '<div class="trade-group-title">Propositions reçues</div>';
-    html += incoming.map(([id, t]) => tradeRowHtml(id, t, 'incoming')).join('');
+    giftsSection.innerHTML = entries.length
+      ? entries.slice(0, 20).map(giftHistoryRowHtml).join('')
+      : '';
+  } catch (e) {
+    console.error('Chargement des cadeaux refusé :', e);
+    giftsSection.innerHTML = '<p class="player-list-empty">Impossible de charger l\'historique des cadeaux.</p>';
   }
-  if (outgoing.length) {
-    html += '<div class="trade-group-title">Propositions envoyées</div>';
-    html += outgoing.map(([id, t]) => tradeRowHtml(id, t, 'outgoing')).join('');
-  }
-  if (history.length) {
-    html += '<div class="trade-group-title">Historique</div>';
-    html += history.map(([id, t]) => tradeRowHtml(id, t, 'history')).join('');
-  }
-  tradesSection.innerHTML = html;
 }
-
-tradesSection.addEventListener('click', (e) => {
-  const acceptBtn = e.target.closest('[data-accept]');
-  const declineBtn = e.target.closest('[data-decline]');
-  const cancelBtn = e.target.closest('[data-cancel]');
-  if (acceptBtn) acceptTrade(acceptBtn.dataset.accept, allTrades[acceptBtn.dataset.accept]);
-  if (declineBtn) declineTrade(declineBtn.dataset.decline);
-  if (cancelBtn) cancelTrade(cancelBtn.dataset.cancel);
-});
 
 // ============================================================
 //  RENDER ALL (au login)

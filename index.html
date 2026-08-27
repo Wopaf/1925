@@ -163,9 +163,9 @@
         <div class="collection-header">
           <h2>Communauté</h2>
         </div>
-        <div id="tradesSection" class="trades-section"></div>
-        <p class="community-hint">Classement des meilleurs collectionneurs — touchez un joueur pour lui proposer un échange</p>
-        <div id="leaderboard" class="leaderboard"></div>
+        <div id="giftsSection" class="gifts-section"></div>
+        <p class="community-hint">Touchez un joueur pour lui offrir une carte</p>
+        <div id="playerList" class="player-list"></div>
       </section>
     </main>
 
@@ -265,18 +265,25 @@
     </div>
   </div>
 
-  <!-- Trade proposal modal -->
-  <div id="tradeModal" class="modal hidden">
-    <div class="trade-panel">
-      <button id="closeTradeModal" class="icon-btn card-detail-close" type="button">✕</button>
-      <h3 class="lieu-panel-title">Échanger avec <span id="tradePartnerName"></span></h3>
-      <p class="lieu-hint">Choisis la carte que tu offres, puis celle que tu veux recevoir.</p>
-      <p class="trade-picker-label">Ta carte</p>
-      <div id="tradeMyCards" class="card-grid trade-pick-grid"></div>
-      <div class="ornate-divider"><span class="ornate-divider-diamond">◆</span></div>
-      <p class="trade-picker-label">Sa carte</p>
-      <div id="tradeTheirCards" class="card-grid trade-pick-grid"></div>
-      <button id="submitTradeBtn" class="btn-primary" type="button" disabled>Proposer l'échange</button>
+  <!-- Send gift modal -->
+  <div id="sendGiftModal" class="modal hidden">
+    <div class="gift-panel">
+      <button id="closeSendGiftModal" class="icon-btn card-detail-close" type="button">✕</button>
+      <h3 class="lieu-panel-title">Offrir une carte à <span id="giftPartnerName"></span></h3>
+      <p class="lieu-hint">Choisis la carte que tu veux offrir. Elle ne te sera pas rendue.</p>
+      <div id="giftMyCards" class="card-grid gift-pick-grid"></div>
+      <button id="submitGiftBtn" class="btn-primary" type="button" disabled>Envoyer le cadeau</button>
+    </div>
+  </div>
+
+  <!-- Gift received modal -->
+  <div id="giftReceivedModal" class="modal hidden">
+    <div class="card-detail">
+      <div id="giftReceivedArt" class="card-detail-art"></div>
+      <h3 id="giftReceivedName" class="card-detail-name"></h3>
+      <span id="giftReceivedRarity" class="card-detail-rarity"></span>
+      <p id="giftReceivedFrom" class="gift-received-from"></p>
+      <button id="closeGiftReceivedModal" class="btn-primary" type="button">Merci !</button>
     </div>
   </div>
 
