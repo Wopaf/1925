@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>Emoji TCG</title>
+  <title>1925 TCG</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -60,7 +60,7 @@
         <span>Roue quotidienne</span>
       </button>
       <div class="currency-pill">
-        <span class="coin-icon">🪙</span>
+        <img class="coin-icon" src="medias/Credit.png" alt="crédits" />
         <span id="creditsValue">0</span>
       </div>
     </header>
@@ -71,10 +71,10 @@
         <div id="homeLieuBg" class="home-lieu-bg"></div>
         <div class="next-credit-card">
           <div class="next-credit-row">
-            <span>Prochain crédit dans</span>
+            <span class="next-credit-label"><img class="coin-icon" src="medias/Credit.png" alt="crédit" />Prochain crédit dans</span>
             <span id="nextCreditTimer">--:--:--</span>
           </div>
-          <div class="progress-bar"><div id="creditProgressFill" class="progress-fill"></div></div>
+          <div id="creditProgressBar" class="progress-bar"><div id="creditProgressFill" class="progress-fill"></div></div>
         </div>
 
         <div class="booster-zone">
@@ -85,7 +85,7 @@
             </div>
           </div>
           <button id="openBoosterBtn" class="btn-primary btn-large">
-            Ouvrir un booster — <span class="coin-icon">🪙</span><span id="boosterCost">5</span>
+            Ouvrir un booster — <img class="coin-icon" src="medias/Credit.png" alt="crédits" /><span id="boosterCost">5</span>
           </button>
           <div id="devTools" class="dev-tools hidden">
             <button id="addCreditsBtn" class="btn-dev" type="button">+10 crédits</button>
@@ -135,7 +135,8 @@
         <div class="collection-header">
           <h2>Communauté</h2>
         </div>
-        <p class="community-hint">Classement des meilleurs collectionneurs</p>
+        <div id="tradesSection" class="trades-section"></div>
+        <p class="community-hint">Classement des meilleurs collectionneurs — touchez un joueur pour lui proposer un échange</p>
         <div id="leaderboard" class="leaderboard"></div>
       </section>
     </main>
@@ -235,10 +236,24 @@
     </div>
   </div>
 
+  <!-- Trade proposal modal -->
+  <div id="tradeModal" class="modal hidden">
+    <div class="trade-panel">
+      <button id="closeTradeModal" class="icon-btn card-detail-close" type="button">✕</button>
+      <h3 class="lieu-panel-title">Échanger avec <span id="tradePartnerName"></span></h3>
+      <p class="lieu-hint">Choisis la carte que tu offres, puis celle que tu veux recevoir.</p>
+      <p class="trade-picker-label">Ta carte</p>
+      <div id="tradeMyCards" class="card-grid trade-pick-grid"></div>
+      <p class="trade-picker-label">Sa carte</p>
+      <div id="tradeTheirCards" class="card-grid trade-pick-grid"></div>
+      <button id="submitTradeBtn" class="btn-primary" type="button" disabled>Proposer l'échange</button>
+    </div>
+  </div>
+
   <!-- Welcome back modal -->
   <div id="welcomeBackModal" class="modal hidden">
     <div class="modal-card">
-      <div class="modal-icon">🪙</div>
+      <div class="modal-icon"><img src="medias/Credit.png" alt="crédits" /></div>
       <h2>Bon retour !</h2>
       <p id="welcomeBackText"></p>
       <button id="closeWelcomeBack" class="btn-primary">Super !</button>

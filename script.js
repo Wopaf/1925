@@ -23,7 +23,7 @@ function slugify(str) {
 }
 
 const RAW_CARDS = [
-  ['Matthias-ChefMatthias', 'Chef Matthias Chef', 'common'],
+  ['Matthias-ChefMatthias', 'Chef Matthias', 'common'],
   ['Matthias-Pizzaiolo', 'Matthias Pizzaziolo', 'rare'],
   ['Matthias-3Cannes', 'Matthias 3 Cannes', 'epic'],
   ['Matthias-Puant', 'Matthias Puant', 'legendary'],
@@ -35,15 +35,39 @@ const RAW_CARDS = [
 
   ['Denis-Cuisinier', 'Denis Cuisinier', 'common'],
   ['Denis-Sparring', 'Denis Sparring', 'rare'],
-  ['Denis-Commando', 'Denis Commando', 'epic'],
-  ['Denis-Attrapeur', 'Denis Attrapeur', 'legendary'],
+  ['Denis-Marines', 'Denis Marines', 'legendary'],
 
-  ['Elodie-Cuisiniere', 'Elodie Cuisinière', 'common'],
-  ['Elodie-Fantome', 'Elodie Fantôme de diane', 'legendary'],
+  ['Elodie-Cuisniere', 'Elodie Cuisinière', 'common'],
+  ['Elodie-Carton', 'Elodie Carton', 'rare'],
+  ['Elodie-Permis', 'Elodie Permis de sortir', 'epic'],
+  ['Elodie-MC', 'Elodie MC L.O.D', 'legendary'],
 
   ['Anais-Receptioniste', 'Anaïs Réceptioniste', 'common'],
-  ['Anais-DanceFloor', 'Anaïs Dancefloor', 'epic'],
+  ['Anais-DanceFloor', 'Anaïs Dancefloor', 'rare'],
   ['Anais-Camisole', 'Anaïs Camisole', 'legendary'],
+
+  ['Bichu-Plongeuse', 'Bichu Plongeuse', 'common'],  
+  ['Bichu-paleo', 'Bichu Paléolithique', 'epic'],
+  ['Bichu-Camtard', 'Bichu Camtard', 'legendary'],
+
+  ['Emilie-réceptioniste', 'Emilie Réceptioniste', 'common'],
+  ['Emilie-Culturiste', 'Emilie Culturiste', 'rare'],
+  ['Emilie-Docker', 'Emilie Docker', 'epic'],
+  ['Emilie-Ardente', 'Emilie Ardente', 'legendary'],
+
+  ['Louann-Serveuse', 'Louann Serveuse', 'common'],
+  ['Louann-Taxi', 'Louann Taxi', 'rare'],
+  ['Louann-Fashion', 'Louann Fashion Week', 'legendary'],
+
+  ['Louis-Serveur', 'Louis Serveur', 'common'],
+  ['Louis-Fugitif', 'Louis Fugitif', 'rare'],
+  ['Louis-Bonaparte', 'Louis Bonaparte', 'epic'],
+  ['Louis-3Vallees', 'Louis 3 Vallées', 'legendary'],
+
+  ['Val-Salle', 'Val Salle', 'common'],
+  ['Val-Sale', 'Val Salé', 'rare'],
+  ['Val-Skibidi', 'Val Skibidi', 'epic'],
+  ['Val-NewBeach', 'Val New Beach', 'legendary'],
 ];
 
 const CARD_DEFS = RAW_CARDS.map(([file, name, rarity]) => ({
@@ -53,6 +77,23 @@ const CARD_DEFS = RAW_CARDS.map(([file, name, rarity]) => ({
   rarity,
   character: file.split('-')[0],
   type: 'character',
+}));
+
+// ============================================================
+//  PERSONNAGES SPÉCIAUX (catégorie à part, ne suit pas le cycle
+//  common/rare/epic/legendary d'un personnage classique)
+// ============================================================
+const RAW_SPECIAL_CARDS = [
+  ['Gabin-maitre', 'Gabin Maître des horloges', 'legendary'],
+];
+
+const SPECIAL_CARD_DEFS = RAW_SPECIAL_CARDS.map(([file, name, rarity]) => ({
+  id: slugify(file),
+  name,
+  file: `${file}.png`,
+  rarity,
+  character: file.split('-')[0],
+  type: 'special',
 }));
 
 // ============================================================
@@ -66,6 +107,11 @@ const CHARACTER_LOCATIONS = {
   Denis: 'cuisine',
   Elodie: 'cuisine',
   Anais: 'reception',
+  Bichu: 'cuisine',
+  Emilie: 'reception',
+  Louann: 'salle',
+  Louis: 'salle',
+  Val: 'salle',
 };
 const LOCATION_ICONS = { cuisine: '🍳', salle: '🍽️', reception: '🛎️' };
 // Artwork des cartes lieu (facultatif tant que les visuels n'existent pas : fallback icône)
@@ -73,7 +119,7 @@ const LOCATION_CARD_FILES = { cuisine: 'La Cuisine.png', salle: 'La Salle.png', 
 // Fond d'écran d'accueil affiché (N&B, 15% d'opacité) quand le lieu est équipé
 const LOCATION_BG_FILES = { cuisine: 'Cuisine-BG.png', salle: 'Salle-BG.png', reception: 'Réception-BG.png' };
 const LOCATION_BONUS = 0.10; // +10% de chance relative pour les personnages du lieu équipé
-const LOCATION_CARD_RARITY = 'epic';
+const LOCATION_CARD_RARITY = 'rare';
 
 const RAW_LOCATIONS = [
   ['cuisine', 'La Cuisine', "Offre un bonus de +10% de chance d'obtenir des personnages de la Cuisine dans vos prochains boosters."],
@@ -93,7 +139,7 @@ const LOCATION_CARD_DEFS = RAW_LOCATIONS.map(([locationId, name, description]) =
   description,
 }));
 
-const ALL_CARD_DEFS = [...CARD_DEFS, ...LOCATION_CARD_DEFS];
+const ALL_CARD_DEFS = [...CARD_DEFS, ...SPECIAL_CARD_DEFS, ...LOCATION_CARD_DEFS];
 
 const RARITY_WEIGHTS = { common: 40, rare: 30, epic: 20, legendary: 10 };
 const RARITY_LABELS = { common: 'Commune', rare: 'Rare', epic: 'Épique', legendary: 'Légendaire' };
@@ -116,9 +162,9 @@ const CARDS_PER_BOOSTER = BOOSTER_SLOTS.length;
 // cost = nb d'exemplaires consommés, reward = crédits obtenus (garde toujours >= 1 exemplaire)
 const RECYCLE_RULES = {
   common: { minOwned: 2, cost: 1, reward: 1 },
-  rare: { minOwned: 2, cost: 1, reward: 3 },
-  epic: { minOwned: 2, cost: 1, reward: 10 },
-  legendary: { minOwned: 2, cost: 1, reward: 30 },
+  rare: { minOwned: 2, cost: 1, reward: 2 },
+  epic: { minOwned: 2, cost: 1, reward: 3 },
+  legendary: { minOwned: 2, cost: 1, reward: 5 },
 };
 
 const RECYCLE_ICON_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor"><path d="M160-479q0 85 42.5 158T318-204q14 9 19.5 24.5T335-150q-8 15-24.5 19.5T279-134q-93-54-146-146T80-479q0-26 3.5-51t9.5-50l-13 8q-14 9-30 4.5T26-586q-8-14-3.5-30.5T41-641l121-70q14-8 30.5-3.5T217-696l70 120q8 14 3.5 30.5T272-521q-14 8-30.5 3.5T217-536l-34-59q-11 28-17 57t-6 59Zm320-321q-41 0-81 10.5T323-759q-15 8-31.5 5.5T267-770q-9-16-4-32.5t21-25.5q45-26 94.5-39T480-880q79 0 151.5 29.5T761-765v-15q0-17 11.5-28.5T801-820q17 0 28.5 11.5T841-780v140q0 17-11.5 28.5T801-600H661q-17 0-28.5-11.5T621-640q0-17 11.5-28.5T661-680h69q-46-57-111-88.5T480-800Zm242 531q38-44 58-97t20-111q0-17 11.5-30t28.5-13q17 0 28.5 13t11.5 30q0 65-20.5 125.5T800-239q-39 52-92.5 89T591-95l10 6q14 8 18 24.5T615-34q-8 14-24 18t-30-4L439-90q-14-8-18.5-24.5T424-145l70-121q8-14 24-18t30 4q14 8 18.5 24.5T563-225l-37 63q57-8 107.5-35.5T722-269Z"/></svg>';
@@ -172,6 +218,7 @@ const avatarGrid = el('avatarGrid');
 const saveProfileBtn = el('saveProfileBtn');
 
 const nextCreditTimer = el('nextCreditTimer');
+const creditProgressBar = el('creditProgressBar');
 const creditProgressFill = el('creditProgressFill');
 const openBoosterBtn = el('openBoosterBtn');
 const boosterPack = el('boosterPack');
@@ -186,6 +233,13 @@ const collectionProgress = el('collectionProgress');
 const cardGrid = el('cardGrid');
 
 const leaderboard = el('leaderboard');
+const tradesSection = el('tradesSection');
+const tradeModal = el('tradeModal');
+const closeTradeModalBtn = el('closeTradeModal');
+const tradePartnerName = el('tradePartnerName');
+const tradeMyCards = el('tradeMyCards');
+const tradeTheirCards = el('tradeTheirCards');
+const submitTradeBtn = el('submitTradeBtn');
 
 const boosterModal = el('boosterModal');
 const revealCards = el('revealCards');
@@ -239,6 +293,10 @@ let state = null; // { uid, email, displayName, credits, lastClaim, cards }
 let currentFilter = null;
 let tickInterval = null;
 let toastTimeout = null;
+let latestPublicProfiles = [];
+let allTrades = {};
+let tradesRef = null;
+const applyingTradeIds = new Set();
 
 // ============================================================
 //  UTILITIES
@@ -247,6 +305,61 @@ function showScreen(id) {
   ['loadingScreen', 'authScreen', 'appShell'].forEach((s) => {
     el(s).classList.toggle('hidden', s !== id);
   });
+}
+
+// ============================================================
+//  ANIMATION : pièce qui plonge vers les crédits
+// ============================================================
+function isElementVisible(elm) {
+  return !!(elm && elm.getClientRects().length);
+}
+
+function pulseCreditsValue() {
+  creditsValue.classList.remove('credit-pop');
+  void creditsValue.offsetWidth; // force le redémarrage de l'animation CSS
+  creditsValue.classList.add('credit-pop');
+}
+
+function spawnFlyingCoin(srcRect) {
+  const dstRect = creditsValue.getBoundingClientRect();
+  const startX = srcRect.left + srcRect.width / 2;
+  const startY = srcRect.top + srcRect.height / 2;
+  const endX = dstRect.left + dstRect.width / 2;
+  const endY = dstRect.top + dstRect.height / 2;
+  const peakX = (startX + endX) / 2 + (Math.random() * 40 - 20);
+  const peakY = Math.min(startY, endY) - 50;
+
+  const coin = document.createElement('img');
+  coin.src = 'medias/Credit.png';
+  coin.className = 'flying-coin';
+  coin.style.left = `${startX}px`;
+  coin.style.top = `${startY}px`;
+  document.body.appendChild(coin);
+
+  const anim = coin.animate([
+    { transform: 'translate(-50%, -50%) scale(1) rotate(0deg)', offset: 0, opacity: 1 },
+    { transform: `translate(calc(-50% + ${peakX - startX}px), calc(-50% + ${peakY - startY}px)) scale(1.15) rotate(220deg)`, offset: 0.45, opacity: 1 },
+    { transform: `translate(calc(-50% + ${endX - startX}px), calc(-50% + ${endY - startY}px)) scale(.25) rotate(400deg)`, offset: 1, opacity: 0.15 },
+  ], { duration: 1400, easing: 'cubic-bezier(.3,.55,.35,1)' });
+
+  anim.onfinish = () => {
+    coin.remove();
+    pulseCreditsValue();
+  };
+}
+
+function flyCoinToCredits(sourceEl, count = 1) {
+  if (!isElementVisible(sourceEl) || !isElementVisible(creditsValue)) {
+    pulseCreditsValue();
+    return;
+  }
+  // Capturé maintenant, avant qu'un re-render (ex: renderCardDetail après recyclage)
+  // ne masque ou ne déplace sourceEl — sinon le setTimeout lirait une position obsolète.
+  const srcRect = sourceEl.getBoundingClientRect();
+  const n = Math.min(count, 3);
+  for (let i = 0; i < n; i++) {
+    setTimeout(() => spawnFlyingCoin(srcRect), i * 220);
+  }
 }
 
 function showToast(msg) {
@@ -383,6 +496,7 @@ saveProfileBtn.addEventListener('click', async () => {
 });
 
 closeProfileModalBtn.addEventListener('click', closeProfileModal);
+profileModal.addEventListener('click', (e) => { if (e.target === profileModal) closeProfileModal(); });
 
 auth.onAuthStateChanged(async (user) => {
   if (user) {
@@ -404,8 +518,10 @@ auth.onAuthStateChanged(async (user) => {
     revealHomeLieuBg();
     startCreditTimer();
     await processOfflineCredits(true);
+    startTradesListener();
   } else {
     stopCreditTimer();
+    stopTradesListener();
     state = null;
     await wait(LOADING_SCREEN_MIN_MS);
     showScreen('authScreen');
@@ -475,6 +591,7 @@ function persistUser() {
     uniqueCount,
     totalCount,
     credits: state.credits,
+    cards: state.cards,
     updatedAt: Date.now(),
   }).catch((err) => {
     console.error('Mise à jour du classement public refusée :', err);
@@ -504,11 +621,13 @@ async function processOfflineCredits(isInitialLoad) {
       welcomeBackModal.classList.remove('hidden');
     } else {
       showToast(`+${ticks} crédit${ticks > 1 ? 's' : ''} !`);
+      flyCoinToCredits(creditProgressBar, ticks);
     }
   }
 }
 
 closeWelcomeBack.addEventListener('click', () => welcomeBackModal.classList.add('hidden'));
+welcomeBackModal.addEventListener('click', (e) => { if (e.target === welcomeBackModal) welcomeBackModal.classList.add('hidden'); });
 
 function startCreditTimer() {
   stopCreditTimer();
@@ -666,6 +785,7 @@ async function closeWheelModal() {
   wheelModal.classList.add('hidden');
 }
 closeWheelModalBtn.addEventListener('click', closeWheelModal);
+wheelModal.addEventListener('click', (e) => { if (e.target === wheelModal) closeWheelModal(); });
 
 function updateWheelUI() {
   const available = isWheelAvailable();
@@ -787,6 +907,7 @@ async function closeLieuModal() {
   lieuModal.classList.add('hidden');
 }
 closeLieuModalBtn.addEventListener('click', closeLieuModal);
+lieuModal.addEventListener('click', (e) => { if (e.target === lieuModal) closeLieuModal(); });
 
 lieuList.addEventListener('click', async (e) => {
   const tile = e.target.closest('.card-tile-wrap[data-lieu-id]');
@@ -986,7 +1107,7 @@ function switchView(view, { instant } = {}) {
   el(`view-${view}`).classList.add('active');
   document.querySelectorAll('.nav-btn').forEach((b) => b.classList.toggle('active', b.dataset.view === view));
   if (view === 'collection') renderCollection();
-  if (view === 'community') renderLeaderboard();
+  if (view === 'community') { renderLeaderboard(); renderTradesSection(); }
   if (view === 'home' && !instant) revealHomeLieuBg();
 }
 
@@ -1019,7 +1140,7 @@ function cardTileHtml(card) {
       <div class="card-tile rarity-${card.rarity}">
         ${art}
         ${recyclable ? `<span class="recycle-badge" title="Recyclage disponible">${RECYCLE_ICON_SVG}</span>` : ''}
-        ${owned ? `<span class="card-count">x${count}</span>` : `<span class="lock-icon">${LOCK_ICON_SVG}</span>`}
+        ${owned ? `<span class="card-count">x${count}</span>` : ''}
       </div>
       <div class="card-caption">
         <span class="card-caption-name">${owned ? escapeHtml(card.name) : '???'}</span>
@@ -1034,11 +1155,12 @@ function renderCollection() {
   cardGrid.classList.toggle('hide-captions', currentFilter !== null);
 
   if (currentFilter === null) {
-    const characters = [...new Set(filtered.map((c) => c.character))];
-    cardGrid.innerHTML = characters
-      .map((character) => {
-        const tiles = filtered.filter((c) => c.character === character).map(cardTileHtml).join('');
-        return `<div class="card-group-title">${escapeHtml(character)}</div>${tiles}`;
+    const groupLabel = (c) => c.type === 'special' ? 'Cartes Spécial' : c.character;
+    const groups = [...new Set(filtered.map(groupLabel))];
+    cardGrid.innerHTML = groups
+      .map((group) => {
+        const tiles = filtered.filter((c) => groupLabel(c) === group).map(cardTileHtml).join('');
+        return `<div class="card-group-title">${escapeHtml(group)}</div>${tiles}`;
       })
       .join('');
   } else {
@@ -1132,6 +1254,7 @@ recycleBtn.addEventListener('click', async () => {
   new Audio('medias/recycling.wav').play().catch(() => {});
   state.cards[detailCardId] = count - rule.cost;
   state.credits += rule.reward;
+  flyCoinToCredits(recycleBtn, rule.reward);
 
   updateCreditUI();
   updateHomeStats();
@@ -1142,6 +1265,7 @@ recycleBtn.addEventListener('click', async () => {
 });
 
 closeCardDetail.addEventListener('click', closeCardDetailModal);
+cardDetailModal.addEventListener('click', (e) => { if (e.target === cardDetailModal) closeCardDetailModal(); });
 
 // ============================================================
 //  COMMUNITY / LEADERBOARD
@@ -1151,8 +1275,9 @@ async function renderLeaderboard() {
   try {
     const snap = await db.ref('publicProfiles').orderByChild('uniqueCount').limitToLast(50).once('value');
     const rows = [];
-    snap.forEach((child) => rows.push(child.val()));
+    snap.forEach((child) => rows.push({ uid: child.key, ...child.val() }));
     rows.reverse();
+    latestPublicProfiles = rows;
 
     if (!rows.length) {
       leaderboard.innerHTML = '<p class="leaderboard-empty">Aucun joueur pour le moment.</p>';
@@ -1163,11 +1288,12 @@ async function renderLeaderboard() {
       .map((r, i) => {
         const rankClass = i === 0 ? 'top1' : i === 1 ? 'top2' : i === 2 ? 'top3' : '';
         const avatar = AVATAR_OPTIONS.includes(r.avatar) ? r.avatar : AVATAR_OPTIONS[0];
+        const isMe = state && r.uid === state.uid;
         return `
-          <div class="leaderboard-row ${rankClass}">
+          <div class="leaderboard-row ${rankClass}" data-uid="${r.uid}" ${isMe ? '' : 'role="button"'}>
             <span class="leaderboard-rank">${i + 1}</span>
             <img class="leaderboard-avatar" src="medias/${avatar}" alt="" />
-            <span class="leaderboard-name">${escapeHtml(r.displayName || 'Joueur')}</span>
+            <span class="leaderboard-name">${escapeHtml(r.displayName || 'Joueur')}${isMe ? ' (toi)' : ''}</span>
             <span class="leaderboard-count">${r.uniqueCount || 0}/${ALL_CARD_DEFS.length}</span>
           </div>`;
       })
@@ -1177,6 +1303,247 @@ async function renderLeaderboard() {
     leaderboard.innerHTML = '<p class="leaderboard-empty">Impossible de charger le classement.</p>';
   }
 }
+
+leaderboard.addEventListener('click', (e) => {
+  const row = e.target.closest('.leaderboard-row[data-uid]');
+  if (!row || !state) return;
+  const uid = row.dataset.uid;
+  if (uid === state.uid) return;
+  const profile = latestPublicProfiles.find((p) => p.uid === uid);
+  if (profile) openTradeModal(profile);
+});
+
+// ============================================================
+//  ÉCHANGES ENTRE JOUEURS
+// ============================================================
+let tradeTarget = null; // { uid, displayName, avatar, cards }
+let tradeGiveId = null;
+let tradeWantId = null;
+
+function tradePickTileHtml(card, count, selected) {
+  return `
+    <div class="card-tile-wrap ${selected ? 'selected' : ''}" data-pick-id="${card.id}">
+      <div class="card-tile rarity-${card.rarity}">
+        ${cardArtHtml(card, escapeHtml(card.name))}
+        <span class="card-count">x${count}</span>
+      </div>
+      <div class="card-caption">
+        <span class="card-caption-name">${escapeHtml(card.name)}</span>
+      </div>
+    </div>`;
+}
+
+function renderTradePickers() {
+  const myOwned = ALL_CARD_DEFS.filter((c) => (state.cards[c.id] || 0) > 0);
+  tradeMyCards.innerHTML = myOwned.length
+    ? myOwned.map((c) => tradePickTileHtml(c, state.cards[c.id], c.id === tradeGiveId)).join('')
+    : '<p class="trade-pick-empty">Tu ne possèdes aucune carte à offrir.</p>';
+
+  const theirCards = (tradeTarget && tradeTarget.cards) || {};
+  const theirOwned = ALL_CARD_DEFS.filter((c) => (theirCards[c.id] || 0) > 0);
+  tradeTheirCards.innerHTML = theirOwned.length
+    ? theirOwned.map((c) => tradePickTileHtml(c, theirCards[c.id], c.id === tradeWantId)).join('')
+    : '<p class="trade-pick-empty">Ce joueur ne possède aucune carte pour l\'instant.</p>';
+
+  submitTradeBtn.disabled = !(tradeGiveId && tradeWantId);
+}
+
+tradeMyCards.addEventListener('click', (e) => {
+  const tile = e.target.closest('.card-tile-wrap[data-pick-id]');
+  if (!tile) return;
+  tradeGiveId = tile.dataset.pickId === tradeGiveId ? null : tile.dataset.pickId;
+  renderTradePickers();
+});
+
+tradeTheirCards.addEventListener('click', (e) => {
+  const tile = e.target.closest('.card-tile-wrap[data-pick-id]');
+  if (!tile) return;
+  tradeWantId = tile.dataset.pickId === tradeWantId ? null : tile.dataset.pickId;
+  renderTradePickers();
+});
+
+function openTradeModal(profile) {
+  if (!state) return;
+  tradeTarget = profile;
+  tradeGiveId = null;
+  tradeWantId = null;
+  tradePartnerName.textContent = profile.displayName || 'Joueur';
+  renderTradePickers();
+  tradeModal.classList.remove('hidden');
+  tradeModal.getBoundingClientRect(); // force layout so the fade/scale-in transition plays
+  tradeModal.classList.add('open');
+}
+
+async function closeTradeModal() {
+  tradeModal.classList.remove('open');
+  await wait(300); // matches the CSS transition duration
+  tradeModal.classList.add('hidden');
+}
+closeTradeModalBtn.addEventListener('click', closeTradeModal);
+tradeModal.addEventListener('click', (e) => { if (e.target === tradeModal) closeTradeModal(); });
+
+submitTradeBtn.addEventListener('click', async () => {
+  if (!state || !tradeTarget || !tradeGiveId || !tradeWantId) return;
+  submitTradeBtn.disabled = true;
+  const newRef = db.ref('trades').push();
+  await newRef.set({
+    fromUid: state.uid,
+    fromName: state.displayName,
+    fromAvatar: state.avatar,
+    toUid: tradeTarget.uid,
+    toName: tradeTarget.displayName || 'Joueur',
+    toAvatar: tradeTarget.avatar,
+    giveCardId: tradeGiveId,
+    wantCardId: tradeWantId,
+    status: 'pending',
+    fromApplied: false,
+    toApplied: false,
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  }).catch((err) => {
+    console.error('Proposition d\'échange refusée :', err);
+    showToast('Erreur — impossible de proposer cet échange.');
+  });
+  showToast('Échange proposé !');
+  closeTradeModal();
+});
+
+function startTradesListener() {
+  stopTradesListener();
+  tradesRef = db.ref('trades');
+  tradesRef.on('value', (snap) => {
+    allTrades = snap.val() || {};
+    applyMyCompletedTrades();
+    renderTradesSection();
+  }, (err) => {
+    console.error('Lecture des échanges refusée :', err);
+  });
+}
+
+function stopTradesListener() {
+  if (tradesRef) {
+    tradesRef.off();
+    tradesRef = null;
+  }
+  allTrades = {};
+}
+
+// Chaque joueur applique lui-même sa moitié de l'échange sur ses propres cartes
+// (les règles Firebase n'autorisent probablement qu'un joueur à écrire ses propres
+// données) : le destinataire applique tout de suite en acceptant, l'expéditeur
+// applique dès que son client détecte le statut 'accepted', que ce soit en direct
+// ou à sa prochaine connexion.
+async function applyMyCompletedTrades() {
+  if (!state) return;
+  for (const [id, trade] of Object.entries(allTrades)) {
+    if (trade.fromUid === state.uid && trade.status === 'accepted' && !trade.fromApplied && !applyingTradeIds.has(id)) {
+      applyingTradeIds.add(id);
+      if ((state.cards[trade.giveCardId] || 0) >= 1) {
+        state.cards[trade.giveCardId] -= 1;
+        if (state.cards[trade.giveCardId] <= 0) delete state.cards[trade.giveCardId];
+      }
+      state.cards[trade.wantCardId] = (state.cards[trade.wantCardId] || 0) + 1;
+      await persistUser();
+      await db.ref(`trades/${id}`).update({ fromApplied: true, status: 'completed', updatedAt: Date.now() });
+      updateHomeStats();
+      renderCollection();
+      showToast('Échange finalisé : nouvelle carte reçue !');
+      applyingTradeIds.delete(id);
+    }
+  }
+}
+
+async function acceptTrade(id, trade) {
+  if (!state) return;
+  if ((state.cards[trade.wantCardId] || 0) < 1) {
+    showToast('Tu ne possèdes plus cette carte.');
+    return;
+  }
+  state.cards[trade.wantCardId] -= 1;
+  if (state.cards[trade.wantCardId] <= 0) delete state.cards[trade.wantCardId];
+  state.cards[trade.giveCardId] = (state.cards[trade.giveCardId] || 0) + 1;
+  await persistUser();
+  await db.ref(`trades/${id}`).update({ toApplied: true, status: 'accepted', updatedAt: Date.now() });
+  updateHomeStats();
+  renderCollection();
+  showToast('Échange accepté !');
+}
+
+async function declineTrade(id) {
+  await db.ref(`trades/${id}`).update({ status: 'declined', updatedAt: Date.now() });
+  showToast('Échange refusé.');
+}
+
+async function cancelTrade(id) {
+  await db.ref(`trades/${id}`).update({ status: 'cancelled', updatedAt: Date.now() });
+  showToast('Échange annulé.');
+}
+
+function tradeCardThumb(cardId) {
+  const card = ALL_CARD_DEFS.find((c) => c.id === cardId);
+  if (!card) return '<span>?</span>';
+  return cardArtHtml(card, escapeHtml(card.name));
+}
+
+function tradeRowHtml(id, trade, mode) {
+  const cardsHtml = `${tradeCardThumb(trade.giveCardId)}<span>⇄</span>${tradeCardThumb(trade.wantCardId)}`;
+  const otherName = mode === 'incoming' ? trade.fromName : trade.toName;
+  let actionsHtml = '';
+  if (mode === 'incoming') {
+    actionsHtml = `
+      <button type="button" class="trade-accept" data-accept="${id}">Accepter</button>
+      <button type="button" data-decline="${id}">Refuser</button>`;
+  } else if (mode === 'outgoing') {
+    actionsHtml = `<button type="button" data-cancel="${id}">Annuler</button>`;
+  } else {
+    actionsHtml = `<span class="trade-row-status status-${trade.status}">${TRADE_STATUS_LABELS[trade.status] || trade.status}</span>`;
+  }
+  return `
+    <div class="trade-row">
+      <div class="trade-row-info">
+        <span class="trade-row-name">${mode === 'incoming' ? 'De ' : mode === 'outgoing' ? 'À ' : ''}${escapeHtml(otherName || 'Joueur')}</span>
+        <span class="trade-row-cards">${cardsHtml}</span>
+      </div>
+      <div class="trade-row-actions">${actionsHtml}</div>
+    </div>`;
+}
+
+const TRADE_STATUS_LABELS = { completed: 'Terminé', declined: 'Refusé', cancelled: 'Annulé' };
+
+function renderTradesSection() {
+  if (!state) return;
+  const entries = Object.entries(allTrades);
+  const incoming = entries.filter(([, t]) => t.toUid === state.uid && t.status === 'pending');
+  const outgoing = entries.filter(([, t]) => t.fromUid === state.uid && t.status === 'pending');
+  const history = entries
+    .filter(([, t]) => (t.fromUid === state.uid || t.toUid === state.uid) && t.status !== 'pending' && t.status !== 'accepted')
+    .sort(([, a], [, b]) => (b.updatedAt || 0) - (a.updatedAt || 0))
+    .slice(0, 10);
+
+  let html = '';
+  if (incoming.length) {
+    html += '<div class="trade-group-title">Propositions reçues</div>';
+    html += incoming.map(([id, t]) => tradeRowHtml(id, t, 'incoming')).join('');
+  }
+  if (outgoing.length) {
+    html += '<div class="trade-group-title">Propositions envoyées</div>';
+    html += outgoing.map(([id, t]) => tradeRowHtml(id, t, 'outgoing')).join('');
+  }
+  if (history.length) {
+    html += '<div class="trade-group-title">Historique</div>';
+    html += history.map(([id, t]) => tradeRowHtml(id, t, 'history')).join('');
+  }
+  tradesSection.innerHTML = html;
+}
+
+tradesSection.addEventListener('click', (e) => {
+  const acceptBtn = e.target.closest('[data-accept]');
+  const declineBtn = e.target.closest('[data-decline]');
+  const cancelBtn = e.target.closest('[data-cancel]');
+  if (acceptBtn) acceptTrade(acceptBtn.dataset.accept, allTrades[acceptBtn.dataset.accept]);
+  if (declineBtn) declineTrade(declineBtn.dataset.decline);
+  if (cancelBtn) cancelTrade(cancelBtn.dataset.cancel);
+});
 
 // ============================================================
 //  RENDER ALL (au login)
