@@ -55,9 +55,9 @@
         <img id="avatarImg" class="avatar" src="medias/PP/Val.PNG" alt="avatar" />
         <span id="playerName">Joueur</span>
       </div>
-      <button id="openWheelBtn" class="btn-wheel hidden" type="button">
-        <span class="wheel-icon">🎡</span>
-        <span>Roue quotidienne</span>
+      <button id="newsBtn" class="news-btn" type="button" aria-label="Actualités">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor"><path d="M480-80q-33 0-56.5-23.5T400-160h160q0 33-23.5 56.5T480-80ZM160-200v-80h80v-280q0-83 50-147.5T420-792v-28q0-25 17.5-42.5T480-880q25 0 42.5 17.5T540-820v28q80 20 130 84.5T720-560v280h80v80H160Z"/></svg>
+        <span>Actualité</span>
       </button>
       <div class="currency-pill">
         <img class="coin-icon" src="medias/Credit.png" alt="crédits" />
@@ -101,15 +101,6 @@
 
         <div class="ornate-divider"><span class="ornate-divider-diamond">◆</span></div>
 
-        <h2 class="home-section-title">Quêtes Quotidiennes</h2>
-        <p class="home-section-subtitle">Remplissez chaque jour vos objectifs pour remporter des crédits supplémentaires.</p>
-        <div class="daily-quest-panel">
-          <ul id="dailyQuestList" class="daily-quest-list"></ul>
-          <button id="claimDailyQuestBtn" class="btn-claim" type="button" disabled>Récupérer 20 Crédits</button>
-        </div>
-
-        <div class="ornate-divider"><span class="ornate-divider-diamond">◆</span></div>
-
         <h2 class="home-section-title">Carte Lieu</h2>
         <p class="home-section-subtitle">Obtenez des passifs uniques grâce aux cartes lieux.</p>
         <div class="lieu-zone">
@@ -121,6 +112,30 @@
             <span id="lieuSlotCaption" class="lieu-slot-caption">Ajouter un lieu</span>
             <span id="lieuSlotEffect" class="lieu-slot-effect hidden"></span>
           </button>
+        </div>
+
+        <div class="ornate-divider"><span class="ornate-divider-diamond">◆</span></div>
+
+        <h2 class="home-section-title">Quêtes Quotidiennes</h2>
+        <p class="home-section-subtitle">Remplissez chaque jour vos objectifs pour remporter des crédits supplémentaires.</p>
+        <div class="daily-quest-panel">
+          <ul id="dailyQuestList" class="daily-quest-list"></ul>
+          <button id="claimDailyQuestBtn" class="btn-claim" type="button" disabled>Récupérer 20 Crédits</button>
+        </div>
+
+        <div class="ornate-divider"><span class="ornate-divider-diamond">◆</span></div>
+
+        <h2 class="home-section-title">Roue Quotidienne</h2>
+        <p class="home-section-subtitle">Tentez votre chance une fois par jour pour gagner des crédits.</p>
+        <div class="wheel-panel wheel-panel-inline">
+          <div class="wheel-stage">
+            <div class="wheel-pointer"></div>
+            <div id="wheelDial" class="wheel-dial">
+              <div id="wheelLabels" class="wheel-labels"></div>
+            </div>
+          </div>
+          <button id="spinWheelBtn" class="btn-primary btn-large" type="button">Lancer la roue</button>
+          <p id="wheelHint" class="wheel-hint"></p>
         </div>
 
         <div id="johnnyDivider" class="ornate-divider hidden"><span class="ornate-divider-diamond">◆</span></div>
@@ -238,22 +253,6 @@
     </div>
   </div>
 
-  <!-- Daily wheel modal -->
-  <div id="wheelModal" class="modal hidden">
-    <div class="wheel-panel">
-      <button id="closeWheelModal" class="icon-btn card-detail-close" type="button">✕</button>
-      <h3 class="wheel-title">Roue quotidienne</h3>
-      <div class="wheel-stage">
-        <div class="wheel-pointer"></div>
-        <div id="wheelDial" class="wheel-dial">
-          <div id="wheelLabels" class="wheel-labels"></div>
-        </div>
-      </div>
-      <button id="spinWheelBtn" class="btn-primary btn-large" type="button">Lancer la roue</button>
-      <p id="wheelHint" class="wheel-hint"></p>
-    </div>
-  </div>
-
   <!-- Lieu equip modal -->
   <div id="lieuModal" class="modal hidden">
     <div class="lieu-panel">
@@ -262,6 +261,15 @@
       <div id="lieuList" class="lieu-list"></div>
       <p id="lieuHint" class="lieu-hint"></p>
       <button id="unequipLieuBtn" class="btn-dev lieu-unequip-btn hidden" type="button">Retirer le lieu actif</button>
+    </div>
+  </div>
+
+  <!-- News modal -->
+  <div id="newsModal" class="modal hidden">
+    <div class="news-panel">
+      <button id="closeNewsModal" class="icon-btn card-detail-close" type="button">✕</button>
+      <h3 class="news-panel-title">Actualités</h3>
+      <div id="newsList" class="news-list"></div>
     </div>
   </div>
 

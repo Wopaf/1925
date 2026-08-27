@@ -205,6 +205,22 @@ const WHEEL_SLOTS = [
 const WHEEL_COLORS = { lose: '#454a54', 1: '#8a94a3', 3: '#0ac8b9', 10: '#a855f7', 30: '#e8b923' };
 
 // ============================================================
+//  ACTUALITÉS
+// ============================================================
+// Ajoute les nouvelles entrées en tête de liste (la plus récente en premier).
+// date : 'AAAA-MM-JJ' — body : un paragraphe par chaîne du tableau.
+const NEWS_ITEMS = [
+  {
+    date: '2026-08-27',
+    title: 'Lancement de la version 1.0.0 de 1925 TCG',
+    body: [
+      "Nous sommes ravis de vous présenter ce jeu, nous espérons qu'il vous plaira.",
+      "Pour commencer votre aventure de collectionneur, nous vous avons laissé 100 crédits. Rassurez-vous, vous en gagnerez bien davantage durant votre aventure. Amusez-vous bien !",
+    ],
+  },
+];
+
+// ============================================================
 //  DOM REFS
 // ============================================================
 const el = (id) => document.getElementById(id);
@@ -301,13 +317,15 @@ const lieuList = el('lieuList');
 const lieuHint = el('lieuHint');
 const unequipLieuBtn = el('unequipLieuBtn');
 
-const openWheelBtn = el('openWheelBtn');
-const wheelModal = el('wheelModal');
-const closeWheelModalBtn = el('closeWheelModal');
 const wheelDial = el('wheelDial');
 const wheelLabels = el('wheelLabels');
 const spinWheelBtn = el('spinWheelBtn');
 const wheelHint = el('wheelHint');
+
+const newsBtn = el('newsBtn');
+const newsModal = el('newsModal');
+const closeNewsModalBtn = el('closeNewsModal');
+const newsList = el('newsList');
 
 const toast = el('toast');
 
@@ -918,31 +936,11 @@ function isWheelAvailable() {
   return !state.lastWheelSpinDate || state.lastWheelSpinDate !== todayKey();
 }
 
-function updateWheelHomeUI() {
-  if (!state) return;
-  openWheelBtn.classList.toggle('hidden', !isWheelAvailable());
-}
-
 let wheelSpinning = false;
 let wheelRotation = 0;
 
-openWheelBtn.addEventListener('click', () => {
-  if (!state) return;
-  updateWheelUI();
-  wheelModal.classList.remove('hidden');
-  wheelModal.getBoundingClientRect(); // force layout so the fade/scale-in transition plays
-  wheelModal.classList.add('open');
-});
-
-async function closeWheelModal() {
-  wheelModal.classList.remove('open');
-  await wait(300); // matches the CSS transition duration
-  wheelModal.classList.add('hidden');
-}
-closeWheelModalBtn.addEventListener('click', closeWheelModal);
-wheelModal.addEventListener('click', (e) => { if (e.target === wheelModal) closeWheelModal(); });
-
 function updateWheelUI() {
+  if (!state) return;
   const available = isWheelAvailable();
   spinWheelBtn.disabled = !available || wheelSpinning;
   wheelHint.textContent = available ? 'Tente ta chance une fois par jour !' : 'Reviens demain pour un nouveau tour !';
@@ -982,7 +980,6 @@ spinWheelBtn.addEventListener('click', async () => {
     showToast(`Roue : +${slot.amount} crédit${slot.amount > 1 ? 's' : ''} !`);
   }
   await persistUser();
-  updateWheelHomeUI();
   spinWheelBtn.disabled = true;
 });
 
@@ -1114,7 +1111,7 @@ resetCardsBtn.addEventListener('click', async () => {
 resetWheelBtn.addEventListener('click', async () => {
   if (!state) return;
   state.lastWheelSpinDate = null;
-  updateWheelHomeUI();
+  updateWheelUI();
   await persistUser();
   showToast('Roue réinitialisée (dev)');
 });
@@ -1245,6 +1242,39 @@ async function finishBoosterReveal() {
   boosterModal.classList.add('hidden');
   renderCollection();
 }
+
+// ============================================================
+//  ACTUALITÉS (modale)
+// ============================================================
+function formatNewsDate(iso) {
+  const d = new Date(`${iso}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+function renderNews() {
+  newsList.innerHTML = NEWS_ITEMS.map((item) => `
+    <article class="news-item">
+      <span class="news-item-date">${escapeHtml(formatNewsDate(item.date))}</span>
+      <h4 class="news-item-title">${escapeHtml(item.title)}</h4>
+      ${(item.body || []).map((p) => `<p class="news-item-body">${escapeHtml(p)}</p>`).join('')}
+    </article>`).join('');
+}
+
+newsBtn.addEventListener('click', () => {
+  renderNews();
+  newsModal.classList.remove('hidden');
+  newsModal.getBoundingClientRect(); // force layout so the fade/scale-in transition plays
+  newsModal.classList.add('open');
+});
+
+async function closeNewsModal() {
+  newsModal.classList.remove('open');
+  await wait(300); // matches the CSS transition duration
+  newsModal.classList.add('hidden');
+}
+closeNewsModalBtn.addEventListener('click', closeNewsModal);
+newsModal.addEventListener('click', (e) => { if (e.target === newsModal) closeNewsModal(); });
 
 // ============================================================
 //  NAVIGATION
@@ -1449,7 +1479,7 @@ async function renderPlayerList() {
   try {
     const snap = await db.ref('publicProfiles').once('value');
     const rows = [];
-    snap.forEach((child) => rows.push({ uid: child.key, ...child.val() }));
+    snap.forEach((child) => { rows.push({ uid: child.key, ...child.val() }); });
     rows.sort((a, b) => (a.displayName || '').localeCompare(b.displayName || ''));
     latestPublicProfiles = rows;
 
@@ -1662,7 +1692,7 @@ async function renderGiftsHistory() {
       db.ref('gifts').orderByChild('toUid').equalTo(state.uid).once('value'),
     ]);
     const entries = [];
-    sentSnap.forEach((child) => entries.push({ id: child.key, ...child.val() }));
+    sentSnap.forEach((child) => { entries.push({ id: child.key, ...child.val() }); });
     receivedSnap.forEach((child) => {
       if (!entries.some((e) => e.id === child.key)) entries.push({ id: child.key, ...child.val() });
     });
@@ -1695,7 +1725,7 @@ function renderAll() {
   el('boosterCost').textContent = BOOSTER_COST;
   updateHomeStats();
   updateCreditUI();
-  updateWheelHomeUI();
+  updateWheelUI();
   updateLieuSlotUI();
   updateJohnnyPanel();
   updateDailyQuestsUI();
