@@ -24,6 +24,7 @@ function slugify(str) {
 
 const RAW_CARDS = [
   ['Matthias-ChefMatthias', 'Chef Matthias', 'common'],
+  ['Matthias-PleinLeCul', 'Matthias Plein le Cul', 'common'],
   ['Matthias-Pizzaiolo', 'Matthias Pizzaziolo', 'rare'],
   ['Matthias-3Cannes', 'Matthias 3 Cannes', 'epic'],
   ['Matthias-Puant', 'Matthias Puant', 'legendary'],
@@ -31,15 +32,18 @@ const RAW_CARDS = [
   ['Valentin-Cuisinier', 'Valentin Cuisinier', 'common'],
   ['Valentin-Crepier', 'Valentin Crêpier', 'rare'],
   ['Valentin-Informaticien', 'Valentin Informaticien', 'epic'],
+  ['Valentin-YesLife', 'Valentin Yes Life', 'epic'],
   ['Valentin-Laitier', 'Valentin Laitier', 'legendary'],
 
   ['Denis-Cuisinier', 'Denis Cuisinier', 'common'],
   ['Denis-Sparring', 'Denis Sparring', 'rare'],
+  ['Denis-Konoha', 'Denis de Konoha', 'rare'],
   ['Denis-Attrapeur', 'Denis Attrapeur de Mouche', 'epic'],
   ['Denis-Marines', 'Denis Marines', 'legendary'],
 
   ['Elodie-Cuisniere', 'Elodie Cuisinière', 'common'],
   ['Elodie-Carton', 'Elodie Carton', 'rare'],
+  ['Elodie-Mention', 'Elodie Mention "Très Bien"', 'rare'],
   ['Elodie-Permis', 'Elodie Permis de sortir', 'epic'],
   ['Elodie-MC', 'Elodie MC L.O.D', 'legendary'],
 
@@ -66,11 +70,13 @@ const RAW_CARDS = [
   ['Louis-Serveur', 'Louis Serveur', 'common'],
   ['Louis-Fugitif', 'Louis Fugitif', 'rare'],
   ['Louis-Bonaparte', 'Louis Bonaparte', 'epic'],
+  ['Louis-KO', 'Louis KO', 'epic'],
   ['Louis-3Vallees', 'Louis 3 Vallées', 'legendary'],
 
   ['Val-Salle', 'Val Salle', 'common'],
   ['Val-Sale', 'Val Sale', 'rare'],
   ['Val-Skibidi', 'Val Skibidi', 'epic'],
+  ['Val-Raciste', 'Val Raciste', 'epic'],
   ['Val-NewBeach', 'Val New Beach', 'legendary'],
 ];
 
@@ -125,6 +131,7 @@ const LOCATION_CARD_FILES = { cuisine: 'La Cuisine.png', salle: 'La Salle.png', 
 // Fond d'écran d'accueil affiché (N&B, 15% d'opacité) quand le lieu est équipé
 const LOCATION_BG_FILES = { cuisine: 'Cuisine-BG.png', salle: 'Salle-BG.png', reception: 'Réception-BG.png' };
 const LOCATION_BONUS = 0.10; // +10% de chance relative pour les personnages du lieu équipé
+const NEW_CARD_BONUS = 0.10; // +10% de chance relative pour les cartes non encore possédées (Le Jacuzzi)
 const LOCATION_CARD_RARITY = 'rare';
 
 const RAW_LOCATIONS = [
@@ -144,6 +151,20 @@ const LOCATION_CARD_DEFS = RAW_LOCATIONS.map(([locationId, name, description]) =
   file: LOCATION_CARD_FILES[locationId] || null,
   description,
 }));
+
+// Carte lieu spéciale : pas rattachée à un lieu, elle booste les cartes non encore possédées.
+LOCATION_CARD_DEFS.push({
+  id: 'lieu-jacuzzi',
+  name: 'Le Jacuzzi',
+  rarity: 'epic',
+  character: 'Cartes Lieux',
+  type: 'lieu',
+  location: null,
+  effect: 'newCard',
+  icon: '🛁',
+  file: null,
+  description: "Offre un bonus de +10% de chance d'obtenir de nouvelles cartes dans vos prochains boosters.",
+});
 
 const ALL_CARD_DEFS = [...CARD_DEFS, ...SPECIAL_CARD_DEFS, ...LOCATION_CARD_DEFS];
 
@@ -186,7 +207,7 @@ const RECYCLE_ICON_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -96
 
 const LOCK_ICON_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor"><path d="M240-80q-33 0-56.5-23.5T160-160v-400q0-33 23.5-56.5T240-640h40v-80q0-83 58.5-141.5T480-920q83 0 141.5 58.5T680-720v80h40q33 0 56.5 23.5T800-560v400q0 33-23.5 56.5T720-80H240Zm0-80h480v-400H240v400Zm296.5-143.5Q560-327 560-360t-23.5-56.5Q513-440 480-440t-56.5 23.5Q400-393 400-360t23.5 56.5Q447-280 480-280t56.5-23.5ZM360-640h240v-80q0-50-35-85t-85-35q-50 0-85 35t-35 85v80ZM240-160v-400 400Z"/></svg>';
 
-const AVATAR_OPTIONS = ['PP/Matthias.PNG', 'PP/Valentin.PNG', 'PP/Denis.PNG', 'PP/Elodie.png', 'PP/Anais.PNG', 'PP/Louis.PNG', 'PP/Louann.PNG', 'PP/Val.PNG', 'PP/Bichu.PNG', 'PP/Emilie.PNG'];
+const AVATAR_OPTIONS = ['PP/Defaut.png', 'PP/Matthias.PNG', 'PP/Valentin.PNG', 'PP/Denis.PNG', 'PP/Elodie.png', 'PP/Anais.PNG', 'PP/Louis.PNG', 'PP/Louann.PNG', 'PP/Val.PNG', 'PP/Bichu.PNG', 'PP/Emilie.PNG'];
 
 // Roue quotidienne : 11 cases (1 perdu, 3x1, 3x3, 3x10, 1x30 crédits), tirage équiprobable
 const WHEEL_SLOTS = [
@@ -211,6 +232,24 @@ const WHEEL_COLORS = { lose: '#454a54', 1: '#8a94a3', 3: '#0ac8b9', 10: '#a855f7
 // date : 'AAAA-MM-JJ' — body : un paragraphe par chaîne du tableau.
 const NEWS_ITEMS = [
   {
+    date: '2026-08-29',
+    title: '???',
+    body: [
+      'Tiens tiens… Vous lisez les actualités ?',
+      "Intéressant, vous êtes sans doute quelqu'un de bien.",
+      'Pour vous récompenser, voici un cadeau.',
+    ],
+    reward: { key: 'newsReaderBonus', amount: 30 },
+  },
+  {
+    date: '2026-08-28',
+    title: 'Déjà de nouvelles cartes !',
+    body: [
+      '7 nouvelles cartes ont été ajoutées : 6 cartes personnage et 1 carte lieu.',
+      'Ouvrez des boosters pour tenter de les décrocher et compléter votre collection !',
+    ],
+  },
+  {
     date: '2026-08-27',
     title: 'Lancement de la version 1.0.0 de 1925 TCG',
     body: [
@@ -219,6 +258,9 @@ const NEWS_ITEMS = [
     ],
   },
 ];
+
+// Date de l'actu la plus récente (les entrées sont triées la plus récente en premier).
+const LATEST_NEWS_DATE = NEWS_ITEMS.length ? NEWS_ITEMS[0].date : '';
 
 // ============================================================
 //  DOM REFS
@@ -323,6 +365,7 @@ const spinWheelBtn = el('spinWheelBtn');
 const wheelHint = el('wheelHint');
 
 const newsBtn = el('newsBtn');
+const newsBadge = el('newsBadge');
 const newsModal = el('newsModal');
 const closeNewsModalBtn = el('closeNewsModal');
 const newsList = el('newsList');
@@ -600,6 +643,8 @@ async function loadUserData(user) {
       dailyQuestRecycleRarity: data.dailyQuestRecycleRarity || null,
       dailyQuestProgress: data.dailyQuestProgress || { openBooster: false, recycleCard: false, giftCard: false },
       dailyQuestClaimed: !!data.dailyQuestClaimed,
+      lastSeenNewsDate: data.lastSeenNewsDate || '',
+      claimedNewsRewards: data.claimedNewsRewards || {},
     };
   } else {
     isNewAccountThisSession = true;
@@ -619,6 +664,8 @@ async function loadUserData(user) {
       dailyQuestRecycleRarity: null,
       dailyQuestProgress: { openBooster: false, recycleCard: false, giftCard: false },
       dailyQuestClaimed: false,
+      lastSeenNewsDate: LATEST_NEWS_DATE,
+      claimedNewsRewards: {},
     };
     await persistUser();
   }
@@ -648,6 +695,8 @@ function persistUser() {
     dailyQuestRecycleRarity: state.dailyQuestRecycleRarity,
     dailyQuestProgress: state.dailyQuestProgress,
     dailyQuestClaimed: state.dailyQuestClaimed,
+    lastSeenNewsDate: state.lastSeenNewsDate,
+    claimedNewsRewards: state.claimedNewsRewards,
   }).catch((err) => {
     console.error('Sauvegarde des données joueur refusée :', err);
     showToast('Erreur de sauvegarde — vérifiez les règles Firebase.');
@@ -747,12 +796,13 @@ function weightedRandomRarity(allowedRarities) {
   return allowedRarities[allowedRarities.length - 1];
 }
 
-function weightedPickCard(pool, boostLocation) {
-  const weights = pool.map((c) => (
-    boostLocation && c.type === 'character' && CHARACTER_LOCATIONS[c.character] === boostLocation
-      ? 1 + LOCATION_BONUS
-      : 1
-  ));
+function weightedPickCard(pool, boostLocation, boostNew) {
+  const weights = pool.map((c) => {
+    let w = 1;
+    if (boostLocation && c.type === 'character' && CHARACTER_LOCATIONS[c.character] === boostLocation) w += LOCATION_BONUS;
+    if (boostNew && !state.cards[c.id]) w += NEW_CARD_BONUS;
+    return w;
+  });
   const total = weights.reduce((a, b) => a + b, 0);
   let r = Math.random() * total;
   for (let i = 0; i < pool.length; i++) {
@@ -762,24 +812,30 @@ function weightedPickCard(pool, boostLocation) {
   return pool[pool.length - 1];
 }
 
-function drawCard(allowedRarities, excludeIds, boostLocation) {
+function drawCard(allowedRarities, excludeIds, boostLocation, boostNew) {
   const rarity = weightedRandomRarity(allowedRarities);
   const pool = ALL_CARD_DEFS.filter((c) => c.rarity === rarity && !excludeIds.has(c.id));
   const finalPool = pool.length > 0 ? pool : ALL_CARD_DEFS.filter((c) => c.rarity === rarity);
-  return weightedPickCard(finalPool, boostLocation);
+  return weightedPickCard(finalPool, boostLocation, boostNew);
+}
+
+function getEquippedLieu() {
+  if (!state || !state.equippedLieuId) return null;
+  return LOCATION_CARD_DEFS.find((c) => c.id === state.equippedLieuId) || null;
 }
 
 function getEquippedLocation() {
-  if (!state || !state.equippedLieuId) return null;
-  const lieu = LOCATION_CARD_DEFS.find((c) => c.id === state.equippedLieuId);
+  const lieu = getEquippedLieu();
   return lieu ? lieu.location : null;
 }
 
 function drawBoosterCards() {
   const excludeIds = new Set();
-  const boostLocation = getEquippedLocation();
+  const equippedLieu = getEquippedLieu();
+  const boostLocation = equippedLieu ? equippedLieu.location : null;
+  const boostNew = !!equippedLieu && equippedLieu.effect === 'newCard';
   return BOOSTER_SLOTS.map((allowedRarities) => {
-    const card = drawCard(allowedRarities, excludeIds, boostLocation);
+    const card = drawCard(allowedRarities, excludeIds, boostLocation, boostNew);
     excludeIds.add(card.id);
     return card;
   });
@@ -994,12 +1050,12 @@ function getOwnedLieuCards() {
 function updateLieuSlotUI() {
   if (!state) return;
   const equipped = state.equippedLieuId ? LOCATION_CARD_DEFS.find((c) => c.id === state.equippedLieuId) : null;
-  lieuSlotBtn.classList.remove('equipped', 'lieu-cuisine', 'lieu-salle', 'lieu-reception');
+  lieuSlotBtn.classList.remove('equipped', 'lieu-cuisine', 'lieu-salle', 'lieu-reception', 'lieu-jacuzzi');
   if (equipped) {
     lieuSlotArt.innerHTML = cardArtHtml(equipped, escapeHtml(equipped.name));
     lieuSlotPassifLabel.classList.remove('hidden');
     lieuSlotCaption.textContent = equipped.name;
-    lieuSlotBtn.classList.add('equipped', `lieu-${equipped.location}`);
+    lieuSlotBtn.classList.add('equipped', `lieu-${equipped.location || 'jacuzzi'}`);
     lieuSlotEffect.textContent = equipped.description;
     lieuSlotEffect.classList.remove('hidden');
   } else {
@@ -1252,13 +1308,46 @@ function formatNewsDate(iso) {
   return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
 }
 
+function newsRewardHtml(item) {
+  if (!item.reward) return '';
+  const claimed = !!(state && state.claimedNewsRewards && state.claimedNewsRewards[item.reward.key]);
+  return `<button type="button" class="btn-claim news-reward-btn" data-reward-key="${item.reward.key}" data-reward-amount="${item.reward.amount}" ${claimed ? 'disabled' : ''}>
+      ${claimed ? 'Cadeau déjà récupéré' : `Récupérer ${item.reward.amount} crédits`}
+    </button>`;
+}
+
 function renderNews() {
   newsList.innerHTML = NEWS_ITEMS.map((item) => `
     <article class="news-item">
       <span class="news-item-date">${escapeHtml(formatNewsDate(item.date))}</span>
       <h4 class="news-item-title">${escapeHtml(item.title)}</h4>
       ${(item.body || []).map((p) => `<p class="news-item-body">${escapeHtml(p)}</p>`).join('')}
+      ${newsRewardHtml(item)}
     </article>`).join('');
+}
+
+newsList.addEventListener('click', async (e) => {
+  const btn = e.target.closest('.news-reward-btn[data-reward-key]');
+  if (!btn || btn.disabled || !state) return;
+  const key = btn.dataset.rewardKey;
+  const amount = parseInt(btn.dataset.rewardAmount, 10) || 0;
+  if (!state.claimedNewsRewards) state.claimedNewsRewards = {};
+  if (state.claimedNewsRewards[key] || amount <= 0) return;
+
+  state.claimedNewsRewards[key] = true;
+  btn.disabled = true;
+  state.credits += amount;
+  updateCreditUI();
+  updateHomeStats();
+  showToast(`+${amount} crédits !`);
+  flyCoinToCredits(btn, amount);
+  await persistUser();
+  renderNews();
+});
+
+function updateNewsBadge() {
+  const unseen = !!state && (state.lastSeenNewsDate || '') < LATEST_NEWS_DATE;
+  newsBadge.classList.toggle('hidden', !unseen);
 }
 
 newsBtn.addEventListener('click', () => {
@@ -1266,6 +1355,11 @@ newsBtn.addEventListener('click', () => {
   newsModal.classList.remove('hidden');
   newsModal.getBoundingClientRect(); // force layout so the fade/scale-in transition plays
   newsModal.classList.add('open');
+  if (state && (state.lastSeenNewsDate || '') < LATEST_NEWS_DATE) {
+    state.lastSeenNewsDate = LATEST_NEWS_DATE;
+    updateNewsBadge();
+    persistUser();
+  }
 });
 
 async function closeNewsModal() {
@@ -1310,7 +1404,7 @@ function switchView(view, { instant } = {}) {
   el(`view-${view}`).classList.add('active');
   document.querySelectorAll('.nav-btn').forEach((b) => b.classList.toggle('active', b.dataset.view === view));
   if (view === 'collection') renderCollection();
-  if (view === 'community') { renderPlayerList(); renderGiftsHistory(); }
+  if (view === 'community') { renderPlayerList(); }
   if (view === 'home' && !instant) revealHomeLieuBg();
 }
 
@@ -1328,7 +1422,7 @@ document.querySelectorAll('.filter-chip').forEach((chip) => {
 
 function cardArtHtml(card, alt) {
   if (card.type === 'lieu' && !card.file) {
-    return `<div class="lieu-art lieu-${card.location}"><span class="lieu-art-icon">${card.icon}</span></div>`;
+    return `<div class="lieu-art lieu-${card.location || 'jacuzzi'}"><span class="lieu-art-icon">${card.icon}</span></div>`;
   }
   return `<img src="medias/${encodeURIComponent(card.file)}" alt="${alt}" />`;
 }
@@ -1411,7 +1505,7 @@ function renderCardDetail() {
 
   if (card.type === 'lieu' && !card.file) {
     cardDetailImg.classList.add('hidden');
-    cardDetailLieuArt.className = `lieu-art lieu-${card.location}`;
+    cardDetailLieuArt.className = `lieu-art lieu-${card.location || 'jacuzzi'}`;
     cardDetailLieuArt.classList.remove('hidden');
     cardDetailLieuIcon.textContent = card.icon;
   } else {
@@ -1480,7 +1574,9 @@ async function renderPlayerList() {
     const snap = await db.ref('publicProfiles').once('value');
     const rows = [];
     snap.forEach((child) => { rows.push({ uid: child.key, ...child.val() }); });
-    rows.sort((a, b) => (a.displayName || '').localeCompare(b.displayName || ''));
+    rows.sort((a, b) =>
+      (b.uniqueCount || 0) - (a.uniqueCount || 0) ||
+      (a.displayName || '').localeCompare(b.displayName || ''));
     latestPublicProfiles = rows;
 
     if (!rows.length) {
@@ -1729,6 +1825,7 @@ function renderAll() {
   updateLieuSlotUI();
   updateJohnnyPanel();
   updateDailyQuestsUI();
+  updateNewsBadge();
   renderCollection();
   switchView('home', { instant: true });
 }
