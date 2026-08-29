@@ -170,8 +170,9 @@ const ALL_CARD_DEFS = [...CARD_DEFS, ...SPECIAL_CARD_DEFS, ...LOCATION_CARD_DEFS
 
 const RARITY_WEIGHTS = { common: 50, rare: 30, epic: 15, legendary: 5 };
 const RARITY_LABELS = { common: 'Commune', rare: 'Rare', epic: 'Épique', legendary: 'Légendaire' };
-const CREDIT_INTERVAL_MS = 10 * 60 * 1000; // 1 crédit de réserve toutes les 10 minutes
-const RESERVE_MAX = 60; // capacité maximale de la réserve de crédits
+const CREDIT_INTERVAL_MS = 15 * 60 * 1000; // un palier de réserve toutes les 15 minutes
+const CREDIT_PER_TICK = 2; // crédits gagnés à chaque palier
+const RESERVE_MAX = 90; // capacité maximale de la réserve de crédits
 const LOADING_SCREEN_MIN_MS = 1000; // durée d'affichage supplémentaire de l'écran de chargement
 const BOOSTER_COST = 30;
 const STARTING_CREDITS = 100;
@@ -231,6 +232,18 @@ const WHEEL_COLORS = { lose: '#454a54', 1: '#8a94a3', 3: '#0ac8b9', 10: '#a855f7
 // Ajoute les nouvelles entrées en tête de liste (la plus récente en premier).
 // date : 'AAAA-MM-JJ' — body : un paragraphe par chaîne du tableau.
 const NEWS_ITEMS = [
+  {
+    date: '2026-08-29',
+    title: 'Coup de boost !',
+    body: [
+      "Aujourd'hui on augmente la cadence !",
+      'Le temps de récupération des crédits passe de 10 min à 15 min.',
+      '« Oh trop nul c\'est déjà bien assez long ! »',
+      'Oui, mais vous gagnez désormais 2 crédits à la place d\'un seul.',
+      'Également, la réserve de crédits est désormais de 90.',
+      'Amusez-vous bien !',
+    ],
+  },
   {
     date: '2026-08-29',
     title: '???',
@@ -730,7 +743,7 @@ function accrueReserve() {
   }
   const ticks = Math.floor((Date.now() - state.lastClaim) / CREDIT_INTERVAL_MS);
   if (ticks <= 0) return 0;
-  const added = Math.min(ticks, RESERVE_MAX - state.reserve);
+  const added = Math.min(ticks * CREDIT_PER_TICK, RESERVE_MAX - state.reserve);
   state.reserve += added;
   state.lastClaim += ticks * CREDIT_INTERVAL_MS;
   return added;
@@ -778,7 +791,7 @@ function updateCreditUI() {
   const elapsed = Date.now() - state.lastClaim;
   const reserveFull = state.reserve >= RESERVE_MAX;
   nextCreditTimer.textContent = reserveFull ? 'Réserve pleine' : formatDuration(CREDIT_INTERVAL_MS - elapsed);
-  const fractional = reserveFull ? 0 : elapsed / CREDIT_INTERVAL_MS;
+  const fractional = reserveFull ? 0 : (elapsed / CREDIT_INTERVAL_MS) * CREDIT_PER_TICK;
   const pct = Math.min(100, Math.max(0, ((state.reserve + fractional) / RESERVE_MAX) * 100));
   creditProgressFill.style.width = `${pct}%`;
 }
