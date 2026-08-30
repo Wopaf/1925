@@ -238,7 +238,7 @@ const NEWS_ITEMS = [
     date: '2026-08-30',
     title: "Un départ à célébrer",
     body: [
-      "Pour célébrer le départ d'une chère collègue d'amour, nous vous offrons 30 crédits.",
+      "Pour célébrer le départ de nos chères collègues d'amour, nous vous offrons 30 crédits.",
     ],
     reward: { key: 'departCollegueBonus', amount: 30 },
   },
