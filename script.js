@@ -97,6 +97,7 @@ const RAW_SPECIAL_CARDS = [
   ['Gabin-maitre', 'Gabin Maître des horloges', 'legendary'],
   ['Johnny', 'Johnny 50 Euros', 'legendary'],
   ['Elodie-Fantome', 'Elodie Fantôme de Diane', 'legendary'],
+  ['Mikoo-Furtif', 'Mikoo Furtif', 'common'],
 ];
 
 const SPECIAL_CARD_DEFS = RAW_SPECIAL_CARDS.map(([file, name, rarity]) => ({
@@ -130,6 +131,7 @@ const LOCATION_ICONS = { cuisine: '🍳', salle: '🍽️', reception: '🛎️'
 const LOCATION_CARD_FILES = { cuisine: 'La Cuisine.png', salle: 'La Salle.png', reception: 'La Réception.png' };
 // Fond d'écran d'accueil affiché (N&B, 15% d'opacité) quand le lieu est équipé
 const LOCATION_BG_FILES = { cuisine: 'Cuisine-BG.png', salle: 'Salle-BG.png', reception: 'Réception-BG.png' };
+const JACUZZI_BG_FILE = 'Jacuzzi-BG.png';
 const LOCATION_BONUS = 0.10; // +10% de chance relative pour les personnages du lieu équipé
 const NEW_CARD_BONUS = 0.10; // +10% de chance relative pour les cartes non encore possédées (Le Jacuzzi)
 const LOCATION_CARD_RARITY = 'rare';
@@ -162,13 +164,13 @@ LOCATION_CARD_DEFS.push({
   location: null,
   effect: 'newCard',
   icon: '🛁',
-  file: null,
+  file: 'Le Jacuzzi.png',
   description: "Offre un bonus de +10% de chance d'obtenir de nouvelles cartes dans vos prochains boosters.",
 });
 
 const ALL_CARD_DEFS = [...CARD_DEFS, ...SPECIAL_CARD_DEFS, ...LOCATION_CARD_DEFS];
 
-const RARITY_WEIGHTS = { common: 50, rare: 30, epic: 15, legendary: 5 };
+const RARITY_WEIGHTS = { common: 50, rare: 25, epic: 15, legendary: 10 };
 const RARITY_LABELS = { common: 'Commune', rare: 'Rare', epic: 'Épique', legendary: 'Légendaire' };
 const CREDIT_INTERVAL_MS = 15 * 60 * 1000; // un palier de réserve toutes les 15 minutes
 const CREDIT_PER_TICK = 2; // crédits gagnés à chaque palier
@@ -232,6 +234,24 @@ const WHEEL_COLORS = { lose: '#454a54', 1: '#8a94a3', 3: '#0ac8b9', 10: '#a855f7
 // Ajoute les nouvelles entrées en tête de liste (la plus récente en premier).
 // date : 'AAAA-MM-JJ' — body : un paragraphe par chaîne du tableau.
 const NEWS_ITEMS = [
+  {
+    date: '2026-08-30',
+    title: "Un départ à célébrer",
+    body: [
+      "Pour célébrer le départ d'une chère collègue d'amour, nous vous offrons 30 crédits.",
+    ],
+    reward: { key: 'departCollegueBonus', amount: 30 },
+  },
+  {
+    date: '2026-08-30',
+    title: 'Quelques corrections',
+    body: [
+      'Une carte spéciale a été ajoutée.',
+      'Correction de bugs.',
+      "Ajout d'animations et d'effets sonores.",
+      'Les taux de loot des cartes sont revus à la hausse : le légendaire passe de 5% à 10%, l\'épique passe de 10% à 15%.',
+    ],
+  },
   {
     date: '2026-08-29',
     title: 'Coup de boost !',
@@ -424,6 +444,7 @@ function pulseCreditsValue() {
 }
 
 function spawnFlyingCoin(srcRect) {
+  new Audio('medias/Coin.wav').play().catch(() => {});
   const dstRect = creditsValue.getBoundingClientRect();
   const startX = srcRect.left + srcRect.width / 2;
   const startY = srcRect.top + srcRect.height / 2;
@@ -563,6 +584,7 @@ function openProfileModal() {
 }
 
 async function closeProfileModal() {
+  new Audio('medias/Clic2.wav').play().catch(() => {});
   profileModal.classList.remove('open');
   await wait(300); // matches the CSS transition duration
   profileModal.classList.add('hidden');
@@ -1078,7 +1100,7 @@ function updateLieuSlotUI() {
     lieuSlotEffect.classList.add('hidden');
   }
 
-  const bgFile = equipped ? LOCATION_BG_FILES[equipped.location] : 'main-bg.png';
+  const bgFile = equipped ? (equipped.location ? LOCATION_BG_FILES[equipped.location] : JACUZZI_BG_FILE) : 'main-bg.png';
   homeLieuBg.style.backgroundImage = bgFile ? `url("medias/${encodeURIComponent(bgFile)}")` : '';
 }
 
@@ -1118,6 +1140,7 @@ function renderLieuList() {
 
 lieuSlotBtn.addEventListener('click', () => {
   if (!state) return;
+  new Audio('medias/Clic2.wav').play().catch(() => {});
   renderLieuList();
   lieuModal.classList.remove('hidden');
   lieuModal.getBoundingClientRect(); // force layout so the fade/scale-in transition plays
@@ -1125,6 +1148,7 @@ lieuSlotBtn.addEventListener('click', () => {
 });
 
 async function closeLieuModal() {
+  new Audio('medias/Clic2.wav').play().catch(() => {});
   lieuModal.classList.remove('open');
   await wait(300); // matches the CSS transition duration
   lieuModal.classList.add('hidden');
@@ -1376,6 +1400,7 @@ newsBtn.addEventListener('click', () => {
 });
 
 async function closeNewsModal() {
+  new Audio('medias/Clic2.wav').play().catch(() => {});
   newsModal.classList.remove('open');
   await wait(300); // matches the CSS transition duration
   newsModal.classList.add('hidden');
@@ -1416,7 +1441,7 @@ function switchView(view, { instant } = {}) {
   document.querySelectorAll('.view').forEach((v) => v.classList.remove('active'));
   el(`view-${view}`).classList.add('active');
   document.querySelectorAll('.nav-btn').forEach((b) => b.classList.toggle('active', b.dataset.view === view));
-  if (view === 'collection') renderCollection();
+  if (view === 'collection') renderCollection(true);
   if (view === 'community') { renderPlayerList(); }
   if (view === 'home' && !instant) revealHomeLieuBg();
 }
@@ -1426,10 +1451,11 @@ function switchView(view, { instant } = {}) {
 // ============================================================
 document.querySelectorAll('.filter-chip').forEach((chip) => {
   chip.addEventListener('click', () => {
+    new Audio('medias/Clic2.wav').play().catch(() => {});
     document.querySelectorAll('.filter-chip').forEach((c) => c.classList.remove('active'));
     chip.classList.add('active');
     currentFilter = chip.dataset.rarity === 'default' ? null : chip.dataset.rarity;
-    renderCollection();
+    renderCollection(true);
   });
 });
 
@@ -1440,13 +1466,15 @@ function cardArtHtml(card, alt) {
   return `<img src="medias/${encodeURIComponent(card.file)}" alt="${alt}" />`;
 }
 
-function cardTileHtml(card) {
+function cardTileHtml(card, delayIndex) {
   const count = state.cards[card.id] || 0;
   const owned = count > 0;
   const recyclable = owned && count >= RECYCLE_RULES[card.rarity].minOwned;
   const art = owned ? cardArtHtml(card, escapeHtml(card.name)) : `<img src="medias/dos-cartes.png" alt="carte non obtenue" />`;
+  const animClass = delayIndex != null ? ' card-pop-in' : '';
+  const animStyle = delayIndex != null ? ` style="animation-delay:${Math.min(delayIndex * 20, 500)}ms"` : '';
   return `
-    <div class="card-tile-wrap ${owned ? '' : 'locked'}" ${owned ? `data-card-id="${card.id}"` : ''}>
+    <div class="card-tile-wrap ${owned ? '' : 'locked'}${animClass}" ${owned ? `data-card-id="${card.id}"` : ''}${animStyle}>
       <div class="card-tile rarity-${card.rarity}">
         ${art}
         ${recyclable ? `<span class="recycle-badge" title="Recyclage disponible">${RECYCLE_ICON_SVG}</span>` : ''}
@@ -1459,22 +1487,25 @@ function cardTileHtml(card) {
     </div>`;
 }
 
-function renderCollection() {
+function renderCollection(animate = false) {
   if (!state) return;
   const filtered = (currentFilter === null || currentFilter === 'all') ? ALL_CARD_DEFS : ALL_CARD_DEFS.filter((c) => c.rarity === currentFilter);
   cardGrid.classList.toggle('hide-captions', currentFilter !== null);
+
+  let cardIndex = 0;
+  const tileHtml = (card) => cardTileHtml(card, animate ? cardIndex++ : null);
 
   if (currentFilter === null) {
     const groupLabel = (c) => c.type === 'special' ? 'Cartes Spécial' : c.character;
     const groups = [...new Set(filtered.map(groupLabel))];
     cardGrid.innerHTML = groups
       .map((group) => {
-        const tiles = filtered.filter((c) => groupLabel(c) === group).map(cardTileHtml).join('');
+        const tiles = filtered.filter((c) => groupLabel(c) === group).map(tileHtml).join('');
         return `<div class="card-group-title">${escapeHtml(group)}</div>${tiles}`;
       })
       .join('');
   } else {
-    cardGrid.innerHTML = filtered.map(cardTileHtml).join('');
+    cardGrid.innerHTML = filtered.map(tileHtml).join('');
   }
 
   const uniqueOwned = Object.keys(state.cards).length;
@@ -1501,6 +1532,7 @@ function openCardDetail(cardId) {
 }
 
 async function closeCardDetailModal() {
+  new Audio('medias/Clic2.wav').play().catch(() => {});
   cardDetailModal.classList.remove('open');
   await wait(300); // matches the CSS transition duration
   cardDetailModal.classList.add('hidden');
@@ -1581,6 +1613,8 @@ cardDetailModal.addEventListener('click', (e) => { if (e.target === cardDetailMo
 // ============================================================
 //  COMMUNITY / PLAYER LIST
 // ============================================================
+const GOLD_FRAME_KEYWORDS = ['elo', 'val', 'bichu', 'chef', 'matthias', 'rault', 'anaïs', 'denis', 'louis', 'emily', 'maho', 'gabin', 'louann'];
+
 async function renderPlayerList() {
   playerList.innerHTML = '<p class="player-list-empty">Chargement...</p>';
   try {
@@ -1598,11 +1632,14 @@ async function renderPlayerList() {
     }
 
     playerList.innerHTML = rows
-      .map((r) => {
+      .map((r, i) => {
         const avatar = AVATAR_OPTIONS.includes(r.avatar) ? r.avatar : AVATAR_OPTIONS[0];
         const isMe = state && r.uid === state.uid;
+        const delay = Math.min(i * 50, 800);
+        const nameLower = (r.displayName || '').toLowerCase();
+        const isGold = GOLD_FRAME_KEYWORDS.some((k) => nameLower.includes(k));
         return `
-          <div class="player-row" data-uid="${r.uid}" ${isMe ? '' : 'role="button"'}>
+          <div class="player-row row-slide-in${isGold ? ' player-row-gold' : ''}" style="animation-delay:${delay}ms" data-uid="${r.uid}" ${isMe ? '' : 'role="button"'}>
             <img class="player-avatar" src="medias/${avatar}" alt="" />
             <span class="player-name">${escapeHtml(r.displayName || 'Joueur')}${isMe ? ' (toi)' : ''}</span>
             <span class="player-count">${r.uniqueCount || 0}/${ALL_CARD_DEFS.length}</span>
@@ -1621,7 +1658,10 @@ playerList.addEventListener('click', (e) => {
   const uid = row.dataset.uid;
   if (uid === state.uid) return;
   const profile = latestPublicProfiles.find((p) => p.uid === uid);
-  if (profile) openSendGiftModal(profile);
+  if (profile) {
+    new Audio('medias/Clic2.wav').play().catch(() => {});
+    openSendGiftModal(profile);
+  }
 });
 
 // ============================================================
@@ -1651,6 +1691,7 @@ function renderGiftPicker() {
 giftMyCards.addEventListener('click', (e) => {
   const tile = e.target.closest('.card-tile-wrap[data-pick-id]');
   if (!tile) return;
+  new Audio('medias/Clic2.wav').play().catch(() => {});
   giftCardId = tile.dataset.pickId === giftCardId ? null : tile.dataset.pickId;
   renderGiftPicker();
 });
@@ -1667,6 +1708,7 @@ function openSendGiftModal(profile) {
 }
 
 async function closeSendGiftModal() {
+  new Audio('medias/Clic2.wav').play().catch(() => {});
   sendGiftModal.classList.remove('open');
   await wait(300); // matches the CSS transition duration
   sendGiftModal.classList.add('hidden');
@@ -1677,6 +1719,7 @@ sendGiftModal.addEventListener('click', (e) => { if (e.target === sendGiftModal)
 submitGiftBtn.addEventListener('click', async () => {
   if (!state || !giftTarget || !giftCardId) return;
   if ((state.cards[giftCardId] || 0) < 1) return;
+  new Audio('medias/Clic2.wav').play().catch(() => {});
   submitGiftBtn.disabled = true;
 
   const newRef = db.ref('gifts').push();
@@ -1768,6 +1811,7 @@ function showNextGiftModal() {
 }
 
 async function closeGiftReceivedModal() {
+  new Audio('medias/Clic2.wav').play().catch(() => {});
   giftReceivedModal.classList.remove('open');
   await wait(300); // matches the CSS transition duration
   giftReceivedModal.classList.add('hidden');
