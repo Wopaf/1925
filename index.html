@@ -53,13 +53,20 @@
     <header class="topbar">
       <div class="player-info">
         <img id="avatarImg" class="avatar" src="medias/PP/Defaut.png" alt="avatar" />
-        <span id="playerName">Joueur</span>
+        <div class="player-name-block">
+          <span id="playerName">Joueur</span>
+          <span id="playerTitle" class="player-title hidden"></span>
+        </div>
       </div>
       <button id="newsBtn" class="news-btn" type="button" aria-label="Actualités">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor"><path d="M480-80q-33 0-56.5-23.5T400-160h160q0 33-23.5 56.5T480-80ZM160-200v-80h80v-280q0-83 50-147.5T420-792v-28q0-25 17.5-42.5T480-880q25 0 42.5 17.5T540-820v28q80 20 130 84.5T720-560v280h80v80H160Z"/></svg>
         <span>Actualité</span>
         <span id="newsBadge" class="news-badge hidden" aria-label="Nouvelle actualité"></span>
       </button>
+      <div class="currency-pill currency-pill-gems">
+        <img class="coin-icon" src="medias/Gemme.png" alt="gemmes" />
+        <span id="gemsValue">0</span>
+      </div>
       <div class="currency-pill">
         <img class="coin-icon" src="medias/Credit.png" alt="crédits" />
         <span id="creditsValue">0</span>
@@ -82,6 +89,22 @@
           </div>
         </div>
 
+        <div id="multiplierBanner" class="multiplier-banner hidden">
+          <span class="multiplier-banner-label">⚡ Multiplicateur x2 actif</span>
+          <span id="multiplierBannerTimer" class="multiplier-banner-timer"></span>
+        </div>
+
+        <div class="quests-launch-row">
+          <button id="questsBtn" class="quests-launch-btn" type="button" aria-label="Quêtes">
+            <img src="medias/Quete.png" alt="Quêtes" />
+            <span id="questsBadge" class="quests-badge hidden" aria-label="Récompense disponible"></span>
+          </button>
+          <button id="wheelLaunchBtn" class="quests-launch-btn quests-launch-btn-right" type="button" aria-label="Roue de la fortune">
+            <img src="medias/Roue-Icon.png" alt="Roue de la fortune" />
+            <span id="wheelLaunchBadge" class="quests-badge hidden" aria-label="Tour disponible"></span>
+          </button>
+        </div>
+
         <div class="booster-zone">
           <div class="booster-stage">
             <div class="light-rays"></div>
@@ -89,15 +112,27 @@
               <img src="medias/Booster.png" class="booster-art" alt="booster" />
             </div>
           </div>
+          <p id="luckPotionActiveLabel" class="luck-potion-active hidden">✨ Potion de chance active</p>
           <button id="openBoosterBtn" class="btn-primary btn-large">
-            Ouvrir un booster — <img class="coin-icon" src="medias/Credit.png" alt="crédits" /><span id="boosterCost">5</span>
+            Ouvrir un booster <img class="coin-icon" src="medias/Credit.png" alt="crédits" /><span id="boosterCost">5</span>
           </button>
           <div id="devTools" class="dev-tools hidden">
             <button id="addCreditsBtn" class="btn-dev" type="button">+10 crédits</button>
-            <button id="resetCardsBtn" class="btn-dev" type="button">Réinitialiser cartes</button>
+            <button id="addGemsBtn" class="btn-dev" type="button">+5 gemmes</button>
+            <button id="resetCreditsBtn" class="btn-dev" type="button">Reset crédits</button>
+            <button id="resetGemsBtn" class="btn-dev" type="button">Reset gemmes</button>
             <button id="resetWheelBtn" class="btn-dev" type="button">Réinitialiser roue</button>
-            <button id="unlockAllCardsBtn" class="btn-dev" type="button">Débloquer toutes les cartes</button>
+            <button id="resetQuestsBtn" class="btn-dev" type="button">Reset quêtes récupérées</button>
           </div>
+        </div>
+
+        <div class="ornate-divider"><span class="ornate-divider-diamond">◆</span></div>
+
+        <h2 class="home-section-title">Quêtes Quotidiennes</h2>
+        <p class="home-section-subtitle">Remplissez chaque jour vos objectifs pour remporter des crédits supplémentaires.</p>
+        <div class="daily-quest-panel">
+          <ul id="dailyQuestList" class="daily-quest-list"></ul>
+          <button id="claimDailyQuestBtn" class="btn-claim" type="button" disabled>Récupérer 20 Crédits</button>
         </div>
 
         <div class="ornate-divider"><span class="ornate-divider-diamond">◆</span></div>
@@ -115,30 +150,6 @@
           </button>
         </div>
 
-        <div class="ornate-divider"><span class="ornate-divider-diamond">◆</span></div>
-
-        <h2 class="home-section-title">Quêtes Quotidiennes</h2>
-        <p class="home-section-subtitle">Remplissez chaque jour vos objectifs pour remporter des crédits supplémentaires.</p>
-        <div class="daily-quest-panel">
-          <ul id="dailyQuestList" class="daily-quest-list"></ul>
-          <button id="claimDailyQuestBtn" class="btn-claim" type="button" disabled>Récupérer 20 Crédits</button>
-        </div>
-
-        <div class="ornate-divider"><span class="ornate-divider-diamond">◆</span></div>
-
-        <h2 class="home-section-title">Roue Quotidienne</h2>
-        <p class="home-section-subtitle">Tentez votre chance une fois par jour pour gagner des crédits.</p>
-        <div class="wheel-panel wheel-panel-inline">
-          <div class="wheel-stage">
-            <div class="wheel-pointer"></div>
-            <div id="wheelDial" class="wheel-dial">
-              <div id="wheelLabels" class="wheel-labels"></div>
-            </div>
-          </div>
-          <button id="spinWheelBtn" class="btn-primary btn-large" type="button">Lancer la roue</button>
-          <p id="wheelHint" class="wheel-hint"></p>
-        </div>
-
         <div id="johnnyDivider" class="ornate-divider hidden"><span class="ornate-divider-diamond">◆</span></div>
 
         <div id="johnnyPanel" class="johnny-panel hidden">
@@ -148,17 +159,14 @@
           <p class="johnny-text">Salut ! C’est Johnny !<br />J’ai besoin de 50 crédits<br />Pour faire un album de Rock’n Roll ! !</p>
           <button id="donateJohnnyBtn" class="btn-primary" type="button">Donner 50 Crédits</button>
         </div>
-
-        <div class="ornate-divider"><span class="ornate-divider-diamond">◆</span></div>
-
-        <div class="home-stats">
-          <div class="stat-box"><span id="statOwned">0</span><small>Cartes possédées</small></div>
-          <div class="stat-box"><span id="statUnique">0</span><small>Cartes uniques</small></div>
-        </div>
       </section>
 
       <!-- COLLECTION -->
       <section id="view-collection" class="view">
+        <div class="home-stats">
+          <div class="stat-box"><span id="statOwned">0</span><small>Cartes possédées</small></div>
+          <div class="stat-box"><span id="statUnique">0</span><small>Cartes uniques</small></div>
+        </div>
         <div class="collection-header">
           <h2>Ma Collection</h2>
           <span id="collectionProgress">0/0</span>
@@ -183,6 +191,27 @@
         <p class="community-hint">Touchez un joueur pour lui offrir une carte</p>
         <div id="playerList" class="player-list"></div>
       </section>
+
+      <!-- BOUTIQUE -->
+      <section id="view-boutique" class="view">
+        <div class="collection-header">
+          <h2>Boutique</h2>
+        </div>
+
+        <div id="gemPackGrid" class="gem-pack-grid"></div>
+
+        <div class="ornate-divider"><span class="ornate-divider-diamond">◆</span></div>
+
+        <h2 class="home-section-title">Objets</h2>
+        <p class="home-section-subtitle">Dépensez vos gemmes contre des bonus bien utiles. Gagnez des gemmes en validant vos quêtes quotidiennes.</p>
+        <div id="shopItemList" class="shop-grid"></div>
+
+        <div class="ornate-divider"><span class="ornate-divider-diamond">◆</span></div>
+
+        <h2 class="home-section-title">Titres</h2>
+        <p class="home-section-subtitle">Achetez des titres avec vos crédits, puis équipez-en un depuis votre profil.</p>
+        <div id="titleShopList" class="title-shop-list"></div>
+      </section>
     </main>
 
     <nav class="bottom-nav">
@@ -198,7 +227,24 @@
         <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor"><path d="M40-272q0-34 17.5-62.5T104-378q62-31 126-46.5T360-440q66 0 130 15.5T616-378q29 15 46.5 43.5T680-272v32q0 33-23.5 56.5T600-160H120q-33 0-56.5-23.5T40-240v-32Zm800 112H738q11-18 16.5-38.5T760-240v-40q0-44-24.5-84.5T666-434q51 6 96 20.5t84 35.5q36 20 55 44.5t19 53.5v40q0 33-23.5 56.5T840-160ZM247-527q-47-47-47-113t47-113q47-47 113-47t113 47q47 47 47 113t-47 113q-47 47-113 47t-113-47Zm466 0q-47 47-113 47-11 0-28-2.5t-28-5.5q27-32 41.5-71t14.5-81q0-42-14.5-81T544-792q14-5 28-6.5t28-1.5q66 0 113 47t47 113q0 66-47 113ZM120-240h480v-32q0-11-5.5-20T580-306q-54-27-109-40.5T360-360q-56 0-111 13.5T140-306q-9 5-14.5 14t-5.5 20v32Zm296.5-343.5Q440-607 440-640t-23.5-56.5Q393-720 360-720t-56.5 23.5Q280-673 280-640t23.5 56.5Q327-560 360-560t56.5-23.5ZM360-240Zm0-400Z"/></svg></span>
         <span>Communauté</span>
       </button>
+      <button class="nav-btn" data-view="boutique">
+        <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor"><path d="M240-80q-33 0-56.5-23.5T160-160v-480q0-33 23.5-56.5T240-720h80q0-66 47-113t113-47q66 0 113 47t47 113h80q33 0 56.5 23.5T880-640v480q0 33-23.5 56.5T800-80H240Zm0-80h560v-480H240v480Zm240-240q66 0 113-47t47-113h-80q0 33-23.5 56.5T480-480q-33 0-56.5-23.5T400-560h-80q0 66 47 113t113 47ZM400-720h160q0-33-23.5-56.5T480-800q-33 0-56.5 23.5T400-720ZM240-160v-480 480Z"/></svg></span>
+        <span>Boutique</span>
+      </button>
     </nav>
+
+    <button id="quickRecycleBtn" class="quick-recycle-fab hidden" type="button">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor"><path d="M160-479q0 85 42.5 158T318-204q14 9 19.5 24.5T335-150q-8 15-24.5 19.5T279-134q-93-54-146-146T80-479q0-26 3.5-51t9.5-50l-13 8q-14 9-30 4.5T26-586q-8-14-3.5-30.5T41-641l121-70q14-8 30.5-3.5T217-696l70 120q8 14 3.5 30.5T272-521q-14 8-30.5 3.5T217-536l-34-59q-11 28-17 57t-6 59Zm320-321q-41 0-81 10.5T323-759q-15 8-31.5 5.5T267-770q-9-16-4-32.5t21-25.5q45-26 94.5-39T480-880q79 0 151.5 29.5T761-765v-15q0-17 11.5-28.5T801-820q17 0 28.5 11.5T841-780v140q0 17-11.5 28.5T801-600H661q-17 0-28.5-11.5T621-640q0-17 11.5-28.5T661-680h69q-46-57-111-88.5T480-800Zm242 531q38-44 58-97t20-111q0-17 11.5-30t28.5-13q17 0 28.5 13t11.5 30q0 65-20.5 125.5T800-239q-39 52-92.5 89T591-95l10 6q14 8 18 24.5T615-34q-8 14-24 18t-30-4L439-90q-14-8-18.5-24.5T424-145l70-121q8-14 24-18t30 4q14 8 18.5 24.5T563-225l-37 63q57-8 107.5-35.5T722-269Z"/></svg>
+      Recyclage rapide
+    </button>
+  </div>
+
+  <!-- Quick recycle modal -->
+  <div id="quickRecycleModal" class="modal hidden">
+    <div class="qr-panel">
+      <button id="closeQuickRecycleModal" class="icon-btn card-detail-close" type="button">✕</button>
+      <div id="quickRecycleBody"></div>
+    </div>
   </div>
 
   <!-- Booster opening modal -->
@@ -247,6 +293,12 @@
         <label for="profileNameInput">Pseudo</label>
         <input type="text" id="profileNameInput" maxlength="20" placeholder="Ton pseudo" />
       </div>
+      <div class="field">
+        <label for="profileTitleSelect">Titre</label>
+        <select id="profileTitleSelect">
+          <option value="">Aucun titre</option>
+        </select>
+      </div>
       <p class="profile-edit-label">Photo de profil</p>
       <div id="avatarGrid" class="avatar-grid"></div>
       <button id="saveProfileBtn" class="btn-primary" type="button">Enregistrer</button>
@@ -271,6 +323,61 @@
       <button id="closeNewsModal" class="icon-btn card-detail-close" type="button">✕</button>
       <h3 class="news-panel-title">Actualités</h3>
       <div id="newsList" class="news-list"></div>
+    </div>
+  </div>
+
+  <!-- Wheel of fortune modal -->
+  <div id="wheelModal" class="modal hidden">
+    <div class="wheel-panel">
+      <button id="closeWheelModal" class="icon-btn card-detail-close" type="button">✕</button>
+      <h3 class="quests-panel-title">Roue de la Fortune</h3>
+      <p class="quests-panel-sub">Tentez votre chance une fois par jour pour gagner des crédits.</p>
+      <div class="wheel-stage">
+        <div class="wheel-pointer"></div>
+        <div id="wheelDial" class="wheel-dial">
+          <div id="wheelLabels" class="wheel-labels"></div>
+        </div>
+      </div>
+      <button id="spinWheelBtn" class="btn-primary btn-large" type="button">Lancer la roue</button>
+      <p id="wheelHint" class="wheel-hint"></p>
+    </div>
+  </div>
+
+  <!-- Quests / achievements modal -->
+  <div id="questsModal" class="modal hidden">
+    <div class="quests-panel">
+      <button id="closeQuestsModal" class="icon-btn card-detail-close" type="button">✕</button>
+      <h3 class="quests-panel-title">Quêtes</h3>
+      <p class="quests-panel-sub">Complétez votre collection pour décrocher les récompenses.</p>
+      <div id="questsList" class="quests-list"></div>
+    </div>
+  </div>
+
+  <!-- Shop item detail modal -->
+  <div id="shopItemModal" class="modal hidden">
+    <div class="shop-item-balance">
+      <span class="shop-item-balance-label">Gemmes possédées</span>
+      <span class="shop-item-balance-value"><img class="gem-icon-img" src="medias/Gemme.png" alt="" /><span id="shopItemModalBalance">0</span></span>
+    </div>
+    <div class="shop-item-detail">
+      <button id="closeShopItemModal" class="icon-btn card-detail-close" type="button">✕</button>
+      <img id="shopItemModalIcon" class="shop-item-detail-icon" src="" alt="" />
+      <h3 id="shopItemModalName" class="lieu-panel-title"></h3>
+      <div class="ornate-divider"><span class="ornate-divider-diamond">◆</span></div>
+      <p id="shopItemModalDesc" class="shop-item-detail-desc"></p>
+      <p id="shopItemModalNote" class="shop-item-detail-note hidden"></p>
+      <button id="shopItemModalBuy" class="btn-primary shop-item-detail-buy" type="button"></button>
+    </div>
+  </div>
+
+  <!-- Gem pack joke modal -->
+  <div id="gemJokeModal" class="modal hidden">
+    <div class="gem-joke-panel">
+      <button id="closeGemJokeModal" class="icon-btn card-detail-close" type="button">✕</button>
+      <img class="gem-joke-emoji" src="medias/Gemme.png" alt="gemmes" />
+      <h3 class="lieu-panel-title">Vraiment ?</h3>
+      <p class="gem-joke-text">Bien évidemment que c'est une blague. Passe ton chemin.</p>
+      <button id="gemJokeDismiss" class="btn-primary" type="button">Je m'en doutais</button>
     </div>
   </div>
 

@@ -25,6 +25,7 @@ function slugify(str) {
 const RAW_CARDS = [
   ['Matthias-ChefMatthias', 'Chef Matthias', 'common'],
   ['Matthias-PleinLeCul', 'Matthias Plein le Cul', 'common'],
+  ['Matthias-Pirate', 'Matthias Pirate', 'common'],
   ['Matthias-Pizzaiolo', 'Matthias Pizzaziolo', 'rare'],
   ['Matthias-3Cannes', 'Matthias 3 Cannes', 'epic'],
   ['Matthias-Puant', 'Matthias Puant', 'legendary'],
@@ -98,6 +99,9 @@ const RAW_SPECIAL_CARDS = [
   ['Johnny', 'Johnny 50 Euros', 'legendary'],
   ['Elodie-Fantome', 'Elodie Fantôme de Diane', 'legendary'],
   ['Mikoo-Furtif', 'Mikoo Furtif', 'common'],
+  ['Tete-Sniper', "Tété Sniper d'Elite", 'epic'],
+  ['Maho-SousSucre', 'Maho Sous Sucre', 'epic'],
+  ['RomainUgo-3Cannes', 'Romain et Ugo 3 Cannes', 'rare'],
 ];
 
 const SPECIAL_CARD_DEFS = RAW_SPECIAL_CARDS.map(([file, name, rarity]) => ({
@@ -170,6 +174,55 @@ LOCATION_CARD_DEFS.push({
 
 const ALL_CARD_DEFS = [...CARD_DEFS, ...SPECIAL_CARD_DEFS, ...LOCATION_CARD_DEFS];
 
+// ============================================================
+//  QUÊTES / SUCCÈS DE COLLECTION
+// ============================================================
+// Chaque quête = posséder (>= 1 exemplaire) toutes les cartes d'un ensemble.
+// Une fois complète, le joueur récupère la récompense une seule fois.
+const ACHIEVEMENT_TEAM_LABELS = { cuisine: 'Cuisine', salle: 'Salle', reception: 'Réception' };
+
+function buildAchievements() {
+  const list = [];
+
+  // Une quête par personnage (cartes personnage classiques).
+  [...new Set(CARD_DEFS.map((c) => c.character))].forEach((char) => {
+    list.push({
+      id: `char-${slugify(char)}`,
+      label: `Collectionner toutes les cartes de ${char}`,
+      cardIds: CARD_DEFS.filter((c) => c.character === char).map((c) => c.id),
+      reward: { type: 'gems', amount: 5 },
+    });
+  });
+
+  list.push({
+    id: 'set-lieux',
+    label: 'Collectionner toutes les cartes Lieux',
+    cardIds: LOCATION_CARD_DEFS.map((c) => c.id),
+    reward: { type: 'gems', amount: 5 },
+  });
+  list.push({
+    id: 'set-special',
+    label: 'Collectionner toutes les cartes Spéciales',
+    cardIds: SPECIAL_CARD_DEFS.map((c) => c.id),
+    reward: { type: 'gems', amount: 10 },
+  });
+
+  // Une quête par équipe (union des cartes personnage de l'équipe).
+  Object.entries(ACHIEVEMENT_TEAM_LABELS).forEach(([loc, label]) => {
+    const teamChars = Object.keys(CHARACTER_LOCATIONS).filter((ch) => CHARACTER_LOCATIONS[ch] === loc);
+    list.push({
+      id: `team-${loc}`,
+      label: `Collectionner toutes les cartes de l'équipe ${label}`,
+      sublabel: teamChars.join(', '),
+      cardIds: CARD_DEFS.filter((c) => teamChars.includes(c.character)).map((c) => c.id),
+      reward: { type: 'gems', amount: 10 },
+    });
+  });
+
+  return list;
+}
+const ACHIEVEMENTS = buildAchievements();
+
 const RARITY_WEIGHTS = { common: 50, rare: 25, epic: 15, legendary: 10 };
 const RARITY_LABELS = { common: 'Commune', rare: 'Rare', epic: 'Épique', legendary: 'Légendaire' };
 const CREDIT_INTERVAL_MS = 15 * 60 * 1000; // un palier de réserve toutes les 15 minutes
@@ -179,19 +232,56 @@ const LOADING_SCREEN_MIN_MS = 1000; // durée d'affichage supplémentaire de l'�
 const BOOSTER_COST = 30;
 const STARTING_CREDITS = 100;
 const JOHNNY_DONATION_COST = 50;
-const DAILY_QUEST_REWARD = 20;
 const DAILY_QUEST_RECYCLE_RARITIES = ['common', 'rare', 'epic'];
 const DAILY_QUEST_LIST = [
   { id: 'openBooster', label: 'Ouvrir un booster' },
   { id: 'recycleCard', label: 'Recycler une carte' },
   { id: 'giftCard', label: 'Offrir une carte à un autre joueur' },
 ];
+const DAILY_QUEST_GEM_REWARD = 5;
+
+// ============================================================
+//  BOUTIQUE (gemmes = monnaie premium, obtenue via les quêtes)
+// ============================================================
+// Les packs de gemmes sont une blague : aucun paiement réel n'est possible.
+const GEM_PACKS = [
+  { id: 'poignee', gems: 100, price: '4,99 €', img: 'G1.png', tier: 'poignee', tag: '' },
+  { id: 'coffre', gems: 550, price: '19,99 €', img: 'G2.png', tier: 'coffre', tag: 'Populaire', bonus: '+10% offert' },
+  { id: 'tresor', gems: 1500, price: '49,99 €', img: 'G3.png', tier: 'tresor', tag: 'Meilleure offre', bonus: '+25% offert' },
+];
+const CREDIT_MULTIPLIER_FACTOR = 2;
+const CREDIT_MULTIPLIER_DURATION_MS = 60 * 60 * 1000; // 1 heure
+const SHOP_ITEMS = {
+  luckPotion: { cost: 25 },
+  wheelReset: { cost: 5 },
+  credits: { cost: 5, credits: 10 },
+};
+
+// Titres : achetés en crédits, équipables depuis la modale de profil.
+const TITLES = [
+  { id: 'cuisinier-dur', name: 'Cuisinier dur au mal', cost: 5 },
+  { id: 'serveur-patient', name: 'Serveur Patient', cost: 5 },
+  { id: 'receptioniste-qualite', name: 'Réceptioniste de Qualité', cost: 5 },
+  { id: 'ptit-zgeg', name: 'Ptit Zgeg', cost: 5 },
+  { id: 'oui-oui-oui', name: '« Oui oui oui ! »', cost: 5 },
+  { id: 'starfoullah', name: '« Starfoullah ! »', cost: 5 },
+  { id: 'je-vais-serrer', name: '« Je vais serrer ! »', cost: 5 },
+  { id: 'allo', name: '« Allo ! »', cost: 5 },
+  { id: 'collectionneur', name: 'Collectionneur Expert', cost: 10 },
+  { id: 'accro-au-jeu', name: 'Accro au jeu', cost: 10 },
+  { id: 'professionnel', name: 'Professionnel', cost: 10 },
+  { id: 'personnage-principal', name: 'Personnage principal', cost: 20 },
+];
+const TITLE_BY_ID = Object.fromEntries(TITLES.map((t) => [t.id, t]));
+function titleName(id) {
+  return id && TITLE_BY_ID[id] ? TITLE_BY_ID[id].name : '';
+}
 
 // Raretés autorisées pour chacune des 5 cartes d'un booster (dans l'ordre du tirage)
 const BOOSTER_SLOTS = [
   ['common', 'rare'],
-  ['common'],
   ['common', 'rare'],
+  ['common', 'rare', 'epic'],
   ['common', 'rare', 'epic'],
   ['epic', 'legendary'],
 ];
@@ -212,21 +302,20 @@ const LOCK_ICON_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 9
 
 const AVATAR_OPTIONS = ['PP/Defaut.png', 'PP/Matthias.png', 'PP/Valentin.png', 'PP/Denis.png', 'PP/Elodie.png', 'PP/Anais.png', 'PP/Louis.png', 'PP/Louann.png', 'PP/Val.png', 'PP/Bichu.png', 'PP/Emilie.png'];
 
-// Roue quotidienne : 11 cases (1 perdu, 3x1, 3x3, 3x10, 1x30 crédits), tirage équiprobable
+// Roue quotidienne : 10 cases (3x1, 3x5, 3x10, 1x30 crédits), tirage équiprobable
 const WHEEL_SLOTS = [
   { type: 'credits', amount: 1 },
-  { type: 'credits', amount: 3 },
+  { type: 'credits', amount: 5 },
   { type: 'credits', amount: 10 },
   { type: 'credits', amount: 1 },
   { type: 'credits', amount: 30 },
-  { type: 'credits', amount: 3 },
+  { type: 'credits', amount: 5 },
   { type: 'credits', amount: 10 },
   { type: 'credits', amount: 1 },
-  { type: 'lose' },
-  { type: 'credits', amount: 3 },
+  { type: 'credits', amount: 5 },
   { type: 'credits', amount: 10 },
 ];
-const WHEEL_COLORS = { lose: '#454a54', 1: '#8a94a3', 3: '#0ac8b9', 10: '#a855f7', 30: '#e8b923' };
+const WHEEL_COLORS = { 1: '#8a94a3', 5: '#0ac8b9', 10: '#a855f7', 30: '#e8b923' };
 
 // ============================================================
 //  ACTUALITÉS
@@ -234,6 +323,21 @@ const WHEEL_COLORS = { lose: '#454a54', 1: '#8a94a3', 3: '#0ac8b9', 10: '#a855f7
 // Ajoute les nouvelles entrées en tête de liste (la plus récente en premier).
 // date : 'AAAA-MM-JJ' — body : un paragraphe par chaîne du tableau.
 const NEWS_ITEMS = [
+  {
+    date: '2026-09-02',
+    title: 'Une grosse mise à jour !',
+    body: [
+      "4 nouvelles cartes rejoignent la collection.",
+      "Toutes les images du jeu ont été optimisées : le chargement est nettement plus rapide, même sur une connexion lente.",
+      "Un nouvel onglet Boutique fait son apparition, avec sa toute nouvelle monnaie : les gemmes. On les gagne en accomplissant ses quêtes, puis on les dépense en boutique.",
+      "Ajout du système de titres : achetez des titres en boutique et équipez-en un depuis votre profil pour l'afficher sous votre pseudo.",
+      "Un panneau de Quêtes regroupe désormais tous vos objectifs de collection.",
+      "Le Recyclage rapide, accessible depuis la collection, recycle d'un seul geste tous les doublons d'une rareté.",
+      "Rééquilibrage de la roue de la fortune.",
+      "Enfin, de nombreuses interfaces ont été retravaillées.",
+      "Bon jeu à toutes et à tous !",
+    ],
+  },
   {
     date: '2026-08-30',
     title: "Un départ à célébrer",
@@ -313,6 +417,7 @@ const authError = el('authError');
 const authSubmit = el('authSubmit');
 
 const playerName = el('playerName');
+const playerTitle = el('playerTitle');
 const avatarImg = el('avatarImg');
 const creditsValue = el('creditsValue');
 const logoutBtn = el('logoutBtn');
@@ -320,8 +425,10 @@ const logoutBtn = el('logoutBtn');
 const profileModal = el('profileModal');
 const closeProfileModalBtn = el('closeProfileModal');
 const profileNameInput = el('profileNameInput');
+const profileTitleSelect = el('profileTitleSelect');
 const avatarGrid = el('avatarGrid');
 const saveProfileBtn = el('saveProfileBtn');
+const titleShopList = el('titleShopList');
 
 const nextCreditTimer = el('nextCreditTimer');
 const creditProgressBar = el('creditProgressBar');
@@ -330,10 +437,12 @@ const reserveValue = el('reserveValue');
 const claimReserveBtn = el('claimReserveBtn');
 const openBoosterBtn = el('openBoosterBtn');
 const boosterPack = el('boosterPack');
+const luckPotionActiveLabel = el('luckPotionActiveLabel');
 const addCreditsBtn = el('addCreditsBtn');
-const resetCardsBtn = el('resetCardsBtn');
+const resetCreditsBtn = el('resetCreditsBtn');
+const resetGemsBtn = el('resetGemsBtn');
 const resetWheelBtn = el('resetWheelBtn');
-const unlockAllCardsBtn = el('unlockAllCardsBtn');
+const resetQuestsBtn = el('resetQuestsBtn');
 const statOwned = el('statOwned');
 const statUnique = el('statUnique');
 const johnnyDivider = el('johnnyDivider');
@@ -379,6 +488,10 @@ const cardDetailRarity = el('cardDetailRarity');
 const cardDetailCount = el('cardDetailCount');
 const recycleBtn = el('recycleBtn');
 const recycleHint = el('recycleHint');
+const quickRecycleBtn = el('quickRecycleBtn');
+const quickRecycleModal = el('quickRecycleModal');
+const closeQuickRecycleModalBtn = el('closeQuickRecycleModal');
+const quickRecycleBody = el('quickRecycleBody');
 
 const homeLieuBg = el('homeLieuBg');
 const lieuSlotBtn = el('lieuSlotBtn');
@@ -396,6 +509,34 @@ const wheelDial = el('wheelDial');
 const wheelLabels = el('wheelLabels');
 const spinWheelBtn = el('spinWheelBtn');
 const wheelHint = el('wheelHint');
+const wheelLaunchBtn = el('wheelLaunchBtn');
+const wheelLaunchBadge = el('wheelLaunchBadge');
+const wheelModal = el('wheelModal');
+const closeWheelModalBtn = el('closeWheelModal');
+
+const questsBtn = el('questsBtn');
+const questsBadge = el('questsBadge');
+const questsModal = el('questsModal');
+const closeQuestsModalBtn = el('closeQuestsModal');
+const questsList = el('questsList');
+
+const multiplierBanner = el('multiplierBanner');
+const multiplierBannerTimer = el('multiplierBannerTimer');
+const gemsValue = el('gemsValue');
+const gemPackGrid = el('gemPackGrid');
+const shopItemList = el('shopItemList');
+const gemJokeModal = el('gemJokeModal');
+const closeGemJokeModalBtn = el('closeGemJokeModal');
+const gemJokeDismissBtn = el('gemJokeDismiss');
+const addGemsBtn = el('addGemsBtn');
+const shopItemModal = el('shopItemModal');
+const closeShopItemModalBtn = el('closeShopItemModal');
+const shopItemModalIcon = el('shopItemModalIcon');
+const shopItemModalBalance = el('shopItemModalBalance');
+const shopItemModalName = el('shopItemModalName');
+const shopItemModalDesc = el('shopItemModalDesc');
+const shopItemModalNote = el('shopItemModalNote');
+const shopItemModalBuy = el('shopItemModalBuy');
 
 const newsBtn = el('newsBtn');
 const newsBadge = el('newsBadge');
@@ -437,15 +578,19 @@ function isElementVisible(elm) {
   return !!(elm && elm.getClientRects().length);
 }
 
-function pulseCreditsValue() {
-  creditsValue.classList.remove('credit-pop');
-  void creditsValue.offsetWidth; // force le redémarrage de l'animation CSS
-  creditsValue.classList.add('credit-pop');
+function pulseValue(elm) {
+  if (!elm) return;
+  elm.classList.remove('credit-pop');
+  void elm.offsetWidth; // force le redémarrage de l'animation CSS
+  elm.classList.add('credit-pop');
 }
+function pulseCreditsValue() { pulseValue(creditsValue); }
+function pulseGemsValue() { pulseValue(gemsValue); }
 
-function spawnFlyingCoin(srcRect) {
+// Jeton volant (pièce ou gemme) du point `srcRect` vers `cfg.target`.
+function spawnFlyingToken(srcRect, cfg) {
   new Audio('medias/Coin.wav').play().catch(() => {});
-  const dstRect = creditsValue.getBoundingClientRect();
+  const dstRect = cfg.target.getBoundingClientRect();
   const startX = srcRect.left + srcRect.width / 2;
   const startY = srcRect.top + srcRect.height / 2;
   const endX = dstRect.left + dstRect.width / 2;
@@ -453,28 +598,28 @@ function spawnFlyingCoin(srcRect) {
   const peakX = (startX + endX) / 2 + (Math.random() * 40 - 20);
   const peakY = Math.min(startY, endY) - 50;
 
-  const coin = document.createElement('img');
-  coin.src = 'medias/Credit.png';
-  coin.className = 'flying-coin';
-  coin.style.left = `${startX}px`;
-  coin.style.top = `${startY}px`;
-  document.body.appendChild(coin);
+  const token = document.createElement('img');
+  token.src = cfg.img;
+  token.className = cfg.className;
+  token.style.left = `${startX}px`;
+  token.style.top = `${startY}px`;
+  document.body.appendChild(token);
 
-  const anim = coin.animate([
+  const anim = token.animate([
     { transform: 'translate(-50%, -50%) scale(1) rotate(0deg)', offset: 0, opacity: 1 },
     { transform: `translate(calc(-50% + ${peakX - startX}px), calc(-50% + ${peakY - startY}px)) scale(1.15) rotate(220deg)`, offset: 0.45, opacity: 1 },
     { transform: `translate(calc(-50% + ${endX - startX}px), calc(-50% + ${endY - startY}px)) scale(.25) rotate(400deg)`, offset: 1, opacity: 0.15 },
   ], { duration: 1400, easing: 'cubic-bezier(.3,.55,.35,1)' });
 
   anim.onfinish = () => {
-    coin.remove();
-    pulseCreditsValue();
+    token.remove();
+    cfg.pulse();
   };
 }
 
-function flyCoinToCredits(sourceEl, count = 1) {
-  if (!isElementVisible(sourceEl) || !isElementVisible(creditsValue)) {
-    pulseCreditsValue();
+function flyTokens(sourceEl, count, cfg) {
+  if (!isElementVisible(sourceEl) || !isElementVisible(cfg.target)) {
+    cfg.pulse();
     return;
   }
   // Capturé maintenant, avant qu'un re-render (ex: renderCardDetail après recyclage)
@@ -482,8 +627,20 @@ function flyCoinToCredits(sourceEl, count = 1) {
   const srcRect = sourceEl.getBoundingClientRect();
   const n = Math.min(count, 3);
   for (let i = 0; i < n; i++) {
-    setTimeout(() => spawnFlyingCoin(srcRect), i * 220);
+    setTimeout(() => spawnFlyingToken(srcRect, cfg), i * 220);
   }
+}
+
+function flyCoinToCredits(sourceEl, count = 1) {
+  flyTokens(sourceEl, count, {
+    target: creditsValue, img: 'medias/Credit.png', className: 'flying-coin', pulse: pulseCreditsValue,
+  });
+}
+
+function flyGemToBalance(sourceEl, count = 1) {
+  flyTokens(sourceEl, count, {
+    target: gemsValue, img: 'medias/Gemme.png', className: 'flying-coin flying-gem', pulse: pulseGemsValue,
+  });
 }
 
 function showToast(msg) {
@@ -578,9 +735,18 @@ function openProfileModal() {
   profileNameInput.value = state.displayName;
   selectedAvatar = state.avatar;
   renderAvatarGrid();
+  renderProfileTitleOptions();
   profileModal.classList.remove('hidden');
   profileModal.getBoundingClientRect(); // force layout so the fade/scale-in transition plays
   profileModal.classList.add('open');
+}
+
+function renderProfileTitleOptions() {
+  const owned = TITLES.filter((t) => state.ownedTitles && state.ownedTitles[t.id]);
+  profileTitleSelect.innerHTML = '<option value="">Aucun titre</option>' +
+    owned.map((t) => `<option value="${t.id}">${escapeHtml(t.name)}</option>`).join('');
+  profileTitleSelect.value = (state.equippedTitle && state.ownedTitles[state.equippedTitle]) ? state.equippedTitle : '';
+  profileTitleSelect.disabled = owned.length === 0;
 }
 
 async function closeProfileModal() {
@@ -600,6 +766,7 @@ function renderAvatarGrid() {
 avatarGrid.addEventListener('click', (e) => {
   const btn = e.target.closest('.avatar-option');
   if (!btn) return;
+  if (btn.dataset.avatar === AVATAR_OPTIONS[2]) registerDevUnlockTap();
   selectedAvatar = btn.dataset.avatar;
   renderAvatarGrid();
 });
@@ -613,8 +780,11 @@ saveProfileBtn.addEventListener('click', async () => {
   }
   state.displayName = name;
   state.avatar = selectedAvatar || state.avatar;
+  const pickedTitle = profileTitleSelect.value || null;
+  state.equippedTitle = (pickedTitle && state.ownedTitles[pickedTitle]) ? pickedTitle : null;
   playerName.textContent = state.displayName;
   avatarImg.src = `medias/${state.avatar}`;
+  updatePlayerTitle();
   await persistUser();
   showToast('Profil mis à jour !');
   closeProfileModal();
@@ -641,6 +811,7 @@ auth.onAuthStateChanged(async (user) => {
     await wait(LOADING_SCREEN_MIN_MS);
     showScreen('appShell');
     revealHomeLieuBg();
+    revealQuestsLaunchRow(true); // relance le compte à 1 s depuis l'affichage réel de l'accueil
     if (accrueReserve() > 0) {
       await persistUser();
     }
@@ -667,6 +838,8 @@ async function loadUserData(user) {
       email: user.email,
       displayName: data.displayName || user.displayName || user.email.split('@')[0],
       credits: typeof data.credits === 'number' ? data.credits : STARTING_CREDITS,
+      gems: typeof data.gems === 'number' ? data.gems : 0,
+      creditMultiplierUntil: typeof data.creditMultiplierUntil === 'number' ? data.creditMultiplierUntil : 0,
       lastClaim: data.lastClaim || Date.now(),
       reserve: typeof data.reserve === 'number' ? data.reserve : 0,
       cards: data.cards || {},
@@ -680,6 +853,10 @@ async function loadUserData(user) {
       dailyQuestClaimed: !!data.dailyQuestClaimed,
       lastSeenNewsDate: data.lastSeenNewsDate || '',
       claimedNewsRewards: data.claimedNewsRewards || {},
+      claimedAchievements: data.claimedAchievements || {},
+      luckyBoosterPending: !!data.luckyBoosterPending,
+      ownedTitles: data.ownedTitles || {},
+      equippedTitle: data.equippedTitle || null,
     };
   } else {
     isNewAccountThisSession = true;
@@ -688,6 +865,8 @@ async function loadUserData(user) {
       email: user.email,
       displayName: user.displayName || user.email.split('@')[0],
       credits: STARTING_CREDITS,
+      gems: 0,
+      creditMultiplierUntil: 0,
       lastClaim: Date.now(),
       reserve: 0,
       cards: {},
@@ -701,6 +880,10 @@ async function loadUserData(user) {
       dailyQuestClaimed: false,
       lastSeenNewsDate: LATEST_NEWS_DATE,
       claimedNewsRewards: {},
+      claimedAchievements: {},
+      luckyBoosterPending: false,
+      ownedTitles: {},
+      equippedTitle: null,
     };
     await persistUser();
   }
@@ -719,6 +902,8 @@ function persistUser() {
     displayName: state.displayName,
     email: state.email,
     credits: state.credits,
+    gems: state.gems,
+    creditMultiplierUntil: state.creditMultiplierUntil,
     lastClaim: state.lastClaim,
     reserve: state.reserve,
     cards: state.cards,
@@ -732,6 +917,10 @@ function persistUser() {
     dailyQuestClaimed: state.dailyQuestClaimed,
     lastSeenNewsDate: state.lastSeenNewsDate,
     claimedNewsRewards: state.claimedNewsRewards,
+    claimedAchievements: state.claimedAchievements,
+    luckyBoosterPending: state.luckyBoosterPending,
+    ownedTitles: state.ownedTitles,
+    equippedTitle: state.equippedTitle,
   }).catch((err) => {
     console.error('Sauvegarde des données joueur refusée :', err);
     showToast('Erreur de sauvegarde — vérifiez les règles Firebase.');
@@ -744,6 +933,7 @@ function persistUser() {
     totalCount,
     credits: state.credits,
     cards: state.cards,
+    equippedTitle: state.equippedTitle || null,
     updatedAt: Date.now(),
   }).catch((err) => {
     console.error('Mise à jour du classement public refusée :', err);
@@ -771,10 +961,22 @@ function accrueReserve() {
   return added;
 }
 
+// Multiplicateur x2 (objet boutique) : double les gains en crédits pendant 1 h.
+function creditMultiplierActive() {
+  return !!state && (state.creditMultiplierUntil || 0) > Date.now();
+}
+
+// Ajoute `base` crédits au solde, doublés si le multiplicateur est actif.
+// Renvoie le montant réellement crédité.
+function grantCredits(base) {
+  const gained = creditMultiplierActive() ? base * CREDIT_MULTIPLIER_FACTOR : base;
+  state.credits += gained;
+  return gained;
+}
+
 async function claimReserve() {
   if (!state || state.reserve <= 0) return;
-  const amount = state.reserve;
-  state.credits += amount;
+  const amount = grantCredits(state.reserve);
   state.reserve = 0;
   state.lastClaim = Date.now();
   await persistUser();
@@ -810,13 +1012,289 @@ function updateCreditUI() {
   creditsValue.textContent = state.credits;
   reserveValue.textContent = `${state.reserve} / ${RESERVE_MAX}`;
   claimReserveBtn.disabled = state.reserve <= 0;
+  claimReserveBtn.innerHTML = state.reserve > 0
+    ? `Récupérer ${state.reserve} <img class="coin-icon" src="medias/Credit.png" alt="crédits" />`
+    : 'Récupérer';
   const elapsed = Date.now() - state.lastClaim;
   const reserveFull = state.reserve >= RESERVE_MAX;
   nextCreditTimer.textContent = reserveFull ? 'Réserve pleine' : formatDuration(CREDIT_INTERVAL_MS - elapsed);
   const fractional = reserveFull ? 0 : (elapsed / CREDIT_INTERVAL_MS) * CREDIT_PER_TICK;
   const pct = Math.min(100, Math.max(0, ((state.reserve + fractional) / RESERVE_MAX) * 100));
   creditProgressFill.style.width = `${pct}%`;
+  updateMultiplierBanner();
 }
+
+// ============================================================
+//  BOUTIQUE : gemmes, multiplicateur, objets
+// ============================================================
+function updateGemUI() {
+  if (!state) return;
+  if (gemsValue) gemsValue.textContent = state.gems;
+}
+
+function updateLuckPotionLabel() {
+  if (!luckPotionActiveLabel) return;
+  luckPotionActiveLabel.classList.toggle('hidden', !state || !state.luckyBoosterPending);
+}
+
+// ---- Titres ----
+function updatePlayerTitle() {
+  if (!playerTitle) return;
+  const name = state ? titleName(state.equippedTitle) : '';
+  playerTitle.textContent = name;
+  playerTitle.classList.toggle('hidden', !name);
+}
+
+function renderTitleShop() {
+  if (!state || !titleShopList) return;
+  titleShopList.innerHTML = TITLES.map((t) => {
+    const owned = !!(state.ownedTitles && state.ownedTitles[t.id]);
+    const canAfford = state.credits >= t.cost;
+    const action = owned
+      ? '<span class="title-shop-owned">Possédé</span>'
+      : `<button type="button" class="title-shop-buy" data-title="${t.id}" ${canAfford ? '' : 'disabled'}>
+           Acheter ${t.cost} <img class="coin-icon" src="medias/Credit.png" alt="crédits" />
+         </button>`;
+    return `
+      <div class="title-shop-row ${owned ? 'owned' : ''}">
+        <span class="title-shop-name">${escapeHtml(t.name)}</span>
+        ${action}
+      </div>`;
+  }).join('');
+}
+
+async function buyTitle(id) {
+  if (!state) return;
+  const t = TITLE_BY_ID[id];
+  if (!t || (state.ownedTitles && state.ownedTitles[id])) return;
+  if (state.credits < t.cost) {
+    showToast('Pas assez de crédits !');
+    return;
+  }
+  state.credits -= t.cost;
+  if (!state.ownedTitles) state.ownedTitles = {};
+  state.ownedTitles[id] = true;
+  new Audio('medias/buy.wav').play().catch(() => {});
+  updateCreditUI();
+  updateHomeStats();
+  renderTitleShop();
+  await persistUser();
+  showToast(`Titre débloqué : « ${t.name} »`);
+}
+
+titleShopList.addEventListener('click', (e) => {
+  const btn = e.target.closest('.title-shop-buy[data-title]');
+  if (btn && !btn.disabled) buyTitle(btn.dataset.title);
+});
+
+let multiplierWasActive = false;
+function updateMultiplierBanner() {
+  if (!state || !multiplierBanner) return;
+  const active = creditMultiplierActive();
+  multiplierBanner.classList.toggle('hidden', !active);
+  if (active) {
+    multiplierBannerTimer.textContent = formatDuration(state.creditMultiplierUntil - Date.now());
+  }
+  // Rafraîchit le compte à rebours "Actif encore …" de l'objet Multiplicateur ;
+  // le `!== active` force un dernier rendu quand l'effet vient d'expirer.
+  const boutiqueEl = el('view-boutique');
+  if (boutiqueEl && boutiqueEl.classList.contains('active') && (active || multiplierWasActive !== active)) {
+    renderBoutique();
+  }
+  multiplierWasActive = active;
+}
+
+function renderBoutique() {
+  if (!state || !gemPackGrid) return;
+  updateGemUI();
+
+  gemPackGrid.innerHTML = GEM_PACKS.map((p) => `
+    <button type="button" class="gem-pack gem-pack-${p.tier}" data-pack="${p.id}" style="background-image:url('medias/${encodeURIComponent(p.img)}')">
+      <span class="gem-pack-shine"></span>
+      ${p.tag ? `<span class="gem-pack-tag">${escapeHtml(p.tag)}</span>` : ''}
+      <span class="gem-pack-info">
+        <span class="gem-pack-amount"><img class="gem-icon-img" src="medias/Gemme.png" alt="" />${p.gems.toLocaleString('fr-FR')}</span>
+        <span class="gem-pack-sub">${p.bonus ? escapeHtml(p.bonus) : 'gemmes'}</span>
+      </span>
+      <span class="gem-pack-price">${p.price}</span>
+    </button>`).join('');
+
+  shopItemList.innerHTML = getShopItems().map((it) => `
+    <button type="button" class="shop-tile ${it.blocked ? 'shop-tile-locked' : ''}" data-item="${it.id}">
+      <img class="shop-tile-icon" src="medias/${encodeURIComponent(it.img)}" alt="${escapeHtml(it.name)}" />
+      <span class="shop-tile-price"><img class="gem-icon-img" src="medias/Gemme.png" alt="" />${it.cost}</span>
+    </button>`).join('');
+
+  renderTitleShop();
+
+  // Garde la modale d'un objet synchro si elle est ouverte (dispo/gemmes qui changent).
+  if (shopModalItemId && shopItemModal && !shopItemModal.classList.contains('hidden')) {
+    renderShopItemModal(shopModalItemId);
+  }
+}
+
+// Objets de la boutique + état calculé (dispo, note explicative).
+function getShopItems() {
+  const wheelUsed = !isWheelAvailable();
+  const poor = 'Pas assez de gemmes.';
+  return [
+    {
+      id: 'credits',
+      img: 'Credit.png',
+      name: 'Crédits',
+      desc: `Échangez ${SHOP_ITEMS.credits.cost} gemmes contre ${SHOP_ITEMS.credits.credits} crédits.`,
+      cost: SHOP_ITEMS.credits.cost,
+      disabled: state.gems < SHOP_ITEMS.credits.cost,
+      blocked: false,
+      note: state.gems < SHOP_ITEMS.credits.cost ? poor : '',
+    },
+    {
+      id: 'wheelReset',
+      img: 'TourneVis.png',
+      name: 'Tourne-vis',
+      desc: "Relance la roue de la fortune une fois de plus aujourd'hui.",
+      cost: SHOP_ITEMS.wheelReset.cost,
+      disabled: !wheelUsed || state.gems < SHOP_ITEMS.wheelReset.cost,
+      blocked: !wheelUsed,
+      note: !wheelUsed
+        ? 'La roue est déjà disponible.'
+        : (state.gems < SHOP_ITEMS.wheelReset.cost ? poor : ''),
+    },
+    {
+      id: 'luckPotion',
+      img: 'Multiplicateur.png',
+      name: 'Potion de Chance',
+      desc: 'Vous assure une carte Légendaire dans le prochain booster que vous ouvrez.',
+      cost: SHOP_ITEMS.luckPotion.cost,
+      disabled: state.luckyBoosterPending || state.gems < SHOP_ITEMS.luckPotion.cost,
+      blocked: state.luckyBoosterPending,
+      note: state.luckyBoosterPending
+        ? 'Déjà active — elle s\'applique à votre prochain booster.'
+        : (state.gems < SHOP_ITEMS.luckPotion.cost ? poor : ''),
+    },
+  ];
+}
+
+let shopModalItemId = null;
+
+function renderShopItemModal(id) {
+  const it = getShopItems().find((x) => x.id === id);
+  if (!it) return;
+  if (shopItemModalBalance) shopItemModalBalance.textContent = state.gems;
+  shopItemModalIcon.src = `medias/${encodeURIComponent(it.img)}`;
+  shopItemModalIcon.alt = it.name;
+  shopItemModalName.textContent = it.name;
+  shopItemModalDesc.textContent = it.desc;
+  shopItemModalNote.textContent = it.note;
+  shopItemModalNote.classList.toggle('hidden', !it.note);
+  shopItemModalBuy.disabled = it.disabled;
+  shopItemModalBuy.innerHTML = `Acheter <img class="gem-icon-img" src="medias/Gemme.png" alt="" />${it.cost}`;
+}
+
+function openShopItemModal(id) {
+  if (!getShopItems().some((x) => x.id === id)) return;
+  shopModalItemId = id;
+  renderShopItemModal(id);
+  new Audio('medias/Clic2.wav').play().catch(() => {});
+  shopItemModal.classList.remove('hidden');
+  shopItemModal.getBoundingClientRect();
+  shopItemModal.classList.add('open');
+}
+
+async function closeShopItemModal() {
+  new Audio('medias/Clic2.wav').play().catch(() => {});
+  shopItemModal.classList.remove('open');
+  await wait(300);
+  shopItemModal.classList.add('hidden');
+  shopModalItemId = null;
+}
+
+async function buyShopItem(id) {
+  if (!state) return false;
+  if (id === 'luckPotion') {
+    if (state.luckyBoosterPending || state.gems < SHOP_ITEMS.luckPotion.cost) return false;
+    state.gems -= SHOP_ITEMS.luckPotion.cost;
+    state.luckyBoosterPending = true;
+    showToast('Potion de Chance bue ! Une Légendaire vous attend au prochain booster.');
+  } else if (id === 'wheelReset') {
+    if (isWheelAvailable() || state.gems < SHOP_ITEMS.wheelReset.cost) return false;
+    state.gems -= SHOP_ITEMS.wheelReset.cost;
+    state.lastWheelSpinDate = null;
+    updateWheelUI();
+    showToast('La roue de la fortune est de nouveau disponible !');
+  } else if (id === 'credits') {
+    if (state.gems < SHOP_ITEMS.credits.cost) return false;
+    state.gems -= SHOP_ITEMS.credits.cost;
+    state.credits += SHOP_ITEMS.credits.credits;
+    updateCreditUI();
+    updateHomeStats();
+    flyCoinToCredits(shopItemModalBuy, SHOP_ITEMS.credits.credits);
+    showToast(`+${SHOP_ITEMS.credits.credits} crédits !`);
+  } else {
+    return false;
+  }
+  new Audio('medias/buy.wav').play().catch(() => {});
+  updateGemUI();
+  updateMultiplierBanner();
+  updateLuckPotionLabel();
+  renderBoutique();
+  await persistUser();
+  return true;
+}
+
+gemPackGrid.addEventListener('click', (e) => {
+  if (!e.target.closest('.gem-pack')) return;
+  new Audio('medias/Clic2.wav').play().catch(() => {});
+  gemJokeModal.classList.remove('hidden');
+  gemJokeModal.getBoundingClientRect();
+  gemJokeModal.classList.add('open');
+});
+
+async function closeGemJokeModal() {
+  new Audio('medias/Clic2.wav').play().catch(() => {});
+  gemJokeModal.classList.remove('open');
+  await wait(300);
+  gemJokeModal.classList.add('hidden');
+}
+closeGemJokeModalBtn.addEventListener('click', closeGemJokeModal);
+gemJokeDismissBtn.addEventListener('click', closeGemJokeModal);
+gemJokeModal.addEventListener('click', (e) => { if (e.target === gemJokeModal) closeGemJokeModal(); });
+
+shopItemList.addEventListener('click', (e) => {
+  const tile = e.target.closest('.shop-tile');
+  if (!tile || !state) return;
+  new Audio('medias/Clic2.wav').play().catch(() => {});
+  openShopItemModal(tile.dataset.item);
+});
+
+shopItemModalBuy.addEventListener('click', async () => {
+  if (!state || !shopModalItemId || shopItemModalBuy.disabled) return;
+  const ok = await buyShopItem(shopModalItemId);
+  if (ok) closeShopItemModal();
+  else renderShopItemModal(shopModalItemId);
+});
+
+closeShopItemModalBtn.addEventListener('click', closeShopItemModal);
+shopItemModal.addEventListener('click', (e) => { if (e.target === shopItemModal) closeShopItemModal(); });
+
+addGemsBtn.addEventListener('click', async () => {
+  if (!state) return;
+  state.gems += 5;
+  updateGemUI();
+  renderBoutique();
+  await persistUser();
+  showToast('+5 gemmes (dev)');
+  flyGemToBalance(addGemsBtn, 5);
+});
+
+resetGemsBtn.addEventListener('click', async () => {
+  if (!state) return;
+  state.gems = 0;
+  updateGemUI();
+  renderBoutique();
+  await persistUser();
+  showToast('Gemmes remises à 0 (dev)');
+});
 
 // ============================================================
 //  BOOSTERS
@@ -869,11 +1347,22 @@ function drawBoosterCards() {
   const equippedLieu = getEquippedLieu();
   const boostLocation = equippedLieu ? equippedLieu.location : null;
   const boostNew = !!equippedLieu && equippedLieu.effect === 'newCard';
-  return BOOSTER_SLOTS.map((allowedRarities) => {
+  const cards = BOOSTER_SLOTS.map((allowedRarities) => {
     const card = drawCard(allowedRarities, excludeIds, boostLocation, boostNew);
     excludeIds.add(card.id);
     return card;
   });
+
+  // Potion de Chance : garantit une Légendaire si le tirage n'en a pas produit.
+  if (state.luckyBoosterPending && !cards.some((c) => c.rarity === 'legendary')) {
+    const idx = cards.length - 1; // le dernier slot autorise déjà "legendary"
+    const others = new Set(cards.filter((_, i) => i !== idx).map((c) => c.id));
+    let pool = ALL_CARD_DEFS.filter((c) => c.rarity === 'legendary' && !others.has(c.id));
+    if (pool.length === 0) pool = ALL_CARD_DEFS.filter((c) => c.rarity === 'legendary');
+    cards[idx] = weightedPickCard(pool, boostLocation, boostNew);
+  }
+
+  return cards;
 }
 
 openBoosterBtn.addEventListener('click', async () => {
@@ -888,6 +1377,9 @@ openBoosterBtn.addEventListener('click', async () => {
 
   state.credits -= BOOSTER_COST;
   const drawn = drawBoosterCards();
+  const usedLuckPotion = state.luckyBoosterPending;
+  state.luckyBoosterPending = false; // consommée par cette ouverture
+  updateLuckPotionLabel();
   const newCardIds = new Set();
   drawn.forEach((card) => {
     if (!state.cards[card.id]) newCardIds.add(card.id);
@@ -897,6 +1389,7 @@ openBoosterBtn.addEventListener('click', async () => {
   markDailyQuest('openBooster');
   updateCreditUI();
   updateHomeStats();
+  if (usedLuckPotion) renderBoutique();
   await persistUser();
 
   showBoosterReveal(drawn, newCardIds);
@@ -941,15 +1434,14 @@ donateJohnnyBtn.addEventListener('click', async () => {
 function buildWheelDial() {
   const seg = 360 / WHEEL_SLOTS.length;
   const gradient = WHEEL_SLOTS
-    .map((slot, i) => `${WHEEL_COLORS[slot.type === 'lose' ? 'lose' : slot.amount]} ${i * seg}deg ${(i + 1) * seg}deg`)
+    .map((slot, i) => `${WHEEL_COLORS[slot.amount]} ${i * seg}deg ${(i + 1) * seg}deg`)
     .join(', ');
   wheelDial.style.background = `conic-gradient(from 0deg, ${gradient})`;
 
   wheelLabels.innerHTML = WHEEL_SLOTS
     .map((slot, i) => {
       const angle = i * seg + seg / 2;
-      const label = slot.type === 'lose' ? '✕' : `+${slot.amount}`;
-      return `<span class="wheel-label" style="transform: translate(-50%,-50%) rotate(${angle}deg) translateY(-95px)">${label}</span>`;
+      return `<span class="wheel-label" style="transform: translate(-50%,-50%) rotate(${angle}deg) translateY(-95px)">+${slot.amount}</span>`;
     })
     .join('');
 }
@@ -1006,7 +1498,7 @@ function updateDailyQuestsUI() {
   claimDailyQuestBtn.disabled = !allDone || state.dailyQuestClaimed;
   claimDailyQuestBtn.textContent = state.dailyQuestClaimed
     ? 'Récompense récupérée'
-    : `Récupérer ${DAILY_QUEST_REWARD} Crédits`;
+    : `Récupérer ${DAILY_QUEST_GEM_REWARD} Gemmes`;
 }
 
 claimDailyQuestBtn.addEventListener('click', async () => {
@@ -1014,13 +1506,13 @@ claimDailyQuestBtn.addEventListener('click', async () => {
   ensureDailyQuests();
   if (!allDailyQuestsDone() || state.dailyQuestClaimed) return;
   state.dailyQuestClaimed = true;
-  state.credits += DAILY_QUEST_REWARD;
-  updateCreditUI();
+  state.gems += DAILY_QUEST_GEM_REWARD;
   updateHomeStats();
+  updateGemUI();
   updateDailyQuestsUI();
   await persistUser();
-  showToast(`+${DAILY_QUEST_REWARD} crédits !`);
-  flyCoinToCredits(claimDailyQuestBtn, DAILY_QUEST_REWARD);
+  showToast(`+${DAILY_QUEST_GEM_REWARD} gemmes !`);
+  flyGemToBalance(claimDailyQuestBtn, DAILY_QUEST_GEM_REWARD);
 });
 
 function isWheelAvailable() {
@@ -1035,7 +1527,27 @@ function updateWheelUI() {
   const available = isWheelAvailable();
   spinWheelBtn.disabled = !available || wheelSpinning;
   wheelHint.textContent = available ? 'Tente ta chance une fois par jour !' : 'Reviens demain pour un nouveau tour !';
+  if (wheelLaunchBadge) wheelLaunchBadge.classList.toggle('hidden', !available || wheelSpinning);
 }
+
+function openWheelModal() {
+  if (!state) return;
+  new Audio('medias/Clic2.wav').play().catch(() => {});
+  updateWheelUI();
+  wheelModal.classList.remove('hidden');
+  wheelModal.getBoundingClientRect();
+  wheelModal.classList.add('open');
+}
+async function closeWheelModal() {
+  if (wheelSpinning) return; // ne pas fermer pendant que la roue tourne
+  new Audio('medias/Clic2.wav').play().catch(() => {});
+  wheelModal.classList.remove('open');
+  await wait(300);
+  wheelModal.classList.add('hidden');
+}
+wheelLaunchBtn.addEventListener('click', openWheelModal);
+closeWheelModalBtn.addEventListener('click', closeWheelModal);
+wheelModal.addEventListener('click', (e) => { if (e.target === wheelModal) closeWheelModal(); });
 
 spinWheelBtn.addEventListener('click', async () => {
   if (!state || wheelSpinning || !isWheelAvailable()) return;
@@ -1060,18 +1572,14 @@ spinWheelBtn.addEventListener('click', async () => {
   wheelSpinning = false;
 
   state.lastWheelSpinDate = todayKey();
-  if (slot.type === 'lose') {
-    wheelHint.textContent = 'Perdu ! Retente ta chance demain.';
-    showToast('Roue : perdu cette fois-ci !');
-  } else {
-    state.credits += slot.amount;
-    updateCreditUI();
-    updateHomeStats();
-    wheelHint.textContent = `Gagné : +${slot.amount} crédit${slot.amount > 1 ? 's' : ''} !`;
-    showToast(`Roue : +${slot.amount} crédit${slot.amount > 1 ? 's' : ''} !`);
-  }
+  const gained = grantCredits(slot.amount);
+  updateCreditUI();
+  updateHomeStats();
+  wheelHint.textContent = `Gagné : +${gained} crédit${gained > 1 ? 's' : ''} !`;
+  showToast(`Roue : +${gained} crédit${gained > 1 ? 's' : ''} !`);
   await persistUser();
   spinWheelBtn.disabled = true;
+  updateWheelUI();
 });
 
 // ============================================================
@@ -1183,22 +1691,16 @@ addCreditsBtn.addEventListener('click', async () => {
   updateHomeStats();
   await persistUser();
   showToast('+10 crédits (dev)');
+  flyCoinToCredits(addCreditsBtn, 10);
 });
 
-resetCardsBtn.addEventListener('click', async () => {
+resetCreditsBtn.addEventListener('click', async () => {
   if (!state) return;
-  if (!confirm('Réinitialiser toutes les cartes possédées ? Cette action est irréversible.')) return;
-  state.cards = {};
-  state.johnnyDonated = false;
-  state.equippedLieuId = null;
-  state.credits = STARTING_CREDITS;
-  updateHomeStats();
-  updateJohnnyPanel();
-  updateLieuSlotUI();
+  state.credits = 0;
   updateCreditUI();
-  renderCollection();
+  updateHomeStats();
   await persistUser();
-  showToast('Collection réinitialisée (dev)');
+  showToast('Crédits remis à 0 (dev)');
 });
 
 resetWheelBtn.addEventListener('click', async () => {
@@ -1209,15 +1711,15 @@ resetWheelBtn.addEventListener('click', async () => {
   showToast('Roue réinitialisée (dev)');
 });
 
-unlockAllCardsBtn.addEventListener('click', async () => {
+// Remet à zéro les quêtes de collection déjà récupérées.
+resetQuestsBtn.addEventListener('click', async () => {
   if (!state) return;
-  ALL_CARD_DEFS.forEach((card) => {
-    state.cards[card.id] = state.cards[card.id] || 1;
-  });
+  state.claimedAchievements = {};
   updateHomeStats();
-  renderCollection();
+  updateQuestsBadge();
+  renderQuests();
   await persistUser();
-  showToast('Toutes les cartes débloquées (dev)');
+  showToast('Quêtes récupérées réinitialisées (dev)');
 });
 
 function wait(ms) {
@@ -1373,11 +1875,11 @@ newsList.addEventListener('click', async (e) => {
 
   state.claimedNewsRewards[key] = true;
   btn.disabled = true;
-  state.credits += amount;
+  const gained = grantCredits(amount);
   updateCreditUI();
   updateHomeStats();
-  showToast(`+${amount} crédits !`);
-  flyCoinToCredits(btn, amount);
+  showToast(`+${gained} crédits !`);
+  flyCoinToCredits(btn, gained);
   await persistUser();
   renderNews();
 });
@@ -1409,13 +1911,129 @@ closeNewsModalBtn.addEventListener('click', closeNewsModal);
 newsModal.addEventListener('click', (e) => { if (e.target === newsModal) closeNewsModal(); });
 
 // ============================================================
+//  QUÊTES / SUCCÈS DE COLLECTION (modale)
+// ============================================================
+function achievementOwnedCount(a) {
+  return a.cardIds.reduce((n, id) => n + ((state.cards[id] || 0) > 0 ? 1 : 0), 0);
+}
+function achievementComplete(a) {
+  return a.cardIds.length > 0 && achievementOwnedCount(a) === a.cardIds.length;
+}
+function achievementClaimable(a) {
+  return achievementComplete(a) && !state.claimedAchievements[a.id];
+}
+function anyAchievementClaimable() {
+  return !!state && ACHIEVEMENTS.some(achievementClaimable);
+}
+
+function updateQuestsBadge() {
+  if (!questsBadge) return;
+  questsBadge.classList.toggle('hidden', !anyAchievementClaimable());
+  if (questsModal && !questsModal.classList.contains('hidden')) renderQuests();
+}
+
+
+function questItemHtml(a) {
+  const owned = achievementOwnedCount(a);
+  const total = a.cardIds.length;
+  const done = owned === total;
+  const claimed = !!state.claimedAchievements[a.id];
+  const claimable = done && !claimed;
+  const pct = total > 0 ? Math.round((owned / total) * 100) : 0;
+  const typeClass = a.reward.type === 'gems' ? 'quest-gems' : 'quest-credits';
+  const rewardIcon = a.reward.type === 'gems'
+    ? '<img class="gem-icon-img" src="medias/Gemme.png" alt="" />'
+    : '<img class="coin-icon" src="medias/Credit.png" alt="" />';
+
+  let foot;
+  if (claimed) {
+    foot = '<span class="quest-claimed">✓ Validée</span>';
+  } else if (claimable) {
+    foot = `<button type="button" class="btn-primary quest-claim-btn" data-quest="${a.id}">Récupérer la récompense</button>`;
+  } else {
+    foot = `
+      <div class="quest-bar"><div class="quest-bar-fill" style="width:${pct}%"></div></div>
+      <span class="quest-bar-count">${owned}/${total}</span>`;
+  }
+
+  return `
+    <div class="quest-item ${typeClass} ${done ? 'done' : ''} ${claimed ? 'claimed' : ''}">
+      <div class="quest-item-titlewrap">
+        <span class="quest-caption">Objectif</span>
+        <span class="quest-item-label">${escapeHtml(a.label)}</span>
+        ${a.sublabel ? `<span class="quest-item-sub">${escapeHtml(a.sublabel)}</span>` : ''}
+      </div>
+      <div class="quest-reward-cell">
+        <span class="quest-caption">Récompense</span>
+        <span class="quest-reward-badge">${rewardIcon}${a.reward.amount}</span>
+      </div>
+      <div class="quest-item-foot">${foot}</div>
+    </div>`;
+}
+
+function renderQuests() {
+  if (!state) return;
+  const ongoing = ACHIEVEMENTS.filter((a) => !state.claimedAchievements[a.id]);
+  const validated = ACHIEVEMENTS.filter((a) => !!state.claimedAchievements[a.id]);
+  let html = ongoing.map(questItemHtml).join('');
+  if (validated.length) {
+    html += `<div class="quests-section-title">Quêtes validées</div>${validated.map(questItemHtml).join('')}`;
+  }
+  questsList.innerHTML = html;
+}
+
+questsList.addEventListener('click', async (e) => {
+  const btn = e.target.closest('.quest-claim-btn[data-quest]');
+  if (!btn || !state) return;
+  const a = ACHIEVEMENTS.find((x) => x.id === btn.dataset.quest);
+  if (!a || !achievementClaimable(a)) return;
+
+  btn.disabled = true;
+  state.claimedAchievements[a.id] = true;
+  let msg;
+  if (a.reward.type === 'gems') {
+    state.gems += a.reward.amount;
+    updateGemUI();
+    msg = `+${a.reward.amount} gemmes !`;
+    flyGemToBalance(btn, a.reward.amount);
+  } else {
+    const gained = grantCredits(a.reward.amount);
+    updateCreditUI();
+    msg = `+${gained} crédit${gained > 1 ? 's' : ''} !`;
+    flyCoinToCredits(btn, gained);
+  }
+  new Audio('medias/Coin.wav').play().catch(() => {});
+  updateHomeStats();
+  updateQuestsBadge();
+  renderQuests();
+  await persistUser();
+  showToast(msg);
+});
+
+function openQuestsModal() {
+  if (!state) return;
+  new Audio('medias/Clic2.wav').play().catch(() => {});
+  renderQuests();
+  questsModal.classList.remove('hidden');
+  questsModal.getBoundingClientRect();
+  questsModal.classList.add('open');
+}
+async function closeQuestsModal() {
+  new Audio('medias/Clic2.wav').play().catch(() => {});
+  questsModal.classList.remove('open');
+  await wait(300);
+  questsModal.classList.add('hidden');
+}
+questsBtn.addEventListener('click', openQuestsModal);
+closeQuestsModalBtn.addEventListener('click', closeQuestsModal);
+questsModal.addEventListener('click', (e) => { if (e.target === questsModal) closeQuestsModal(); });
+
+// ============================================================
 //  NAVIGATION
 // ============================================================
 const devTools = el('devTools');
 const DEV_TOOLS_UNLOCK_TAPS = 10;
 const DEV_TOOLS_TAP_TIMEOUT_MS = 2000;
-let homeTapCount = 0;
-let homeTapTimeout = null;
 
 document.querySelectorAll('.nav-btn').forEach((btn) => {
   btn.addEventListener('click', () => {
@@ -1423,27 +2041,49 @@ document.querySelectorAll('.nav-btn').forEach((btn) => {
     sound.volume = 0.3;
     sound.play().catch(() => {});
     switchView(btn.dataset.view);
-
-    if (btn.dataset.view === 'home' && devTools.classList.contains('hidden')) {
-      homeTapCount += 1;
-      clearTimeout(homeTapTimeout);
-      homeTapTimeout = setTimeout(() => { homeTapCount = 0; }, DEV_TOOLS_TAP_TIMEOUT_MS);
-      if (homeTapCount >= DEV_TOOLS_UNLOCK_TAPS) {
-        homeTapCount = 0;
-        devTools.classList.remove('hidden');
-        showToast('Outils dev activés');
-      }
-    }
   });
 });
+
+// Déblocage des outils dev : 10 clics sur la 3e photo de profil (modale "Mon profil").
+let devTapCount = 0;
+let devTapTimeout = null;
+function registerDevUnlockTap() {
+  if (!devTools.classList.contains('hidden')) return;
+  devTapCount += 1;
+  clearTimeout(devTapTimeout);
+  devTapTimeout = setTimeout(() => { devTapCount = 0; }, DEV_TOOLS_TAP_TIMEOUT_MS);
+  if (devTapCount >= DEV_TOOLS_UNLOCK_TAPS) {
+    devTapCount = 0;
+    devTools.classList.remove('hidden');
+    showToast('Outils dev activés');
+  }
+}
 
 function switchView(view, { instant } = {}) {
   document.querySelectorAll('.view').forEach((v) => v.classList.remove('active'));
   el(`view-${view}`).classList.add('active');
+  const scroller = document.querySelector('.views');
+  if (scroller) scroller.scrollTop = 0;
   document.querySelectorAll('.nav-btn').forEach((b) => b.classList.toggle('active', b.dataset.view === view));
   if (view === 'collection') renderCollection(true);
   if (view === 'community') { renderPlayerList(); }
+  if (view === 'boutique') renderBoutique();
   if (view === 'home' && !instant) revealHomeLieuBg();
+  quickRecycleBtn.classList.toggle('hidden', view !== 'collection');
+  if (view !== 'collection' && !quickRecycleModal.classList.contains('hidden')) closeQuickRecycleModal();
+  revealQuestsLaunchRow(view === 'home');
+}
+
+// Les boutons Quêtes / Roue apparaissent 1 s après l'affichage de l'accueil.
+let questsRowRevealTimer = null;
+function revealQuestsLaunchRow(onHome) {
+  const row = document.querySelector('.quests-launch-row');
+  if (!row) return;
+  clearTimeout(questsRowRevealTimer);
+  row.classList.remove('revealed');
+  if (onHome) {
+    questsRowRevealTimer = setTimeout(() => row.classList.add('revealed'), 1000);
+  }
 }
 
 // ============================================================
@@ -1611,9 +2251,130 @@ closeCardDetail.addEventListener('click', closeCardDetailModal);
 cardDetailModal.addEventListener('click', (e) => { if (e.target === cardDetailModal) closeCardDetailModal(); });
 
 // ============================================================
+//  RECYCLAGE RAPIDE (bouton fixe de la collection)
+// ============================================================
+const QUICK_RECYCLE_RARITIES = ['common', 'rare', 'epic', 'legendary'];
+
+// Combien de doublons d'une rareté peuvent être recyclés (chaque carte gardée en 1 ex.).
+function quickRecycleSummary(rarity) {
+  const rule = RECYCLE_RULES[rarity];
+  let ops = 0;
+  let uniqueCards = 0;
+  ALL_CARD_DEFS.filter((c) => c.rarity === rarity).forEach((c) => {
+    const count = state.cards[c.id] || 0;
+    if (count < rule.minOwned) return;
+    const n = Math.floor((count - 1) / rule.cost);
+    if (n > 0) { ops += n; uniqueCards += 1; }
+  });
+  return { ops, uniqueCards, cardsConsumed: ops * rule.cost, credits: ops * rule.reward };
+}
+
+function renderQuickRecycleChoices() {
+  const rows = QUICK_RECYCLE_RARITIES.map((rarity) => {
+    const s = quickRecycleSummary(rarity);
+    const empty = s.ops === 0;
+    return `
+      <button type="button" class="qr-choice rarity-${rarity} ${empty ? 'qr-choice-empty' : ''}" data-rarity="${rarity}" ${empty ? 'disabled' : ''}>
+        <span class="qr-choice-info">
+          <span class="qr-choice-name">Cartes ${RARITY_LABELS[rarity].toLowerCase()}s</span>
+          <span class="qr-choice-count">${empty ? 'Aucun doublon à recycler' : `${s.cardsConsumed} carte${s.cardsConsumed > 1 ? 's' : ''} en double`}</span>
+        </span>
+        <span class="qr-choice-reward"><img class="coin-icon" src="medias/Credit.png" alt="" /> +${s.credits}</span>
+      </button>`;
+  }).join('');
+  quickRecycleBody.innerHTML = `
+    <h3 class="qr-title">Recyclage rapide</h3>
+    <p class="qr-sub">Recycle d'un coup tous les doublons d'une rareté. Chaque carte concernée reste dans ta collection en 1 exemplaire.</p>
+    <div class="qr-choices">${rows}</div>`;
+}
+
+function renderQuickRecycleConfirm(rarity) {
+  const s = quickRecycleSummary(rarity);
+  const label = RARITY_LABELS[rarity].toLowerCase();
+  const cPlural = s.cardsConsumed > 1 ? 's' : '';
+  const uPlural = s.uniqueCards > 1 ? 's' : '';
+  quickRecycleBody.innerHTML = `
+    <h3 class="qr-title">Confirmer le recyclage</h3>
+    <div class="qr-confirm-box rarity-${rarity}">
+      <p><strong>${s.cardsConsumed} carte${cPlural} ${label}${cPlural}</strong> en double seront recyclées, réparties sur <strong>${s.uniqueCards} carte${uPlural}</strong> différente${uPlural}.</p>
+      <p>Chaque carte concernée sera conservée en <strong>1 exemplaire</strong>. Cette action est irréversible.</p>
+      <p class="qr-confirm-gain">Tu recevras <img class="coin-icon" src="medias/Credit.png" alt="" /> <strong>+${s.credits} crédits</strong>.</p>
+    </div>
+    <div class="qr-confirm-actions">
+      <button type="button" class="btn-dev qr-back-btn">Retour</button>
+      <button type="button" class="btn-primary qr-confirm-btn" data-rarity="${rarity}">Recycler</button>
+    </div>`;
+}
+
+async function performQuickRecycle(rarity) {
+  if (!state) return;
+  const rule = RECYCLE_RULES[rarity];
+  let ops = 0;
+  ALL_CARD_DEFS.filter((c) => c.rarity === rarity).forEach((c) => {
+    const count = state.cards[c.id] || 0;
+    if (count < rule.minOwned) return;
+    const n = Math.floor((count - 1) / rule.cost);
+    if (n > 0) {
+      state.cards[c.id] = count - n * rule.cost;
+      ops += n;
+    }
+  });
+  if (ops === 0) { closeQuickRecycleModal(); return; }
+
+  const consumed = ops * rule.cost;
+  const credits = ops * rule.reward;
+  state.credits += credits;
+  markDailyQuest('recycleCard', rarity);
+  new Audio('medias/recycling.wav').play().catch(() => {});
+  flyCoinToCredits(quickRecycleBtn, credits);
+  updateCreditUI();
+  updateHomeStats();
+  renderCollection(true);
+  await persistUser();
+  showToast(`${consumed} carte${consumed > 1 ? 's' : ''} recyclée${consumed > 1 ? 's' : ''} · +${credits} crédit${credits > 1 ? 's' : ''}`);
+  closeQuickRecycleModal();
+}
+
+function openQuickRecycleModal() {
+  if (!state) return;
+  new Audio('medias/Clic2.wav').play().catch(() => {});
+  renderQuickRecycleChoices();
+  quickRecycleModal.classList.remove('hidden');
+  quickRecycleModal.getBoundingClientRect();
+  quickRecycleModal.classList.add('open');
+}
+async function closeQuickRecycleModal() {
+  quickRecycleModal.classList.remove('open');
+  await wait(300);
+  quickRecycleModal.classList.add('hidden');
+}
+
+quickRecycleBtn.addEventListener('click', openQuickRecycleModal);
+closeQuickRecycleModalBtn.addEventListener('click', closeQuickRecycleModal);
+quickRecycleModal.addEventListener('click', (e) => { if (e.target === quickRecycleModal) closeQuickRecycleModal(); });
+
+quickRecycleBody.addEventListener('click', async (e) => {
+  const choice = e.target.closest('.qr-choice[data-rarity]');
+  if (choice && !choice.disabled) {
+    new Audio('medias/Clic2.wav').play().catch(() => {});
+    renderQuickRecycleConfirm(choice.dataset.rarity);
+    return;
+  }
+  if (e.target.closest('.qr-back-btn')) {
+    renderQuickRecycleChoices();
+    return;
+  }
+  const confirmBtn = e.target.closest('.qr-confirm-btn[data-rarity]');
+  if (confirmBtn) {
+    confirmBtn.disabled = true;
+    await performQuickRecycle(confirmBtn.dataset.rarity);
+  }
+});
+
+// ============================================================
 //  COMMUNITY / PLAYER LIST
 // ============================================================
-const GOLD_FRAME_KEYWORDS = ['elo', 'val', 'bichu', 'chef', 'matthias', 'rault', 'anaïs', 'denis', 'louis', 'emily', 'maho', 'gabin', 'louann'];
+const GOLD_FRAME_KEYWORDS = ['elo', 'val', 'bichu', 'chef', 'matthias', 'rault', 'anaïs', 'denis', 'louis', 'emily', 'maho', 'gabin', 'louann', 'tété'];
 
 async function renderPlayerList() {
   playerList.innerHTML = '<p class="player-list-empty">Chargement...</p>';
@@ -1638,10 +2399,14 @@ async function renderPlayerList() {
         const delay = Math.min(i * 50, 800);
         const nameLower = (r.displayName || '').toLowerCase();
         const isGold = GOLD_FRAME_KEYWORDS.some((k) => nameLower.includes(k));
+        const title = titleName(r.equippedTitle);
         return `
           <div class="player-row row-slide-in${isGold ? ' player-row-gold' : ''}" style="animation-delay:${delay}ms" data-uid="${r.uid}" ${isMe ? '' : 'role="button"'}>
             <img class="player-avatar" src="medias/${avatar}" alt="" />
-            <span class="player-name">${escapeHtml(r.displayName || 'Joueur')}${isMe ? ' (toi)' : ''}</span>
+            <div class="player-name-block">
+              <span class="player-name">${escapeHtml(r.displayName || 'Joueur')}${isMe ? ' (toi)' : ''}</span>
+              ${title ? `<span class="player-title">${escapeHtml(title)}</span>` : ''}
+            </div>
             <span class="player-count">${r.uniqueCount || 0}/${ALL_CARD_DEFS.length}</span>
           </div>`;
       })
@@ -1870,11 +2635,13 @@ function updateHomeStats() {
   statOwned.textContent = totalOwned;
   statUnique.textContent = `${uniqueOwned}/${ALL_CARD_DEFS.length}`;
   creditsValue.textContent = state.credits;
+  updateQuestsBadge();
 }
 
 function renderAll() {
   playerName.textContent = state.displayName;
   avatarImg.src = `medias/${state.avatar}`;
+  updatePlayerTitle();
   el('boosterCost').textContent = BOOSTER_COST;
   updateHomeStats();
   updateCreditUI();
@@ -1883,6 +2650,10 @@ function renderAll() {
   updateJohnnyPanel();
   updateDailyQuestsUI();
   updateNewsBadge();
+  updateGemUI();
+  updateMultiplierBanner();
+  updateLuckPotionLabel();
+  renderBoutique();
   renderCollection();
   switchView('home', { instant: true });
 }
