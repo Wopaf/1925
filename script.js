@@ -88,6 +88,7 @@ const CARD_DEFS = RAW_CARDS.map(([file, name, rarity]) => ({
   rarity,
   character: file.split('-')[0],
   type: 'character',
+  extension: 'classic',
 }));
 
 // ============================================================
@@ -111,6 +112,7 @@ const SPECIAL_CARD_DEFS = RAW_SPECIAL_CARDS.map(([file, name, rarity]) => ({
   rarity,
   character: file.split('-')[0],
   type: 'special',
+  extension: 'classic',
 }));
 
 // ============================================================
@@ -152,6 +154,7 @@ const LOCATION_CARD_DEFS = RAW_LOCATIONS.map(([locationId, name, description]) =
   rarity: LOCATION_CARD_RARITY,
   character: 'Cartes Lieux',
   type: 'lieu',
+  extension: 'classic',
   location: locationId,
   icon: LOCATION_ICONS[locationId],
   file: LOCATION_CARD_FILES[locationId] || null,
@@ -165,6 +168,7 @@ LOCATION_CARD_DEFS.push({
   rarity: 'epic',
   character: 'Cartes Lieux',
   type: 'lieu',
+  extension: 'classic',
   location: null,
   effect: 'newCard',
   icon: '🛁',
@@ -172,7 +176,104 @@ LOCATION_CARD_DEFS.push({
   description: "Offre un bonus de +10% de chance d'obtenir de nouvelles cartes dans vos prochains boosters.",
 });
 
-const ALL_CARD_DEFS = [...CARD_DEFS, ...SPECIAL_CARD_DEFS, ...LOCATION_CARD_DEFS];
+// Cartes lieu de l'extension "Across the verse" : pas de visuel pour l'instant
+// (icône de repli via cardArtHtml), et un effet déclenché à l'ouverture d'un booster
+// plutôt qu'un bonus de tirage.
+LOCATION_CARD_DEFS.push({
+  id: 'lieu-aveyron',
+  name: 'Aveyron',
+  rarity: 'rare',
+  character: 'Cartes Lieux',
+  type: 'lieu',
+  extension: 'ext2',
+  location: null,
+  effect: 'boosterPascades',
+  effectAmount: 3,
+  icon: '🐄',
+  file: 'Aveyron.png',
+  bg: 'Aveyron-BG.png',
+  description: 'Pour chaque booster que vous ouvrez, obtenez 3 pascades.',
+});
+LOCATION_CARD_DEFS.push({
+  id: 'lieu-alibaba',
+  name: "Caverne d'Alibaba",
+  rarity: 'epic',
+  character: 'Cartes Lieux',
+  type: 'lieu',
+  extension: 'ext2',
+  location: null,
+  effect: 'boosterRandomReward',
+  icon: '💰',
+  file: 'Caverne.png',
+  bg: 'Caverne-BG.png',
+  description: 'Pour chaque booster que vous ouvrez, obtenez une récompense aléatoire.',
+});
+
+// ============================================================
+//  EXTENSION "POWER" (ext2)
+// ============================================================
+// Le 1er élément est le nom de fichier (sans extension = .png ; avec extension
+// explicite, ex. "X.PNG", il est utilisé tel quel — certains assets sont en .PNG).
+function makeExt2Def(type) {
+  return ([token, name, rarity]) => {
+    const dot = token.lastIndexOf('.');
+    const base = dot > 0 ? token.slice(0, dot) : token;
+    return {
+      id: slugify(base),
+      name,
+      file: dot > 0 ? token : `${token}.png`,
+      rarity,
+      character: base.split('-')[0],
+      type,
+      extension: 'ext2',
+    };
+  };
+}
+
+const RAW_EXT2_CARDS = [
+  ['Bichu-Power', 'Bichu Power', 'common'],
+  ['Elodie-Power', 'Elodie Power', 'common'],
+  ['Valentin-Power', 'Valentin Power', 'common'],
+  ['Matthias-Power', 'Matthias Power', 'common'],
+  ['Denis-Power', 'Denis Power', 'common'],
+  ['Matthias-LeCringe', 'Matthias Le Cringe', 'common'],
+  ['Valentin-LeCringe', 'Valentin Le Cringe', 'common'],
+  ['Val-Shaolin', 'Val Moine Shaolin', 'rare'],
+  ['Emilie-Catcheur.PNG', 'Emilie Catcheur', 'rare'],
+  ['Elodie-degre.PNG', 'Elodie 1er Degré', 'common'],
+  ['Louis-Bouzelouf', 'Louis Bouzelouf', 'epic'],
+  ['Bichu-2249', 'Bichu 2249', 'rare'],
+  ['Valentin-train', 'Valentin fan de train', 'epic'],
+  ['Anais-Mugshot', 'Anaïs Mugshot', 'epic'],
+  ['Matthias-Cruci', 'Matthias Cruciverbiste', 'common'],
+  ['Bichu-MaitreChien', 'Bichu Maître Chien', 'common'],
+  ['Denis-Kawaii', 'Denis Kawaii', 'epic'],
+  ['Bichu-Rasta', 'Bichu Rasta', 'legendary'],
+  ['Denis-Basket', 'Denis Basket', 'legendary'],
+  ['Elodie-CartonV2', 'Elodie Carton V2.0', 'legendary'],
+  ['Louis-Rayon', 'Louis Rayon de Soleil', 'legendary'],
+  ['Val-Dirty', 'Val Dirty Dancing', 'legendary'],
+  ['Valentin-Beauf', 'Valentin Beauf', 'common'],
+];
+const EXT2_CARD_DEFS = RAW_EXT2_CARDS.map(makeExt2Def('character'));
+
+// Cartes spéciales de l'extension "Across the verse" (catégorie "Cartes Spécial").
+const RAW_EXT2_SPECIAL_CARDS = [
+  ['PhillipLacheau', 'Phillipe Lacheau', 'common'],
+  ['William', 'William', 'rare'],
+  ['Tete-pecheCanard', 'Tété Pêche aux Canard', 'rare'],
+  ['Maho-Pop', 'Maho Roi de la Pop', 'epic'],
+  ['Thermomix-Gaulois', 'Thermomix le Gaulois', 'legendary'],
+];
+const EXT2_SPECIAL_CARD_DEFS = RAW_EXT2_SPECIAL_CARDS.map(makeExt2Def('special'));
+
+const ALL_CARD_DEFS = [
+  ...CARD_DEFS,
+  ...SPECIAL_CARD_DEFS,
+  ...LOCATION_CARD_DEFS,
+  ...EXT2_CARD_DEFS,
+  ...EXT2_SPECIAL_CARD_DEFS,
+];
 
 // ============================================================
 //  QUÊTES / SUCCÈS DE COLLECTION
@@ -231,6 +332,24 @@ const RESERVE_MAX = 90; // capacité maximale de la réserve de crédits
 const LOADING_SCREEN_MIN_MS = 1000; // durée d'affichage supplémentaire de l'écran de chargement
 const BOOSTER_COST = 30;
 const STARTING_CREDITS = 100;
+
+// Extensions de cartes. La 1ère est "Classic" (toutes les cartes actuelles).
+// Les extensions marquées `comingSoon` ne sont pas encore ouvrables (pas de cartes).
+const EXTENSIONS = [
+  { id: 'classic', name: 'Classic', front: 'Booster.png', back: 'Booster-dos.png' },
+  { id: 'ext2', name: 'Across the verse', front: 'Booster2.png', back: 'Booster-Dos2.png' },
+  { id: 'soon', name: 'Prochainement', front: 'Booster-Empty.png', back: 'Booster-Empty.png', comingSoon: true },
+];
+const EXT_INDEX_STORAGE_KEY = 'selectedExtIndex';
+function loadStoredExtIndex() {
+  try {
+    const i = Number(localStorage.getItem(EXT_INDEX_STORAGE_KEY));
+    return Number.isInteger(i) && i >= 0 && i < EXTENSIONS.length ? i : 0;
+  } catch {
+    return 0;
+  }
+}
+let currentExtIndex = loadStoredExtIndex();
 const JOHNNY_DONATION_COST = 50;
 const DAILY_QUEST_RECYCLE_RARITIES = ['common', 'rare', 'epic'];
 const DAILY_QUEST_LIST = [
@@ -238,7 +357,7 @@ const DAILY_QUEST_LIST = [
   { id: 'recycleCard', label: 'Recycler une carte' },
   { id: 'giftCard', label: 'Offrir une carte à un autre joueur' },
 ];
-const DAILY_QUEST_GEM_REWARD = 5;
+const DAILY_QUEST_GEM_REWARD = 10;
 
 // ============================================================
 //  BOUTIQUE (gemmes = monnaie premium, obtenue via les quêtes)
@@ -254,7 +373,8 @@ const CREDIT_MULTIPLIER_DURATION_MS = 60 * 60 * 1000; // 1 heure
 const SHOP_ITEMS = {
   luckPotion: { cost: 25 },
   wheelReset: { cost: 5 },
-  credits: { cost: 5, credits: 10 },
+  credits: { cost: 5, credits: 10 },  // 5 gemmes -> 10 crédits
+  gems: { cost: 20, gems: 5 },        // 20 crédits -> 5 gemmes
 };
 
 // Titres : achetés en crédits, équipables depuis la modale de profil.
@@ -276,6 +396,13 @@ const TITLE_BY_ID = Object.fromEntries(TITLES.map((t) => [t.id, t]));
 function titleName(id) {
   return id && TITLE_BY_ID[id] ? TITLE_BY_ID[id].name : '';
 }
+
+// Lots de pascades achetables en crédits (échange 1:1).
+const PASCADE_PACKS = [
+  { pascades: 1, cost: 1 },
+  { pascades: 10, cost: 10 },
+  { pascades: 20, cost: 20 },
+];
 
 // Raretés autorisées pour chacune des 5 cartes d'un booster (dans l'ordre du tirage)
 const BOOSTER_SLOTS = [
@@ -323,6 +450,20 @@ const WHEEL_COLORS = { 1: '#8a94a3', 5: '#0ac8b9', 10: '#a855f7', 30: '#e8b923' 
 // Ajoute les nouvelles entrées en tête de liste (la plus récente en premier).
 // date : 'AAAA-MM-JJ' — body : un paragraphe par chaîne du tableau.
 const NEWS_ITEMS = [
+  {
+    date: '2026-09-04',
+    title: 'Encore plein de nouveautés !',
+    body: [
+      "Comme vous le savez je n'ai pas de vie, et en plus je suis informaticien : je vous ai donc préparé une belle fournée de nouveautés.",
+      "Un tout nouveau booster et sa première extension : « Across the Verse », avec ses propres cartes à collectionner.",
+      "Refonte de plusieurs interfaces pour une navigation plus claire.",
+      "De nouveaux objets à débloquer dans la boutique.",
+      "Arrivée du système de Pascades, la monnaie qui s'offre entre joueurs.",
+      "Vous pouvez maintenant afficher une bulle de dialogue sur votre profil dans l'onglet Communauté.",
+      "Et plein d'autres petites choses à découvrir par vous-même.",
+      "Bon jeu !",
+    ],
+  },
   {
     date: '2026-09-02',
     title: 'Une grosse mise à jour !',
@@ -437,12 +578,21 @@ const reserveValue = el('reserveValue');
 const claimReserveBtn = el('claimReserveBtn');
 const openBoosterBtn = el('openBoosterBtn');
 const boosterPack = el('boosterPack');
+const boosterCarousel = el('boosterCarousel');
+const boosterExtName = el('boosterExtName');
+const boosterExtCount = el('boosterExtCount');
+const boosterExtDots = el('boosterExtDots');
+const boosterPrevBtn = el('boosterPrev');
+const boosterNextBtn = el('boosterNext');
 const luckPotionActiveLabel = el('luckPotionActiveLabel');
 const addCreditsBtn = el('addCreditsBtn');
+const addPascadesBtn = el('addPascadesBtn');
 const resetCreditsBtn = el('resetCreditsBtn');
 const resetGemsBtn = el('resetGemsBtn');
+const resetPascadesBtn = el('resetPascadesBtn');
 const resetWheelBtn = el('resetWheelBtn');
 const resetQuestsBtn = el('resetQuestsBtn');
+const addExt2LieuxBtn = el('addExt2LieuxBtn');
 const statOwned = el('statOwned');
 const statUnique = el('statUnique');
 const johnnyDivider = el('johnnyDivider');
@@ -451,10 +601,10 @@ const donateJohnnyBtn = el('donateJohnnyBtn');
 const dailyQuestList = el('dailyQuestList');
 const claimDailyQuestBtn = el('claimDailyQuestBtn');
 
-const collectionProgress = el('collectionProgress');
 const cardGrid = el('cardGrid');
 
 const playerList = el('playerList');
+const myPlayerRow = el('myPlayerRow');
 const giftsSection = el('giftsSection');
 const sendGiftModal = el('sendGiftModal');
 const closeSendGiftModalBtn = el('closeSendGiftModal');
@@ -468,11 +618,35 @@ const giftReceivedRarity = el('giftReceivedRarity');
 const giftReceivedFrom = el('giftReceivedFrom');
 const closeGiftReceivedModalBtn = el('closeGiftReceivedModal');
 
+const sendPascadeModal = el('sendPascadeModal');
+const closeSendPascadeModalBtn = el('closeSendPascadeModal');
+const pascadeGiftPartnerName = el('pascadeGiftPartnerName');
+const pascadeGiftAmountEl = el('pascadeGiftAmount');
+const pascadeGiftBalanceEl = el('pascadeGiftBalance');
+const pascadeGiftMinusBtn = el('pascadeGiftMinus');
+const pascadeGiftPlusBtn = el('pascadeGiftPlus');
+const submitPascadeGiftBtn = el('submitPascadeGiftBtn');
+
+const giftChoiceModal = el('giftChoiceModal');
+const closeGiftChoiceModalBtn = el('closeGiftChoiceModal');
+const giftChoicePartnerName = el('giftChoicePartnerName');
+const giftChoicePascadeBtn = el('giftChoicePascade');
+const giftChoiceCardBtn = el('giftChoiceCard');
+
+const bubbleEditModal = el('bubbleEditModal');
+const closeBubbleEditModalBtn = el('closeBubbleEditModal');
+const bubbleEditInput = el('bubbleEditInput');
+const bubbleEditCount = el('bubbleEditCount');
+const bubbleEditClearBtn = el('bubbleEditClear');
+const bubbleEditSaveBtn = el('bubbleEditSave');
+
 const boosterModal = el('boosterModal');
 const revealCards = el('revealCards');
 const revealProgress = el('revealProgress');
 const revealHint = el('revealHint');
 const revealBoosterArt = el('revealBoosterArt');
+const revealBoosterFront = el('revealBoosterFront');
+const revealBoosterBack = el('revealBoosterBack');
 const revealRarityLabel = el('revealRarityLabel');
 const revealNewBadge = el('revealNewBadge');
 const revealRays = el('revealRays');
@@ -523,6 +697,7 @@ const questsList = el('questsList');
 const multiplierBanner = el('multiplierBanner');
 const multiplierBannerTimer = el('multiplierBannerTimer');
 const gemsValue = el('gemsValue');
+const pascadesValue = el('pascadesValue');
 const gemPackGrid = el('gemPackGrid');
 const shopItemList = el('shopItemList');
 const gemJokeModal = el('gemJokeModal');
@@ -533,8 +708,11 @@ const shopItemModal = el('shopItemModal');
 const closeShopItemModalBtn = el('closeShopItemModal');
 const shopItemModalIcon = el('shopItemModalIcon');
 const shopItemModalBalance = el('shopItemModalBalance');
+const shopItemModalBalanceLabel = el('shopItemModalBalanceLabel');
+const shopItemModalBalanceIcon = el('shopItemModalBalanceIcon');
 const shopItemModalName = el('shopItemModalName');
 const shopItemModalDesc = el('shopItemModalDesc');
+const shopItemModalUsage = el('shopItemModalUsage');
 const shopItemModalNote = el('shopItemModalNote');
 const shopItemModalBuy = el('shopItemModalBuy');
 
@@ -545,6 +723,7 @@ const closeNewsModalBtn = el('closeNewsModal');
 const newsList = el('newsList');
 
 const toast = el('toast');
+const toastBackdrop = el('toastBackdrop');
 
 // ============================================================
 //  APP STATE
@@ -552,8 +731,10 @@ const toast = el('toast');
 let state = null; // { uid, email, displayName, credits, lastClaim, cards }
 let isNewAccountThisSession = false;
 let currentFilter = 'all';
+let currentExtFilter = 'all'; // 'all' | id d'extension
 let tickInterval = null;
 let toastTimeout = null;
+let toastHideTimeout = null;
 let latestPublicProfiles = [];
 let giftsRef = null;
 const claimingGiftIds = new Set();
@@ -643,18 +824,46 @@ function flyGemToBalance(sourceEl, count = 1) {
   });
 }
 
-function showToast(msg) {
-  toast.textContent = msg;
-  toast.classList.remove('hidden');
-  clearTimeout(toastTimeout);
-  toastTimeout = setTimeout(() => toast.classList.add('hidden'), 2500);
+function flyPascadeToBalance(sourceEl, count = 1) {
+  flyTokens(sourceEl, count, {
+    target: pascadesValue, img: 'medias/Pascade.png', className: 'flying-coin', pulse: () => pulseValue(pascadesValue),
+  });
 }
 
-function formatDuration(ms) {
+function showToast(msg) {
+  toast.textContent = msg;
+  toast.classList.remove('hidden', 'leaving');
+  // Rejoue l'animation d'entrée même si le toast est déjà affiché.
+  toast.style.animation = 'none';
+  void toast.offsetWidth;
+  toast.style.animation = '';
+  if (toastBackdrop) {
+    toastBackdrop.classList.remove('hidden');
+    void toastBackdrop.offsetWidth;
+    toastBackdrop.classList.add('visible');
+  }
+  clearTimeout(toastTimeout);
+  clearTimeout(toastHideTimeout);
+  toastTimeout = setTimeout(() => {
+    toast.classList.add('leaving');
+    if (toastBackdrop) toastBackdrop.classList.remove('visible');
+    toastHideTimeout = setTimeout(() => {
+      toast.classList.add('hidden');
+      toast.classList.remove('leaving');
+      if (toastBackdrop) toastBackdrop.classList.add('hidden');
+    }, 340);
+  }, 2300);
+}
+
+function formatDuration(ms, minSecOnly = false) {
   const totalSec = Math.max(0, Math.floor(ms / 1000));
   const h = Math.floor(totalSec / 3600);
   const m = Math.floor((totalSec % 3600) / 60);
   const s = totalSec % 60;
+  if (minSecOnly) {
+    const mm = Math.floor(totalSec / 60);
+    return [mm, s].map((n) => String(n).padStart(2, '0')).join(':');
+  }
   return [h, m, s].map((n) => String(n).padStart(2, '0')).join(':');
 }
 
@@ -839,6 +1048,7 @@ async function loadUserData(user) {
       displayName: data.displayName || user.displayName || user.email.split('@')[0],
       credits: typeof data.credits === 'number' ? data.credits : STARTING_CREDITS,
       gems: typeof data.gems === 'number' ? data.gems : 0,
+      pascades: typeof data.pascades === 'number' ? data.pascades : 0,
       creditMultiplierUntil: typeof data.creditMultiplierUntil === 'number' ? data.creditMultiplierUntil : 0,
       lastClaim: data.lastClaim || Date.now(),
       reserve: typeof data.reserve === 'number' ? data.reserve : 0,
@@ -857,6 +1067,7 @@ async function loadUserData(user) {
       luckyBoosterPending: !!data.luckyBoosterPending,
       ownedTitles: data.ownedTitles || {},
       equippedTitle: data.equippedTitle || null,
+      bubbleText: typeof data.bubbleText === 'string' ? data.bubbleText : '',
     };
   } else {
     isNewAccountThisSession = true;
@@ -866,6 +1077,7 @@ async function loadUserData(user) {
       displayName: user.displayName || user.email.split('@')[0],
       credits: STARTING_CREDITS,
       gems: 0,
+      pascades: 0,
       creditMultiplierUntil: 0,
       lastClaim: Date.now(),
       reserve: 0,
@@ -884,6 +1096,7 @@ async function loadUserData(user) {
       luckyBoosterPending: false,
       ownedTitles: {},
       equippedTitle: null,
+      bubbleText: '',
     };
     await persistUser();
   }
@@ -903,6 +1116,7 @@ function persistUser() {
     email: state.email,
     credits: state.credits,
     gems: state.gems,
+    pascades: state.pascades,
     creditMultiplierUntil: state.creditMultiplierUntil,
     lastClaim: state.lastClaim,
     reserve: state.reserve,
@@ -921,6 +1135,7 @@ function persistUser() {
     luckyBoosterPending: state.luckyBoosterPending,
     ownedTitles: state.ownedTitles,
     equippedTitle: state.equippedTitle,
+    bubbleText: state.bubbleText || '',
   }).catch((err) => {
     console.error('Sauvegarde des données joueur refusée :', err);
     showToast('Erreur de sauvegarde — vérifiez les règles Firebase.');
@@ -932,8 +1147,10 @@ function persistUser() {
     uniqueCount,
     totalCount,
     credits: state.credits,
+    pascades: state.pascades || 0,
     cards: state.cards,
     equippedTitle: state.equippedTitle || null,
+    bubbleText: state.bubbleText || null,
     updatedAt: Date.now(),
   }).catch((err) => {
     console.error('Mise à jour du classement public refusée :', err);
@@ -1011,17 +1228,20 @@ function updateCreditUI() {
   if (!state) return;
   creditsValue.textContent = state.credits;
   reserveValue.textContent = `${state.reserve} / ${RESERVE_MAX}`;
-  claimReserveBtn.disabled = state.reserve <= 0;
-  claimReserveBtn.innerHTML = state.reserve > 0
+  const hasReserve = state.reserve > 0;
+  claimReserveBtn.disabled = !hasReserve;
+  claimReserveBtn.style.visibility = hasReserve ? '' : 'hidden';
+  claimReserveBtn.innerHTML = hasReserve
     ? `Récupérer ${state.reserve} <img class="coin-icon" src="medias/Credit.png" alt="crédits" />`
     : 'Récupérer';
   const elapsed = Date.now() - state.lastClaim;
   const reserveFull = state.reserve >= RESERVE_MAX;
-  nextCreditTimer.textContent = reserveFull ? 'Réserve pleine' : formatDuration(CREDIT_INTERVAL_MS - elapsed);
-  const fractional = reserveFull ? 0 : (elapsed / CREDIT_INTERVAL_MS) * CREDIT_PER_TICK;
-  const pct = Math.min(100, Math.max(0, ((state.reserve + fractional) / RESERVE_MAX) * 100));
+  nextCreditTimer.textContent = reserveFull ? 'Réserve pleine' : formatDuration(CREDIT_INTERVAL_MS - elapsed, true);
+  // La barre suit le compte à rebours : progression vers le prochain palier de crédits.
+  const pct = reserveFull ? 100 : Math.min(100, Math.max(0, (elapsed / CREDIT_INTERVAL_MS) * 100));
   creditProgressFill.style.width = `${pct}%`;
   updateMultiplierBanner();
+  refreshOpenBoosterBtnState();
 }
 
 // ============================================================
@@ -1030,6 +1250,11 @@ function updateCreditUI() {
 function updateGemUI() {
   if (!state) return;
   if (gemsValue) gemsValue.textContent = state.gems;
+}
+
+function updatePascadesUI() {
+  if (!state) return;
+  if (pascadesValue) pascadesValue.textContent = state.pascades || 0;
 }
 
 function updateLuckPotionLabel() {
@@ -1077,7 +1302,7 @@ async function buyTitle(id) {
   new Audio('medias/buy.wav').play().catch(() => {});
   updateCreditUI();
   updateHomeStats();
-  renderTitleShop();
+  renderBoutique();
   await persistUser();
   showToast(`Titre débloqué : « ${t.name} »`);
 }
@@ -1121,8 +1346,11 @@ function renderBoutique() {
 
   shopItemList.innerHTML = getShopItems().map((it) => `
     <button type="button" class="shop-tile ${it.blocked ? 'shop-tile-locked' : ''}" data-item="${it.id}">
-      <img class="shop-tile-icon" src="medias/${encodeURIComponent(it.img)}" alt="${escapeHtml(it.name)}" />
-      <span class="shop-tile-price"><img class="gem-icon-img" src="medias/Gemme.png" alt="" />${it.cost}</span>
+      <span class="shop-tile-name">${escapeHtml(it.name)}</span>
+      <span class="shop-tile-art">
+        <img class="shop-tile-icon" src="medias/${encodeURIComponent(it.img)}" alt="${escapeHtml(it.name)}" />
+      </span>
+      <span class="shop-tile-price shop-tile-price-${it.currency === 'credits' ? 'credits' : 'gems'}">${currencyIconImg(it.currency)}${it.cost}</span>
     </button>`).join('');
 
   renderTitleShop();
@@ -1134,45 +1362,81 @@ function renderBoutique() {
 }
 
 // Objets de la boutique + état calculé (dispo, note explicative).
+// currency: 'gems' (défaut) ou 'credits'.
 function getShopItems() {
   const wheelUsed = !isWheelAvailable();
-  const poor = 'Pas assez de gemmes.';
+  const poorGems = 'Pas assez de gemmes.';
+  const poorCredits = 'Pas assez de crédits.';
   return [
     {
       id: 'credits',
       img: 'Credit.png',
       name: 'Crédits',
       desc: `Échangez ${SHOP_ITEMS.credits.cost} gemmes contre ${SHOP_ITEMS.credits.credits} crédits.`,
+      usage: 'Les crédits servent à ouvrir des boosters, acheter des titres et des pascades.',
+      currency: 'gems',
       cost: SHOP_ITEMS.credits.cost,
       disabled: state.gems < SHOP_ITEMS.credits.cost,
       blocked: false,
-      note: state.gems < SHOP_ITEMS.credits.cost ? poor : '',
+      note: state.gems < SHOP_ITEMS.credits.cost ? poorGems : '',
+    },
+    {
+      id: 'gems',
+      img: 'Gemme.png',
+      name: 'Gemmes',
+      desc: `Échangez ${SHOP_ITEMS.gems.cost} crédits contre ${SHOP_ITEMS.gems.gems} gemmes.`,
+      usage: 'Les gemmes servent à acheter les objets de la boutique (Tourne-vis, Potion de Chance). On en gagne aussi via les quêtes.',
+      currency: 'credits',
+      cost: SHOP_ITEMS.gems.cost,
+      disabled: state.credits < SHOP_ITEMS.gems.cost,
+      blocked: false,
+      note: state.credits < SHOP_ITEMS.gems.cost ? poorCredits : '',
     },
     {
       id: 'wheelReset',
       img: 'TourneVis.png',
       name: 'Tourne-vis',
       desc: "Relance la roue de la fortune une fois de plus aujourd'hui.",
+      currency: 'gems',
       cost: SHOP_ITEMS.wheelReset.cost,
       disabled: !wheelUsed || state.gems < SHOP_ITEMS.wheelReset.cost,
       blocked: !wheelUsed,
       note: !wheelUsed
         ? 'La roue est déjà disponible.'
-        : (state.gems < SHOP_ITEMS.wheelReset.cost ? poor : ''),
+        : (state.gems < SHOP_ITEMS.wheelReset.cost ? poorGems : ''),
     },
+    ...PASCADE_PACKS.map((p, i) => ({
+      id: `pascade-${i}`,
+      img: 'Pascade.png',
+      name: `${p.pascades} Pascade${p.pascades > 1 ? 's' : ''}`,
+      desc: `Échangez ${p.cost} crédit${p.cost > 1 ? 's' : ''} contre ${p.pascades} pascade${p.pascades > 1 ? 's' : ''}.`,
+      usage: 'Offrez des pascades aux autres joueurs. Celui qui en possède le plus décroche la mention « Pascade Pro ».',
+      currency: 'credits',
+      cost: p.cost,
+      disabled: state.credits < p.cost,
+      blocked: false,
+      note: state.credits < p.cost ? poorCredits : '',
+    })),
     {
       id: 'luckPotion',
       img: 'Multiplicateur.png',
       name: 'Potion de Chance',
       desc: 'Vous assure une carte Légendaire dans le prochain booster que vous ouvrez.',
+      currency: 'gems',
       cost: SHOP_ITEMS.luckPotion.cost,
       disabled: state.luckyBoosterPending || state.gems < SHOP_ITEMS.luckPotion.cost,
       blocked: state.luckyBoosterPending,
       note: state.luckyBoosterPending
         ? 'Déjà active — elle s\'applique à votre prochain booster.'
-        : (state.gems < SHOP_ITEMS.luckPotion.cost ? poor : ''),
+        : (state.gems < SHOP_ITEMS.luckPotion.cost ? poorGems : ''),
     },
   ];
+}
+
+function currencyIconImg(currency) {
+  return currency === 'credits'
+    ? '<img class="coin-icon" src="medias/Credit.png" alt="crédits" />'
+    : '<img class="gem-icon-img" src="medias/Gemme.png" alt="" />';
 }
 
 let shopModalItemId = null;
@@ -1180,15 +1444,24 @@ let shopModalItemId = null;
 function renderShopItemModal(id) {
   const it = getShopItems().find((x) => x.id === id);
   if (!it) return;
-  if (shopItemModalBalance) shopItemModalBalance.textContent = state.gems;
+  const isCredits = it.currency === 'credits';
+  if (shopItemModalBalance) shopItemModalBalance.textContent = isCredits ? state.credits : state.gems;
+  if (shopItemModalBalanceLabel) shopItemModalBalanceLabel.textContent = isCredits ? 'Crédits possédés' : 'Gemmes possédées';
+  if (shopItemModalBalanceIcon) {
+    shopItemModalBalanceIcon.src = isCredits ? 'medias/Credit.png' : 'medias/Gemme.png';
+    shopItemModalBalanceIcon.classList.toggle('coin-icon', isCredits);
+    shopItemModalBalanceIcon.classList.toggle('gem-icon-img', !isCredits);
+  }
   shopItemModalIcon.src = `medias/${encodeURIComponent(it.img)}`;
   shopItemModalIcon.alt = it.name;
   shopItemModalName.textContent = it.name;
   shopItemModalDesc.textContent = it.desc;
+  shopItemModalUsage.textContent = it.usage || '';
+  shopItemModalUsage.classList.toggle('hidden', !it.usage);
   shopItemModalNote.textContent = it.note;
   shopItemModalNote.classList.toggle('hidden', !it.note);
   shopItemModalBuy.disabled = it.disabled;
-  shopItemModalBuy.innerHTML = `Acheter <img class="gem-icon-img" src="medias/Gemme.png" alt="" />${it.cost}`;
+  shopItemModalBuy.innerHTML = `Acheter ${currencyIconImg(it.currency)}${it.cost}`;
 }
 
 function openShopItemModal(id) {
@@ -1230,6 +1503,24 @@ async function buyShopItem(id) {
     updateHomeStats();
     flyCoinToCredits(shopItemModalBuy, SHOP_ITEMS.credits.credits);
     showToast(`+${SHOP_ITEMS.credits.credits} crédits !`);
+  } else if (id === 'gems') {
+    if (state.credits < SHOP_ITEMS.gems.cost) return false;
+    state.credits -= SHOP_ITEMS.gems.cost;
+    state.gems += SHOP_ITEMS.gems.gems;
+    updateCreditUI();
+    updateHomeStats();
+    flyGemToBalance(shopItemModalBuy, SHOP_ITEMS.gems.gems);
+    showToast(`+${SHOP_ITEMS.gems.gems} gemmes !`);
+  } else if (id.startsWith('pascade-')) {
+    const p = PASCADE_PACKS[Number(id.slice('pascade-'.length))];
+    if (!p || state.credits < p.cost) return false;
+    state.credits -= p.cost;
+    state.pascades = (state.pascades || 0) + p.pascades;
+    updateCreditUI();
+    updateHomeStats();
+    updatePascadesUI();
+    flyPascadeToBalance(shopItemModalBuy, p.pascades);
+    showToast(`+${p.pascades} pascade${p.pascades > 1 ? 's' : ''} !`);
   } else {
     return false;
   }
@@ -1296,6 +1587,35 @@ resetGemsBtn.addEventListener('click', async () => {
   showToast('Gemmes remises à 0 (dev)');
 });
 
+addPascadesBtn.addEventListener('click', async () => {
+  if (!state) return;
+  state.pascades = (state.pascades || 0) + 5;
+  updatePascadesUI();
+  await persistUser();
+  showToast('+5 pascades (dev)');
+  flyPascadeToBalance(addPascadesBtn, 5);
+});
+
+// Reset des pascades pour TOUS les joueurs (via publicProfiles).
+resetPascadesBtn.addEventListener('click', async () => {
+  if (!state) return;
+  if (!confirm('Remettre à 0 les pascades de TOUS les joueurs ?')) return;
+  try {
+    const snap = await db.ref('publicProfiles').once('value');
+    const updates = {};
+    snap.forEach((child) => { updates[`${child.key}/pascades`] = 0; });
+    if (Object.keys(updates).length) await db.ref('publicProfiles').update(updates);
+    state.pascades = 0;
+    updatePascadesUI();
+    await persistUser();
+    renderPlayerList();
+    showToast('Pascades de tous les joueurs remises à 0 (dev)');
+  } catch (e) {
+    console.error('Reset global des pascades refusé :', e);
+    showToast('Reset global refusé (règles Firebase).');
+  }
+});
+
 // ============================================================
 //  BOOSTERS
 // ============================================================
@@ -1310,6 +1630,7 @@ function weightedRandomRarity(allowedRarities) {
 }
 
 function weightedPickCard(pool, boostLocation, boostNew) {
+  if (!pool.length) return null;
   const weights = pool.map((c) => {
     let w = 1;
     if (boostLocation && c.type === 'character' && CHARACTER_LOCATIONS[c.character] === boostLocation) w += LOCATION_BONUS;
@@ -1325,11 +1646,19 @@ function weightedPickCard(pool, boostLocation, boostNew) {
   return pool[pool.length - 1];
 }
 
-function drawCard(allowedRarities, excludeIds, boostLocation, boostNew) {
+function drawCard(allowedRarities, excludeIds, boostLocation, boostNew, extId) {
+  const extCards = ALL_CARD_DEFS.filter((c) => c.extension === extId);
   const rarity = weightedRandomRarity(allowedRarities);
-  const pool = ALL_CARD_DEFS.filter((c) => c.rarity === rarity && !excludeIds.has(c.id));
-  const finalPool = pool.length > 0 ? pool : ALL_CARD_DEFS.filter((c) => c.rarity === rarity);
-  return weightedPickCard(finalPool, boostLocation, boostNew);
+  // Fallbacks pour les petites extensions : rareté exacte non-tirée → rareté exacte
+  // → n'importe quelle carte non-tirée → tout l'extension.
+  const pools = [
+    extCards.filter((c) => c.rarity === rarity && !excludeIds.has(c.id)),
+    extCards.filter((c) => c.rarity === rarity),
+    extCards.filter((c) => !excludeIds.has(c.id)),
+    extCards,
+  ];
+  const pool = pools.find((p) => p.length) || [];
+  return weightedPickCard(pool, boostLocation, boostNew);
 }
 
 function getEquippedLieu() {
@@ -1342,31 +1671,244 @@ function getEquippedLocation() {
   return lieu ? lieu.location : null;
 }
 
-function drawBoosterCards() {
+// ============================================================
+//  RÉCOMPENSES DE BOOSTER (cartes lieu Aveyron / Caverne d'Alibaba)
+// ============================================================
+// Table de tirage de la Caverne d'Alibaba (doublons = poids plus élevé).
+const ALIBABA_REWARD_POOL = [
+  { kind: 'credits', amount: 1 },
+  { kind: 'credits', amount: 1 },
+  { kind: 'credits', amount: 3 },
+  { kind: 'credits', amount: 5 },
+  { kind: 'credits', amount: 10 },
+  { kind: 'gems', amount: 1 },
+  { kind: 'gems', amount: 1 },
+  { kind: 'gems', amount: 3 },
+  { kind: 'gems', amount: 5 },
+  { kind: 'pascades', amount: 1 },
+  { kind: 'pascades', amount: 1 },
+  { kind: 'pascades', amount: 3 },
+  { kind: 'pascades', amount: 5 },
+  { kind: 'pascades', amount: 10 },
+  { kind: 'luckPotion', amount: 1 },
+  { kind: 'wheelReset', amount: 1 },
+];
+const LIEU_REWARD_ICONS = {
+  credits: 'Credit.png',
+  gems: 'Gemme.png',
+  pascades: 'Pascade.png',
+  luckPotion: 'Multiplicateur.png',
+  wheelReset: 'TourneVis.png',
+};
+function lieuRewardLabel(kind, amount) {
+  if (kind === 'luckPotion') return 'Potion de Chance';
+  if (kind === 'wheelReset') return 'Tourne-vis';
+  const noun = kind === 'credits' ? 'Crédit' : kind === 'gems' ? 'Gemme' : 'Pascade';
+  return `+${amount} ${noun}${amount > 1 ? 's' : ''}`;
+}
+
+function applyLieuReward(kind, amount) {
+  if (kind === 'credits') state.credits += amount;
+  else if (kind === 'gems') state.gems += amount;
+  else if (kind === 'pascades') state.pascades = (state.pascades || 0) + amount;
+  else if (kind === 'luckPotion') state.luckyBoosterPending = true;
+  else if (kind === 'wheelReset') state.lastWheelSpinDate = null;
+}
+
+// Si le lieu équipé a un effet déclenché à l'ouverture d'un booster (Aveyron,
+// Caverne d'Alibaba), applique la récompense à l'état et renvoie une "carte"
+// à afficher après le paquet dans la révélation (jamais ajoutée à state.cards).
+function computeBoosterBonusReward(equippedLieu) {
+  if (!equippedLieu || !state) return null;
+  let kind;
+  let amount;
+  if (equippedLieu.effect === 'boosterPascades') {
+    kind = 'pascades';
+    amount = equippedLieu.effectAmount || 0;
+  } else if (equippedLieu.effect === 'boosterRandomReward') {
+    const pick = ALIBABA_REWARD_POOL[Math.floor(Math.random() * ALIBABA_REWARD_POOL.length)];
+    kind = pick.kind;
+    amount = pick.amount;
+  } else {
+    return null;
+  }
+  applyLieuReward(kind, amount);
+  return {
+    id: `lieu-reward-${kind}`,
+    name: lieuRewardLabel(kind, amount),
+    type: 'reward',
+    rarity: 'epic',
+    rewardIconFile: LIEU_REWARD_ICONS[kind],
+  };
+}
+
+function drawBoosterCards(extId) {
   const excludeIds = new Set();
   const equippedLieu = getEquippedLieu();
   const boostLocation = equippedLieu ? equippedLieu.location : null;
   const boostNew = !!equippedLieu && equippedLieu.effect === 'newCard';
   const cards = BOOSTER_SLOTS.map((allowedRarities) => {
-    const card = drawCard(allowedRarities, excludeIds, boostLocation, boostNew);
-    excludeIds.add(card.id);
+    const card = drawCard(allowedRarities, excludeIds, boostLocation, boostNew, extId);
+    if (card) excludeIds.add(card.id);
     return card;
-  });
+  }).filter(Boolean);
 
   // Potion de Chance : garantit une Légendaire si le tirage n'en a pas produit.
   if (state.luckyBoosterPending && !cards.some((c) => c.rarity === 'legendary')) {
     const idx = cards.length - 1; // le dernier slot autorise déjà "legendary"
     const others = new Set(cards.filter((_, i) => i !== idx).map((c) => c.id));
-    let pool = ALL_CARD_DEFS.filter((c) => c.rarity === 'legendary' && !others.has(c.id));
-    if (pool.length === 0) pool = ALL_CARD_DEFS.filter((c) => c.rarity === 'legendary');
-    cards[idx] = weightedPickCard(pool, boostLocation, boostNew);
+    const legendaries = ALL_CARD_DEFS.filter((c) => c.extension === extId && c.rarity === 'legendary');
+    let pool = legendaries.filter((c) => !others.has(c.id));
+    if (pool.length === 0) pool = legendaries;
+    if (pool.length) cards[idx] = weightedPickCard(pool, boostLocation, boostNew);
   }
 
   return cards;
 }
 
+// ---- Sélection de l'extension sur l'accueil (carrousel 3D) ----
+function extensionAvailable(ext) {
+  return !ext.comingSoon && ALL_CARD_DEFS.some((c) => c.extension === ext.id);
+}
+
+// Grise / désactive « Ouvrir un booster » si l'extension n'est pas encore dispo
+// ou si le joueur n'a pas assez de crédits.
+const OPEN_BOOSTER_LABEL = `<span class="ob-label">Ouvrir un booster</span><span class="ob-price"><span id="boosterCost">${BOOSTER_COST}</span><img class="coin-icon" src="medias/Credit.png" alt="crédits" /></span>`;
+
+function refreshOpenBoosterBtnState() {
+  if (!openBoosterBtn) return;
+  const ext = EXTENSIONS[currentExtIndex];
+  const unavailable = !extensionAvailable(ext);
+  const poor = !state || state.credits < BOOSTER_COST;
+  // Extension indisponible : reste cliquable pour afficher la notif « Booster indisponible ».
+  // Crédits insuffisants : bouton désactivé + libellé « Crédits manquants ».
+  openBoosterBtn.disabled = poor && !unavailable;
+  openBoosterBtn.classList.toggle('booster-btn-disabled', unavailable || poor);
+  const label = (poor && !unavailable)
+    ? '<span class="ob-label">Crédits manquants</span>'
+    : OPEN_BOOSTER_LABEL;
+  if (openBoosterBtn.innerHTML !== label) openBoosterBtn.innerHTML = label;
+}
+
+function buildBoosterCarousel() {
+  if (!boosterCarousel) return;
+  boosterCarousel.innerHTML = EXTENSIONS
+    .map((ext, i) => `
+      <div class="booster-slide" data-idx="${i}">
+        <img class="booster-art" src="medias/${ext.front}" alt="${escapeHtml(ext.name)}" />
+      </div>`)
+    .join('');
+}
+
+function positionBoosterSlides() {
+  if (!boosterCarousel) return;
+  boosterCarousel.querySelectorAll('.booster-slide').forEach((slide) => {
+    const off = Number(slide.dataset.idx) - currentExtIndex;
+    const a = Math.abs(off);
+    slide.classList.toggle('is-center', off === 0);
+    if (off === 0) {
+      slide.style.transform = 'translate3d(0,0,0) rotateY(0deg) scale(1)';
+      slide.style.opacity = '1';
+      slide.style.zIndex = '20';
+    } else {
+      const dir = off > 0 ? 1 : -1;
+      const x = dir * (58 + (a - 1) * 72);
+      const z = -140 - (a - 1) * 45;
+      const ry = dir * -24;
+      const scale = Math.max(0.5, 0.68 - (a - 1) * 0.13);
+      slide.style.transform = `translate3d(${x}px, 6px, ${z}px) rotateY(${ry}deg) scale(${scale})`;
+      slide.style.opacity = a >= 3 ? '0' : String(Math.max(0, 0.6 - (a - 1) * 0.22));
+      slide.style.zIndex = String(20 - a);
+    }
+  });
+}
+
+boosterCarousel?.addEventListener('click', (e) => {
+  const slide = e.target.closest('.booster-slide[data-idx]');
+  if (!slide) return;
+  const idx = Number(slide.dataset.idx);
+  if (idx !== currentExtIndex) goToExtension(idx, idx > currentExtIndex ? 1 : -1);
+});
+
+function updateBoosterExtension() {
+  const ext = EXTENSIONS[currentExtIndex];
+  if (boosterCarousel && !boosterCarousel.children.length) buildBoosterCarousel();
+  positionBoosterSlides();
+  if (boosterExtName) {
+    boosterExtName.textContent = ext.name;
+    boosterExtName.classList.toggle('is-soon', !!ext.comingSoon);
+  }
+  if (boosterExtCount) {
+    const n = ALL_CARD_DEFS.filter((c) => c.extension === ext.id).length;
+    boosterExtCount.textContent = `${n} carte${n > 1 ? 's' : ''}`;
+  }
+  if (boosterExtDots) {
+    // Construit les points une seule fois, puis ne fait que basculer .active
+    // pour que le changement de taille se fasse en transition.
+    if (boosterExtDots.children.length !== EXTENSIONS.length) {
+      boosterExtDots.innerHTML = EXTENSIONS
+        .map((_, i) => `<span class="booster-dot" data-ext="${i}"></span>`)
+        .join('');
+    }
+    boosterExtDots.querySelectorAll('.booster-dot').forEach((dot, i) => {
+      dot.classList.toggle('active', i === currentExtIndex);
+    });
+  }
+  if (openBoosterBtn) refreshOpenBoosterBtnState();
+  if (boosterPrevBtn) boosterPrevBtn.classList.toggle('hidden', EXTENSIONS.length < 2);
+  if (boosterNextBtn) boosterNextBtn.classList.toggle('hidden', EXTENSIONS.length < 2);
+  boosterExtDots.classList.toggle('hidden', EXTENSIONS.length < 2);
+}
+
+function goToExtension(index, dir = 0) {
+  const n = EXTENSIONS.length;
+  index = ((index % n) + n) % n;
+  if (index === currentExtIndex) return;
+  currentExtIndex = index;
+  try {
+    localStorage.setItem(EXT_INDEX_STORAGE_KEY, String(index));
+  } catch {
+    /* stockage indisponible */
+  }
+  updateBoosterExtension();
+  new Audio('medias/WooshSwitch.wav').play().catch(() => {});
+}
+
+boosterPrevBtn.addEventListener('click', () => goToExtension(currentExtIndex - 1, -1));
+boosterNextBtn.addEventListener('click', () => goToExtension(currentExtIndex + 1, 1));
+boosterExtDots.addEventListener('click', (e) => {
+  const dot = e.target.closest('.booster-dot[data-ext]');
+  if (dot) goToExtension(Number(dot.dataset.ext), Number(dot.dataset.ext) > currentExtIndex ? 1 : -1);
+});
+
+// Swipe tactile sur le booster
+(() => {
+  const stage = boosterPack.parentElement;
+  let startX = null;
+  let startY = null;
+  stage.addEventListener('touchstart', (e) => {
+    if (boosterPack.classList.contains('opening')) return;
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+  }, { passive: true });
+  stage.addEventListener('touchend', (e) => {
+    if (startX === null) return;
+    const dx = e.changedTouches[0].clientX - startX;
+    const dy = e.changedTouches[0].clientY - startY;
+    startX = startY = null;
+    if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy)) {
+      goToExtension(currentExtIndex + (dx < 0 ? 1 : -1), dx < 0 ? 1 : -1);
+    }
+  }, { passive: true });
+})();
+
 openBoosterBtn.addEventListener('click', async () => {
   if (!state) return;
+  const ext = EXTENSIONS[currentExtIndex];
+  if (!extensionAvailable(ext)) {
+    showToast('Booster indisponible');
+    return;
+  }
   if (state.credits < BOOSTER_COST) {
     showToast('Pas assez de crédits !');
     return;
@@ -1376,7 +1918,7 @@ openBoosterBtn.addEventListener('click', async () => {
   boosterPack.classList.add('opening');
 
   state.credits -= BOOSTER_COST;
-  const drawn = drawBoosterCards();
+  const drawn = drawBoosterCards(ext.id);
   const usedLuckPotion = state.luckyBoosterPending;
   state.luckyBoosterPending = false; // consommée par cette ouverture
   updateLuckPotionLabel();
@@ -1386,15 +1928,23 @@ openBoosterBtn.addEventListener('click', async () => {
     state.cards[card.id] = (state.cards[card.id] || 0) + 1;
   });
 
+  // Lieu équipé à effet déclenché à l'ouverture (Aveyron / Caverne d'Alibaba) :
+  // ajoute une "carte" bonus après le paquet, sans la collectionner.
+  const bonusReward = computeBoosterBonusReward(getEquippedLieu());
+  const revealCardsList = bonusReward ? [...drawn, bonusReward] : drawn;
+
   markDailyQuest('openBooster');
   updateCreditUI();
   updateHomeStats();
-  if (usedLuckPotion) renderBoutique();
+  updateGemUI();
+  updatePascadesUI();
+  updateWheelUI();
+  if (usedLuckPotion || bonusReward) renderBoutique();
   await persistUser();
 
-  showBoosterReveal(drawn, newCardIds);
+  showBoosterReveal(revealCardsList, newCardIds, ext);
   boosterPack.classList.remove('opening');
-  openBoosterBtn.disabled = false;
+  refreshOpenBoosterBtnState();
 });
 
 // ============================================================
@@ -1496,9 +2046,9 @@ function updateDailyQuestsUI() {
   }).join('');
   const allDone = allDailyQuestsDone();
   claimDailyQuestBtn.disabled = !allDone || state.dailyQuestClaimed;
-  claimDailyQuestBtn.textContent = state.dailyQuestClaimed
+  claimDailyQuestBtn.innerHTML = state.dailyQuestClaimed
     ? 'Récompense récupérée'
-    : `Récupérer ${DAILY_QUEST_GEM_REWARD} Gemmes`;
+    : `Récupérer ${DAILY_QUEST_GEM_REWARD} <img class="coin-icon" src="medias/Gemme.png" alt="gemmes" />`;
 }
 
 claimDailyQuestBtn.addEventListener('click', async () => {
@@ -1608,7 +2158,9 @@ function updateLieuSlotUI() {
     lieuSlotEffect.classList.add('hidden');
   }
 
-  const bgFile = equipped ? (equipped.location ? LOCATION_BG_FILES[equipped.location] : JACUZZI_BG_FILE) : 'main-bg.png';
+  const bgFile = equipped
+    ? (equipped.bg || (equipped.location ? LOCATION_BG_FILES[equipped.location] : JACUZZI_BG_FILE))
+    : 'main-bg.png';
   homeLieuBg.style.backgroundImage = bgFile ? `url("medias/${encodeURIComponent(bgFile)}")` : '';
 }
 
@@ -1722,6 +2274,20 @@ resetQuestsBtn.addEventListener('click', async () => {
   showToast('Quêtes récupérées réinitialisées (dev)');
 });
 
+// Débloque pour soi-même les 2 nouvelles cartes lieu d'Across the verse (dev).
+addExt2LieuxBtn?.addEventListener('click', async () => {
+  if (!state) return;
+  ['lieu-aveyron', 'lieu-alibaba'].forEach((id) => {
+    state.cards[id] = (state.cards[id] || 0) + 1;
+  });
+  updateHomeStats();
+  updateQuestsBadge();
+  if (!lieuModal.classList.contains('hidden')) renderLieuList();
+  renderCollection(true);
+  await persistUser();
+  showToast('Cartes lieux Aveyron + Caverne d\'Alibaba ajoutées (dev)');
+});
+
 function wait(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -1774,7 +2340,9 @@ async function showRevealCard() {
   await wait(250);
   wrap.classList.add('flipped'); // triggers the cardFlip keyframes (1.3s, anticipation + overshoot)
   await wait(600); // card front becomes visible partway through the flip, no need to wait for full settle
-  revealRarityLabel.textContent = RARITY_LABELS[card.rarity];
+  // Une carte "récompense" (lieu Aveyron / Caverne d'Alibaba) affiche son
+  // libellé (ex. « +3 Pascades ») à la place du nom de rareté.
+  revealRarityLabel.textContent = card.type === 'reward' ? card.name : RARITY_LABELS[card.rarity];
   revealRarityLabel.classList.add(`rarity-${card.rarity}`, 'shown');
   revealRays.classList.add(`rarity-${card.rarity}`, 'shown');
   if (revealNewCardIds.has(card.id)) {
@@ -1783,7 +2351,9 @@ async function showRevealCard() {
   }
 }
 
-async function showBoosterReveal(cards, newCardIds = new Set()) {
+async function showBoosterReveal(cards, newCardIds = new Set(), ext = EXTENSIONS[0]) {
+  if (revealBoosterFront) revealBoosterFront.src = `medias/${ext.front}`;
+  if (revealBoosterBack) revealBoosterBack.src = `medias/${ext.back}`;
   revealQueue = cards;
   revealIndex = 0;
   revealNewCardIds = newCardIds;
@@ -2065,16 +2635,16 @@ function switchView(view, { instant } = {}) {
   const scroller = document.querySelector('.views');
   if (scroller) scroller.scrollTop = 0;
   document.querySelectorAll('.nav-btn').forEach((b) => b.classList.toggle('active', b.dataset.view === view));
+  appShell.classList.toggle('home-view', view === 'home');
   if (view === 'collection') renderCollection(true);
   if (view === 'community') { renderPlayerList(); }
   if (view === 'boutique') renderBoutique();
-  if (view === 'home' && !instant) revealHomeLieuBg();
   quickRecycleBtn.classList.toggle('hidden', view !== 'collection');
   if (view !== 'collection' && !quickRecycleModal.classList.contains('hidden')) closeQuickRecycleModal();
   revealQuestsLaunchRow(view === 'home');
 }
 
-// Les boutons Quêtes / Roue apparaissent 1 s après l'affichage de l'accueil.
+// Les boutons Quêtes / Roue / Actualité apparaissent peu après l'affichage de l'accueil.
 let questsRowRevealTimer = null;
 function revealQuestsLaunchRow(onHome) {
   const row = document.querySelector('.quests-launch-row');
@@ -2082,7 +2652,7 @@ function revealQuestsLaunchRow(onHome) {
   clearTimeout(questsRowRevealTimer);
   row.classList.remove('revealed');
   if (onHome) {
-    questsRowRevealTimer = setTimeout(() => row.classList.add('revealed'), 1000);
+    questsRowRevealTimer = setTimeout(() => row.classList.add('revealed'), 300);
   }
 }
 
@@ -2099,7 +2669,30 @@ document.querySelectorAll('.filter-chip').forEach((chip) => {
   });
 });
 
+// Filtre par extension (généré depuis EXTENSIONS pour rester synchro avec les noms)
+const extFilters = el('extFilters');
+function renderExtFilters() {
+  if (!extFilters) return;
+  // On masque les extensions « à venir » (aucune carte) de la liste des filtres.
+  const opts = [{ id: 'all', name: 'Toutes' }, ...EXTENSIONS.filter((e) => extensionAvailable(e))];
+  extFilters.innerHTML = opts
+    .map((o) => `<button type="button" class="ext-filter-chip ${o.id === currentExtFilter ? 'active' : ''}" data-ext="${o.id}">${escapeHtml(o.name)}</button>`)
+    .join('');
+}
+extFilters?.addEventListener('click', (e) => {
+  const chip = e.target.closest('.ext-filter-chip[data-ext]');
+  if (!chip) return;
+  new Audio('medias/Clic2.wav').play().catch(() => {});
+  currentExtFilter = chip.dataset.ext;
+  extFilters.querySelectorAll('.ext-filter-chip').forEach((c) => c.classList.toggle('active', c === chip));
+  renderCollection(true);
+});
+renderExtFilters();
+
 function cardArtHtml(card, alt) {
+  if (card.type === 'reward') {
+    return `<div class="lieu-art lieu-jacuzzi reward-art"><img class="reward-art-icon" src="medias/${card.rewardIconFile}" alt="" /></div>`;
+  }
   if (card.type === 'lieu' && !card.file) {
     return `<div class="lieu-art lieu-${card.location || 'jacuzzi'}"><span class="lieu-art-icon">${card.icon}</span></div>`;
   }
@@ -2129,7 +2722,8 @@ function cardTileHtml(card, delayIndex) {
 
 function renderCollection(animate = false) {
   if (!state) return;
-  const filtered = (currentFilter === null || currentFilter === 'all') ? ALL_CARD_DEFS : ALL_CARD_DEFS.filter((c) => c.rarity === currentFilter);
+  const byExt = currentExtFilter === 'all' ? ALL_CARD_DEFS : ALL_CARD_DEFS.filter((c) => c.extension === currentExtFilter);
+  const filtered = (currentFilter === null || currentFilter === 'all') ? byExt : byExt.filter((c) => c.rarity === currentFilter);
   cardGrid.classList.toggle('hide-captions', currentFilter !== null);
 
   let cardIndex = 0;
@@ -2147,9 +2741,6 @@ function renderCollection(animate = false) {
   } else {
     cardGrid.innerHTML = filtered.map(tileHtml).join('');
   }
-
-  const uniqueOwned = Object.keys(state.cards).length;
-  collectionProgress.textContent = `${uniqueOwned}/${ALL_CARD_DEFS.length}`;
 }
 
 // ============================================================
@@ -2376,57 +2967,209 @@ quickRecycleBody.addEventListener('click', async (e) => {
 // ============================================================
 const GOLD_FRAME_KEYWORDS = ['elo', 'val', 'bichu', 'chef', 'matthias', 'rault', 'anaïs', 'denis', 'louis', 'emily', 'maho', 'gabin', 'louann', 'tété'];
 
+const COMMUNITY_SORT_KEY = 'communitySort';
+const COMMUNITY_FAV_KEY = 'communityFavorites';
+
+function loadCommunitySort() {
+  try {
+    const s = localStorage.getItem(COMMUNITY_SORT_KEY);
+    return ['unique', 'pascades', 'favorites'].includes(s) ? s : 'unique';
+  } catch {
+    return 'unique';
+  }
+}
+function loadFavoritePlayers() {
+  try {
+    const a = JSON.parse(localStorage.getItem(COMMUNITY_FAV_KEY) || '[]');
+    return Array.isArray(a) ? a.filter((x) => typeof x === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+function saveFavoritePlayers() {
+  try {
+    localStorage.setItem(COMMUNITY_FAV_KEY, JSON.stringify(favoritePlayers));
+  } catch {
+    /* stockage indisponible */
+  }
+}
+function isFavoritePlayer(uid) {
+  return favoritePlayers.includes(uid);
+}
+function toggleFavoritePlayer(uid) {
+  const i = favoritePlayers.indexOf(uid);
+  if (i === -1) favoritePlayers.push(uid);
+  else favoritePlayers.splice(i, 1);
+  saveFavoritePlayers();
+}
+
+let playerSort = loadCommunitySort(); // 'pascades' | 'unique' | 'favorites'
+let favoritePlayers = loadFavoritePlayers();
+let playerSearchQuery = '';
+
+function normalizeStr(s) {
+  return (s || '').toString().toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '');
+}
+
+function sortPlayerRows(rows) {
+  const byName = (a, b) => (a.displayName || '').localeCompare(b.displayName || '');
+  return rows.slice().sort((a, b) => {
+    const pasc = (b.pascades || 0) - (a.pascades || 0);
+    const uniq = (b.uniqueCount || 0) - (a.uniqueCount || 0);
+    if (playerSort === 'favorites') {
+      const fav = (isFavoritePlayer(b.uid) ? 1 : 0) - (isFavoritePlayer(a.uid) ? 1 : 0);
+      return fav || uniq || pasc || byName(a, b);
+    }
+    return playerSort === 'unique' ? (uniq || pasc || byName(a, b)) : (pasc || uniq || byName(a, b));
+  });
+}
+
+function buildPlayerRow(r, delay, maxPascades) {
+  const avatar = AVATAR_OPTIONS.includes(r.avatar) ? r.avatar : AVATAR_OPTIONS[0];
+  const isMe = state && r.uid === state.uid;
+  const nameLower = (r.displayName || '').toLowerCase();
+  const isGold = GOLD_FRAME_KEYWORDS.some((k) => nameLower.includes(k));
+  const title = titleName(r.equippedTitle);
+  const isPascadePro = maxPascades > 0 && (r.pascades || 0) === maxPascades;
+  const bubble = (r.bubbleText || '').trim();
+  return `
+    <div class="player-row row-slide-in${isMe ? ' player-row-me' : ''}${isGold ? ' player-row-gold' : ''}${bubble ? ' has-bubble' : ''}" style="animation-delay:${delay}ms" data-uid="${r.uid}">
+      ${bubble ? `<div class="player-bubble">${escapeHtml(bubble)}</div>` : ''}
+      <div class="player-header">
+        <img class="player-avatar" src="medias/${avatar}" alt="" />
+        <div class="player-name-block">
+          <span class="player-name">${escapeHtml(r.displayName || 'Joueur')}${isMe ? ' (toi)' : ''}</span>
+          ${title ? `<span class="player-title">${escapeHtml(title)}</span>` : ''}
+          ${isPascadePro ? '<span class="player-badge-pro">Pascade Pro</span>' : ''}
+        </div>
+        ${isMe ? `<button type="button" class="player-bubble-edit" data-act="bubble" aria-label="Éditer ma bulle de dialogue">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor"><path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T845-624L318-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z"/></svg>
+        </button>` : `<button type="button" class="player-fav-btn${isFavoritePlayer(r.uid) ? ' is-fav' : ''}" data-uid="${r.uid}" aria-label="Ajouter aux favoris" aria-pressed="${isFavoritePlayer(r.uid) ? 'true' : 'false'}">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="m233-120 65-281L80-590l288-25 112-265 112 265 288 25-218 189 65 281-247-149-247 149Z"/></svg>
+        </button>`}
+      </div>
+      <div class="player-stats-row">
+        <div class="player-stats-box">
+          <div class="player-stat">
+            <span class="player-stat-value">${r.pascades || 0} <img class="pascade-icon" src="medias/Pascade.png" alt="" /></span>
+            <span class="player-stat-label">Pascade</span>
+          </div>
+          <div class="player-stat">
+            <span class="player-stat-value">${r.uniqueCount || 0}/${ALL_CARD_DEFS.length}</span>
+            <span class="player-stat-label">Cartes uniques</span>
+          </div>
+          <div class="player-stat">
+            <span class="player-stat-value">${r.totalCount || 0}</span>
+            <span class="player-stat-label">Cartes totales</span>
+          </div>
+        </div>
+        ${isMe ? '' : `<button type="button" class="player-gift-btn" data-uid="${r.uid}" aria-label="Offrir un cadeau">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor"><path d="M160-160v-360q-33 0-56.5-23.5T80-600v-80q0-33 23.5-56.5T160-760h128q-5-9-6.5-19t-1.5-21q0-50 35-85t85-35q23 0 43 8.5t37 23.5q17-16 37-24t43-8q50 0 85 35t35 85q0 11-2 20.5t-6 19.5h128q33 0 56.5 23.5T880-680v80q0 33-23.5 56.5T800-520v360q0 33-23.5 56.5T720-80H240q-33 0-56.5-23.5T160-160Zm371.5-668.5Q520-817 520-800t11.5 28.5Q543-760 560-760t28.5-11.5Q600-783 600-800t-11.5-28.5Q577-840 560-840t-28.5 11.5ZM360-800q0 17 11.5 28.5T400-760q17 0 28.5-11.5T440-800q0-17-11.5-28.5T400-840q-17 0-28.5 11.5T360-800ZM160-680v80h280v-80H160Zm280 520v-360H240v360h200Zm80 0h200v-360H520v360Zm280-440v-80H520v80h280Z"/></svg>
+          <span class="player-gift-btn-label">Cadeau</span>
+        </button>`}
+      </div>
+    </div>`;
+}
+
+function renderPlayerRows() {
+  const all = latestPublicProfiles || [];
+  // "Pascade Pro" = joueur(s) avec le plus de pascades (calculé sur la liste complète).
+  const maxPascades = all.reduce((m, r) => Math.max(m, r.pascades || 0), 0);
+
+  // Ma card est aussi affichée à part, juste sous le titre (en plus de la liste).
+  const me = state ? all.find((r) => r.uid === state.uid) : null;
+  if (myPlayerRow) myPlayerRow.innerHTML = me ? buildPlayerRow(me, 0, maxPascades) : '';
+
+  const q = normalizeStr(playerSearchQuery.trim());
+  const filtered = q ? all.filter((r) => normalizeStr(r.displayName).includes(q)) : all;
+  const rows = sortPlayerRows(filtered);
+
+  if (!all.length) {
+    playerList.innerHTML = '<p class="player-list-empty">Aucun joueur pour le moment.</p>';
+    return;
+  }
+  if (!rows.length) {
+    playerList.innerHTML = '<p class="player-list-empty">Aucun joueur ne correspond à cette recherche.</p>';
+    return;
+  }
+  playerList.innerHTML = rows
+    .map((r, i) => buildPlayerRow(r, q ? 0 : Math.min(i * 50, 800), maxPascades))
+    .join('');
+}
+
 async function renderPlayerList() {
   playerList.innerHTML = '<p class="player-list-empty">Chargement...</p>';
   try {
     const snap = await db.ref('publicProfiles').once('value');
     const rows = [];
     snap.forEach((child) => { rows.push({ uid: child.key, ...child.val() }); });
-    rows.sort((a, b) =>
-      (b.uniqueCount || 0) - (a.uniqueCount || 0) ||
-      (a.displayName || '').localeCompare(b.displayName || ''));
     latestPublicProfiles = rows;
-
-    if (!rows.length) {
-      playerList.innerHTML = '<p class="player-list-empty">Aucun joueur pour le moment.</p>';
-      return;
-    }
-
-    playerList.innerHTML = rows
-      .map((r, i) => {
-        const avatar = AVATAR_OPTIONS.includes(r.avatar) ? r.avatar : AVATAR_OPTIONS[0];
-        const isMe = state && r.uid === state.uid;
-        const delay = Math.min(i * 50, 800);
-        const nameLower = (r.displayName || '').toLowerCase();
-        const isGold = GOLD_FRAME_KEYWORDS.some((k) => nameLower.includes(k));
-        const title = titleName(r.equippedTitle);
-        return `
-          <div class="player-row row-slide-in${isGold ? ' player-row-gold' : ''}" style="animation-delay:${delay}ms" data-uid="${r.uid}" ${isMe ? '' : 'role="button"'}>
-            <img class="player-avatar" src="medias/${avatar}" alt="" />
-            <div class="player-name-block">
-              <span class="player-name">${escapeHtml(r.displayName || 'Joueur')}${isMe ? ' (toi)' : ''}</span>
-              ${title ? `<span class="player-title">${escapeHtml(title)}</span>` : ''}
-            </div>
-            <span class="player-count">${r.uniqueCount || 0}/${ALL_CARD_DEFS.length}</span>
-          </div>`;
-      })
-      .join('');
+    renderPlayerRows();
   } catch (e) {
     console.error('Chargement des joueurs refusé :', e);
     playerList.innerHTML = '<p class="player-list-empty">Impossible de charger la liste des joueurs.</p>';
   }
 }
 
+function syncPlayerSortChips() {
+  document.querySelectorAll('.player-sort-chip').forEach((c) => {
+    c.classList.toggle('active', c.dataset.sort === playerSort);
+  });
+}
+document.querySelectorAll('.player-sort-chip').forEach((chip) => {
+  chip.addEventListener('click', () => {
+    if (chip.classList.contains('active')) return;
+    new Audio('medias/Clic2.wav').play().catch(() => {});
+    playerSort = chip.dataset.sort;
+    try {
+      localStorage.setItem(COMMUNITY_SORT_KEY, playerSort);
+    } catch {
+      /* stockage indisponible */
+    }
+    syncPlayerSortChips();
+    renderPlayerRows();
+  });
+});
+syncPlayerSortChips();
+
+const playerSearch = el('playerSearch');
+playerSearch.addEventListener('input', () => {
+  playerSearchQuery = playerSearch.value;
+  renderPlayerRows();
+});
+
+if (myPlayerRow) {
+  myPlayerRow.addEventListener('click', (e) => {
+    if (!state) return;
+    if (e.target.closest('.player-bubble-edit')) {
+      new Audio('medias/Clic2.wav').play().catch(() => {});
+      openBubbleEditModal();
+    }
+  });
+}
+
 playerList.addEventListener('click', (e) => {
-  const row = e.target.closest('.player-row[data-uid]');
-  if (!row || !state) return;
-  const uid = row.dataset.uid;
+  if (!state) return;
+  const favBtn = e.target.closest('.player-fav-btn[data-uid]');
+  if (favBtn) {
+    new Audio('medias/Clic2.wav').play().catch(() => {});
+    toggleFavoritePlayer(favBtn.dataset.uid);
+    renderPlayerRows();
+    return;
+  }
+  if (e.target.closest('.player-bubble-edit')) {
+    new Audio('medias/Clic2.wav').play().catch(() => {});
+    openBubbleEditModal();
+    return;
+  }
+  const btn = e.target.closest('.player-gift-btn[data-uid]');
+  if (!btn) return;
+  const uid = btn.dataset.uid;
   if (uid === state.uid) return;
   const profile = latestPublicProfiles.find((p) => p.uid === uid);
-  if (profile) {
-    new Audio('medias/Clic2.wav').play().catch(() => {});
-    openSendGiftModal(profile);
-  }
+  if (!profile) return;
+  new Audio('medias/Clic2.wav').play().catch(() => {});
+  openGiftChoiceModal(profile);
 });
 
 // ============================================================
@@ -2447,9 +3190,17 @@ function giftPickTileHtml(card, count, selected) {
 
 function renderGiftPicker() {
   const myOwned = ALL_CARD_DEFS.filter((c) => (state.cards[c.id] || 0) > 0);
-  giftMyCards.innerHTML = myOwned.length
-    ? myOwned.map((c) => giftPickTileHtml(c, state.cards[c.id], c.id === giftCardId)).join('')
-    : '<p class="gift-pick-empty">Tu ne possèdes aucune carte à offrir.</p>';
+  if (!myOwned.length) {
+    giftMyCards.innerHTML = '<p class="gift-pick-empty">Tu ne possèdes aucune carte à offrir.</p>';
+  } else {
+    const order = ['common', 'rare', 'epic', 'legendary'];
+    giftMyCards.innerHTML = order.map((rarity) => {
+      const cards = myOwned.filter((c) => c.rarity === rarity);
+      if (!cards.length) return '';
+      const tiles = cards.map((c) => giftPickTileHtml(c, state.cards[c.id], c.id === giftCardId)).join('');
+      return `<div class="card-group-title">${RARITY_LABELS[rarity]}s</div>${tiles}`;
+    }).join('');
+  }
   submitGiftBtn.disabled = !giftCardId;
 }
 
@@ -2471,6 +3222,85 @@ function openSendGiftModal(profile) {
   sendGiftModal.getBoundingClientRect(); // force layout so the fade/scale-in transition plays
   sendGiftModal.classList.add('open');
 }
+
+// ---- Choix du type de cadeau (carte ou pascades) ----
+let giftChoiceTarget = null;
+
+function openGiftChoiceModal(profile) {
+  if (!state) return;
+  giftChoiceTarget = profile;
+  giftChoicePartnerName.textContent = profile.displayName || 'Joueur';
+  giftChoiceModal.classList.remove('hidden');
+  giftChoiceModal.getBoundingClientRect();
+  giftChoiceModal.classList.add('open');
+}
+
+async function closeGiftChoiceModal() {
+  giftChoiceModal.classList.remove('open');
+  await wait(300);
+  giftChoiceModal.classList.add('hidden');
+}
+
+closeGiftChoiceModalBtn.addEventListener('click', closeGiftChoiceModal);
+giftChoiceModal.addEventListener('click', (e) => { if (e.target === giftChoiceModal) closeGiftChoiceModal(); });
+giftChoicePascadeBtn.addEventListener('click', async () => {
+  const p = giftChoiceTarget;
+  new Audio('medias/Clic2.wav').play().catch(() => {});
+  await closeGiftChoiceModal();
+  if (p) openSendPascadeModal(p);
+});
+giftChoiceCardBtn.addEventListener('click', async () => {
+  const p = giftChoiceTarget;
+  new Audio('medias/Clic2.wav').play().catch(() => {});
+  await closeGiftChoiceModal();
+  if (p) openSendGiftModal(p);
+});
+
+// ---- Bulle de dialogue (perso du joueur, visible par tous) ----
+const BUBBLE_MAX = 180;
+
+function updateBubbleCount() {
+  bubbleEditCount.textContent = `${bubbleEditInput.value.length} / ${BUBBLE_MAX}`;
+}
+
+function openBubbleEditModal() {
+  if (!state) return;
+  bubbleEditInput.value = state.bubbleText || '';
+  updateBubbleCount();
+  bubbleEditModal.classList.remove('hidden');
+  bubbleEditModal.getBoundingClientRect();
+  bubbleEditModal.classList.add('open');
+  setTimeout(() => bubbleEditInput.focus(), 50);
+}
+async function closeBubbleEditModal() {
+  bubbleEditModal.classList.remove('open');
+  await wait(300);
+  bubbleEditModal.classList.add('hidden');
+}
+
+bubbleEditInput.addEventListener('input', updateBubbleCount);
+closeBubbleEditModalBtn.addEventListener('click', closeBubbleEditModal);
+bubbleEditModal.addEventListener('click', (e) => { if (e.target === bubbleEditModal) closeBubbleEditModal(); });
+
+bubbleEditClearBtn.addEventListener('click', () => {
+  bubbleEditInput.value = '';
+  updateBubbleCount();
+  bubbleEditInput.focus();
+});
+
+bubbleEditSaveBtn.addEventListener('click', async () => {
+  if (!state) return;
+  new Audio('medias/Clic2.wav').play().catch(() => {});
+  state.bubbleText = bubbleEditInput.value.trim().slice(0, BUBBLE_MAX);
+  bubbleEditSaveBtn.disabled = true;
+  await persistUser();
+  bubbleEditSaveBtn.disabled = false;
+  const me = (latestPublicProfiles || []).find((p) => p.uid === state.uid);
+  if (me) me.bubbleText = state.bubbleText;
+  showToast('Bulle de dialogue enregistrée !');
+  await closeBubbleEditModal();
+  renderPlayerRows();
+});
 
 async function closeSendGiftModal() {
   new Audio('medias/Clic2.wav').play().catch(() => {});
@@ -2517,6 +3347,76 @@ submitGiftBtn.addEventListener('click', async () => {
   closeSendGiftModal();
 });
 
+// ---- Cadeau de pascades ----
+let pascadeGiftTarget = null;
+let pascadeGiftValue = 1;
+
+function renderPascadeGift() {
+  const max = state ? (state.pascades || 0) : 0;
+  pascadeGiftValue = Math.max(0, Math.min(pascadeGiftValue, max));
+  pascadeGiftAmountEl.textContent = pascadeGiftValue;
+  pascadeGiftBalanceEl.textContent = max;
+  pascadeGiftMinusBtn.disabled = pascadeGiftValue <= 1;
+  pascadeGiftPlusBtn.disabled = pascadeGiftValue >= max;
+  submitPascadeGiftBtn.disabled = pascadeGiftValue < 1;
+}
+
+function openSendPascadeModal(profile) {
+  if (!state) return;
+  pascadeGiftTarget = profile;
+  pascadeGiftValue = (state.pascades || 0) > 0 ? 1 : 0;
+  pascadeGiftPartnerName.textContent = profile.displayName || 'Joueur';
+  renderPascadeGift();
+  sendPascadeModal.classList.remove('hidden');
+  sendPascadeModal.getBoundingClientRect();
+  sendPascadeModal.classList.add('open');
+}
+
+async function closeSendPascadeModal() {
+  new Audio('medias/Clic2.wav').play().catch(() => {});
+  sendPascadeModal.classList.remove('open');
+  await wait(300);
+  sendPascadeModal.classList.add('hidden');
+}
+closeSendPascadeModalBtn.addEventListener('click', closeSendPascadeModal);
+sendPascadeModal.addEventListener('click', (e) => { if (e.target === sendPascadeModal) closeSendPascadeModal(); });
+pascadeGiftMinusBtn.addEventListener('click', () => { pascadeGiftValue -= 1; renderPascadeGift(); });
+pascadeGiftPlusBtn.addEventListener('click', () => { pascadeGiftValue += 1; renderPascadeGift(); });
+
+submitPascadeGiftBtn.addEventListener('click', async () => {
+  if (!state || !pascadeGiftTarget) return;
+  const amount = Math.min(pascadeGiftValue, state.pascades || 0);
+  if (amount < 1) return;
+  new Audio('medias/Clic2.wav').play().catch(() => {});
+  submitPascadeGiftBtn.disabled = true;
+
+  const newRef = db.ref('gifts').push();
+  try {
+    await newRef.set({
+      fromUid: state.uid,
+      fromName: state.displayName,
+      fromAvatar: state.avatar,
+      toUid: pascadeGiftTarget.uid,
+      toName: pascadeGiftTarget.displayName || 'Joueur',
+      toAvatar: pascadeGiftTarget.avatar || AVATAR_OPTIONS[0],
+      pascades: amount,
+      claimed: false,
+      createdAt: Date.now(),
+    });
+  } catch (err) {
+    console.error('Envoi des pascades refusé :', err);
+    showToast("Erreur — impossible d'envoyer ces pascades.");
+    submitPascadeGiftBtn.disabled = false;
+    return;
+  }
+
+  state.pascades -= amount;
+  await persistUser();
+  updatePascadesUI();
+  showToast(`${amount} pascade${amount > 1 ? 's' : ''} envoyée${amount > 1 ? 's' : ''} !`);
+  closeSendPascadeModal();
+});
+
 // Cadeaux entrants pour ce joueur : listener scopé sur toUid (pas besoin de lire
 // tout l'arbre "gifts" comme le faisait l'ancien système d'échange). child_added
 // se déclenche pour chaque cadeau déjà présent à la connexion (rattrapage hors-ligne)
@@ -2545,12 +3445,17 @@ function stopGiftsListener() {
 async function claimGift(id, gift) {
   if (!state || gift.toUid !== state.uid || gift.claimed) return;
   claimingGiftIds.add(id);
-  state.cards[gift.cardId] = (state.cards[gift.cardId] || 0) + 1;
+  if (gift.pascades) {
+    state.pascades = (state.pascades || 0) + gift.pascades;
+  } else {
+    state.cards[gift.cardId] = (state.cards[gift.cardId] || 0) + 1;
+  }
   await persistUser();
   await db.ref(`gifts/${id}`).update({ claimed: true, claimedAt: Date.now() }).catch((err) => {
     console.error('Confirmation du cadeau refusée :', err);
   });
   updateHomeStats();
+  updatePascadesUI();
   renderCollection();
   pendingGiftQueue.push(gift);
   showNextGiftModal();
@@ -2562,12 +3467,19 @@ function showNextGiftModal() {
   const gift = pendingGiftQueue.shift();
   if (!gift) return;
   giftModalShowing = true;
-  const card = ALL_CARD_DEFS.find((c) => c.id === gift.cardId);
-  if (card) {
-    giftReceivedArt.innerHTML = cardArtHtml(card, escapeHtml(card.name));
-    giftReceivedName.textContent = card.name;
-    giftReceivedRarity.textContent = RARITY_LABELS[card.rarity];
-    giftReceivedRarity.className = `card-detail-rarity rarity-${card.rarity}`;
+  if (gift.pascades) {
+    giftReceivedArt.innerHTML = '<img src="medias/Pascade.png" alt="" class="gift-received-pascade" />';
+    giftReceivedName.textContent = `+${gift.pascades} pascade${gift.pascades > 1 ? 's' : ''}`;
+    giftReceivedRarity.textContent = '';
+    giftReceivedRarity.className = 'card-detail-rarity';
+  } else {
+    const card = ALL_CARD_DEFS.find((c) => c.id === gift.cardId);
+    if (card) {
+      giftReceivedArt.innerHTML = cardArtHtml(card, escapeHtml(card.name));
+      giftReceivedName.textContent = card.name;
+      giftReceivedRarity.textContent = RARITY_LABELS[card.rarity];
+      giftReceivedRarity.className = `card-detail-rarity rarity-${card.rarity}`;
+    }
   }
   giftReceivedFrom.textContent = `Offert par ${gift.fromName || 'un joueur'}`;
   giftReceivedModal.classList.remove('hidden');
@@ -2589,7 +3501,9 @@ function giftHistoryRowHtml(gift) {
   const sent = gift.fromUid === state.uid;
   const otherName = sent ? gift.toName : gift.fromName;
   const card = ALL_CARD_DEFS.find((c) => c.id === gift.cardId);
-  const thumb = card ? cardArtHtml(card, escapeHtml(card.name)) : '<span>?</span>';
+  const thumb = gift.pascades
+    ? '<img src="medias/Pascade.png" alt="" />'
+    : (card ? cardArtHtml(card, escapeHtml(card.name)) : '<span>?</span>');
   const date = gift.createdAt ? new Date(gift.createdAt).toLocaleDateString() : '';
   return `
     <div class="gift-row">
@@ -2642,7 +3556,7 @@ function renderAll() {
   playerName.textContent = state.displayName;
   avatarImg.src = `medias/${state.avatar}`;
   updatePlayerTitle();
-  el('boosterCost').textContent = BOOSTER_COST;
+  updateBoosterExtension();
   updateHomeStats();
   updateCreditUI();
   updateWheelUI();
@@ -2651,6 +3565,7 @@ function renderAll() {
   updateDailyQuestsUI();
   updateNewsBadge();
   updateGemUI();
+  updatePascadesUI();
   updateMultiplierBanner();
   updateLuckPotionLabel();
   renderBoutique();

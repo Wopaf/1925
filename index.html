@@ -50,6 +50,7 @@
 
   <!-- Main app -->
   <div id="appShell" class="screen hidden">
+    <div id="homeLieuBg" class="home-lieu-bg"></div>
     <header class="topbar">
       <div class="player-info">
         <img id="avatarImg" class="avatar" src="medias/PP/Defaut.png" alt="avatar" />
@@ -58,11 +59,10 @@
           <span id="playerTitle" class="player-title hidden"></span>
         </div>
       </div>
-      <button id="newsBtn" class="news-btn" type="button" aria-label="Actualités">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor"><path d="M480-80q-33 0-56.5-23.5T400-160h160q0 33-23.5 56.5T480-80ZM160-200v-80h80v-280q0-83 50-147.5T420-792v-28q0-25 17.5-42.5T480-880q25 0 42.5 17.5T540-820v28q80 20 130 84.5T720-560v280h80v80H160Z"/></svg>
-        <span>Actualité</span>
-        <span id="newsBadge" class="news-badge hidden" aria-label="Nouvelle actualité"></span>
-      </button>
+      <div class="currency-pill currency-pill-pascades">
+        <img class="coin-icon" src="medias/Pascade.png" alt="pascades" />
+        <span id="pascadesValue">0</span>
+      </div>
       <div class="currency-pill currency-pill-gems">
         <img class="coin-icon" src="medias/Gemme.png" alt="gemmes" />
         <span id="gemsValue">0</span>
@@ -76,17 +76,15 @@
     <main class="views">
       <!-- HOME -->
       <section id="view-home" class="view active">
-        <div id="homeLieuBg" class="home-lieu-bg"></div>
         <div class="next-credit-card">
           <div class="next-credit-row">
-            <span class="next-credit-label"><img class="coin-icon" src="medias/Credit.png" alt="crédit" />Réserve de crédits</span>
-            <span id="reserveValue">0 / 90</span>
+            <span class="next-credit-label">Prochain crédit <span id="nextCreditTimer">--:--:--</span></span>
+            <span class="next-credit-reserve"><span id="reserveValue">0 / 90</span><img class="coin-icon" src="medias/Credit.png" alt="crédits" /></span>
           </div>
           <div id="creditProgressBar" class="progress-bar"><div id="creditProgressFill" class="progress-fill"></div></div>
-          <div class="next-credit-row next-credit-row-sub">
-            <span class="next-credit-label">Prochain crédit <span id="nextCreditTimer">--:--:--</span></span>
-            <button id="claimReserveBtn" class="btn-claim" type="button" disabled>Récupérer</button>
-          </div>
+        </div>
+        <div class="claim-reserve-wrap">
+          <button id="claimReserveBtn" class="btn-claim" type="button" disabled>Récupérer</button>
         </div>
 
         <div id="multiplierBanner" class="multiplier-banner hidden">
@@ -94,35 +92,53 @@
           <span id="multiplierBannerTimer" class="multiplier-banner-timer"></span>
         </div>
 
-        <div class="quests-launch-row">
-          <button id="questsBtn" class="quests-launch-btn" type="button" aria-label="Quêtes">
-            <img src="medias/Quete.png" alt="Quêtes" />
-            <span id="questsBadge" class="quests-badge hidden" aria-label="Récompense disponible"></span>
-          </button>
-          <button id="wheelLaunchBtn" class="quests-launch-btn quests-launch-btn-right" type="button" aria-label="Roue de la fortune">
-            <img src="medias/Roue-Icon.png" alt="Roue de la fortune" />
-            <span id="wheelLaunchBadge" class="quests-badge hidden" aria-label="Tour disponible"></span>
-          </button>
-        </div>
-
         <div class="booster-zone">
           <div class="booster-stage">
             <div class="light-rays"></div>
+            <button id="boosterPrev" class="booster-nav booster-nav-prev" type="button" aria-label="Booster précédent">‹</button>
             <div id="boosterPack" class="booster-pack">
-              <img src="medias/Booster.png" class="booster-art" alt="booster" />
+              <div id="boosterCarousel" class="booster-carousel"></div>
             </div>
+            <button id="boosterNext" class="booster-nav booster-nav-next" type="button" aria-label="Booster suivant">›</button>
+          </div>
+          <div class="booster-ext-selector">
+            <span id="boosterExtName" class="booster-ext-name">Classic</span>
+            <span id="boosterExtCount" class="booster-ext-count"></span>
+            <div id="boosterExtDots" class="booster-ext-dots"></div>
           </div>
           <p id="luckPotionActiveLabel" class="luck-potion-active hidden">✨ Potion de chance active</p>
           <button id="openBoosterBtn" class="btn-primary btn-large">
-            Ouvrir un booster <img class="coin-icon" src="medias/Credit.png" alt="crédits" /><span id="boosterCost">5</span>
+            <span class="ob-label">Ouvrir un booster</span><span class="ob-price"><span id="boosterCost">30</span><img class="coin-icon" src="medias/Credit.png" alt="crédits" /></span>
           </button>
+
+          <div class="quests-launch-row">
+            <button id="questsBtn" class="quests-launch-btn" type="button" aria-label="Quêtes">
+              <img src="medias/Quete.png" alt="Quêtes" />
+              <span id="questsBadge" class="quests-badge hidden" aria-label="Récompense disponible"></span>
+              <span class="quests-launch-label">Quêtes</span>
+            </button>
+            <button id="wheelLaunchBtn" class="quests-launch-btn" type="button" aria-label="Roue de la fortune">
+              <img src="medias/Roue-Icon.png" alt="Roue de la fortune" />
+              <span id="wheelLaunchBadge" class="quests-badge hidden" aria-label="Tour disponible"></span>
+              <span class="quests-launch-label">Roue</span>
+            </button>
+            <button id="newsBtn" class="quests-launch-btn" type="button" aria-label="Actualité">
+              <img src="medias/Megaphone.png" alt="Actualité" />
+              <span id="newsBadge" class="quests-badge hidden" aria-label="Nouvelle actualité"></span>
+              <span class="quests-launch-label">Actualité</span>
+            </button>
+          </div>
+
           <div id="devTools" class="dev-tools hidden">
             <button id="addCreditsBtn" class="btn-dev" type="button">+10 crédits</button>
             <button id="addGemsBtn" class="btn-dev" type="button">+5 gemmes</button>
+            <button id="addPascadesBtn" class="btn-dev" type="button">+5 pascades</button>
             <button id="resetCreditsBtn" class="btn-dev" type="button">Reset crédits</button>
             <button id="resetGemsBtn" class="btn-dev" type="button">Reset gemmes</button>
+            <button id="resetPascadesBtn" class="btn-dev" type="button">Reset pascades (tous)</button>
             <button id="resetWheelBtn" class="btn-dev" type="button">Réinitialiser roue</button>
             <button id="resetQuestsBtn" class="btn-dev" type="button">Reset quêtes récupérées</button>
+            <button id="addExt2LieuxBtn" class="btn-dev" type="button">+ Cartes lieux Across the verse</button>
           </div>
         </div>
 
@@ -167,10 +183,9 @@
           <div class="stat-box"><span id="statOwned">0</span><small>Cartes possédées</small></div>
           <div class="stat-box"><span id="statUnique">0</span><small>Cartes uniques</small></div>
         </div>
-        <div class="collection-header">
-          <h2>Ma Collection</h2>
-          <span id="collectionProgress">0/0</span>
-        </div>
+        <span class="filter-caption filter-caption-top">Extension</span>
+        <div id="extFilters" class="rarity-filters ext-filters"></div>
+        <span class="filter-caption filter-caption-top">Filtres</span>
         <div class="rarity-filters">
           <button class="filter-chip" data-rarity="default" aria-label="Tri par défaut"><svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="currentColor"><path d="M160-240q-17 0-28.5-11.5T120-280q0-17 11.5-28.5T160-320h160q17 0 28.5 11.5T360-280q0 17-11.5 28.5T320-240H160Zm0-200q-17 0-28.5-11.5T120-480q0-17 11.5-28.5T160-520h400q17 0 28.5 11.5T600-480q0 17-11.5 28.5T560-440H160Zm0-200q-17 0-28.5-11.5T120-680q0-17 11.5-28.5T160-720h640q17 0 28.5 11.5T840-680q0 17-11.5 28.5T800-640H160Z"/></svg></button>
           <button class="filter-chip active" data-rarity="all">Toutes</button>
@@ -184,26 +199,27 @@
 
       <!-- COMMUNITY -->
       <section id="view-community" class="view">
-        <div class="collection-header">
-          <h2>Communauté</h2>
-        </div>
+        <div id="myPlayerRow" class="my-player-row"></div>
+        <div class="ornate-divider"><span class="ornate-divider-diamond">◆</span></div>
+        <input id="playerSearch" class="player-search" type="text" placeholder="Rechercher un joueur…" autocomplete="off" />
         <div id="giftsSection" class="gifts-section hidden"></div>
-        <p class="community-hint">Touchez un joueur pour lui offrir une carte</p>
+        <div class="player-sort">
+          <span class="player-sort-label">Trier par</span>
+          <button class="player-sort-chip active" type="button" data-sort="unique">Cartes uniques</button>
+          <button class="player-sort-chip" type="button" data-sort="pascades">Pascades</button>
+          <button class="player-sort-chip" type="button" data-sort="favorites">Favoris</button>
+        </div>
         <div id="playerList" class="player-list"></div>
       </section>
 
       <!-- BOUTIQUE -->
       <section id="view-boutique" class="view">
-        <div class="collection-header">
-          <h2>Boutique</h2>
-        </div>
-
         <div id="gemPackGrid" class="gem-pack-grid"></div>
 
         <div class="ornate-divider"><span class="ornate-divider-diamond">◆</span></div>
 
         <h2 class="home-section-title">Objets</h2>
-        <p class="home-section-subtitle">Dépensez vos gemmes contre des bonus bien utiles. Gagnez des gemmes en validant vos quêtes quotidiennes.</p>
+        <p class="home-section-subtitle">Dépensez vos gemmes ou vos crédits contre des bonus bien utiles.</p>
         <div id="shopItemList" class="shop-grid"></div>
 
         <div class="ornate-divider"><span class="ornate-divider-diamond">◆</span></div>
@@ -255,8 +271,8 @@
         <div id="revealRays" class="reveal-rays"></div>
         <div id="revealBoosterArt" class="reveal-booster-wrap">
           <div class="reveal-booster-inner">
-            <img src="medias/Booster.png" alt="booster" class="reveal-booster-face reveal-booster-front" />
-            <img src="medias/Booster-dos.png" alt="dos du booster" class="reveal-booster-face reveal-booster-back" />
+            <img id="revealBoosterFront" src="medias/Booster.png" alt="booster" class="reveal-booster-face reveal-booster-front" />
+            <img id="revealBoosterBack" src="medias/Booster-dos.png" alt="dos du booster" class="reveal-booster-face reveal-booster-back" />
           </div>
         </div>
         <div id="revealCards" class="reveal-cards"></div>
@@ -356,8 +372,8 @@
   <!-- Shop item detail modal -->
   <div id="shopItemModal" class="modal hidden">
     <div class="shop-item-balance">
-      <span class="shop-item-balance-label">Gemmes possédées</span>
-      <span class="shop-item-balance-value"><img class="gem-icon-img" src="medias/Gemme.png" alt="" /><span id="shopItemModalBalance">0</span></span>
+      <span id="shopItemModalBalanceLabel" class="shop-item-balance-label">Gemmes possédées</span>
+      <span class="shop-item-balance-value"><img id="shopItemModalBalanceIcon" class="gem-icon-img" src="medias/Gemme.png" alt="" /><span id="shopItemModalBalance">0</span></span>
     </div>
     <div class="shop-item-detail">
       <button id="closeShopItemModal" class="icon-btn card-detail-close" type="button">✕</button>
@@ -365,6 +381,7 @@
       <h3 id="shopItemModalName" class="lieu-panel-title"></h3>
       <div class="ornate-divider"><span class="ornate-divider-diamond">◆</span></div>
       <p id="shopItemModalDesc" class="shop-item-detail-desc"></p>
+      <p id="shopItemModalUsage" class="shop-item-detail-usage hidden"></p>
       <p id="shopItemModalNote" class="shop-item-detail-note hidden"></p>
       <button id="shopItemModalBuy" class="btn-primary shop-item-detail-buy" type="button"></button>
     </div>
@@ -381,6 +398,21 @@
     </div>
   </div>
 
+  <!-- Bulle de dialogue modal -->
+  <div id="bubbleEditModal" class="modal hidden">
+    <div class="bubble-edit-panel">
+      <button id="closeBubbleEditModal" class="icon-btn card-detail-close" type="button">✕</button>
+      <h3 class="lieu-panel-title">Bulle de dialogue</h3>
+      <p class="lieu-hint">Ce texte s'affiche au-dessus de ton personnage pour tous les joueurs.</p>
+      <textarea id="bubbleEditInput" class="bubble-edit-input" maxlength="180" rows="3" placeholder="Ton message…"></textarea>
+      <span id="bubbleEditCount" class="bubble-edit-count">0 / 180</span>
+      <div class="bubble-edit-actions">
+        <button id="bubbleEditClear" class="btn-dev" type="button">Effacer</button>
+        <button id="bubbleEditSave" class="btn-primary" type="button">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Send gift modal -->
   <div id="sendGiftModal" class="modal hidden">
     <div class="gift-panel">
@@ -389,6 +421,32 @@
       <p class="lieu-hint">Choisis la carte que tu veux offrir. Elle ne te sera pas rendue.</p>
       <div id="giftMyCards" class="card-grid gift-pick-grid"></div>
       <button id="submitGiftBtn" class="btn-primary" type="button" disabled>Envoyer le cadeau</button>
+    </div>
+  </div>
+
+  <!-- Gift choice modal -->
+  <div id="giftChoiceModal" class="modal hidden">
+    <div class="gift-choice-panel">
+      <button id="closeGiftChoiceModal" class="icon-btn card-detail-close" type="button">✕</button>
+      <h3 class="lieu-panel-title">Offrir à <span id="giftChoicePartnerName"></span></h3>
+      <button id="giftChoicePascade" class="btn-primary" type="button">Offrir des pascades</button>
+      <button id="giftChoiceCard" class="btn-primary" type="button">Offrir une carte</button>
+    </div>
+  </div>
+
+  <!-- Send pascades modal -->
+  <div id="sendPascadeModal" class="modal hidden">
+    <div class="pascade-gift-panel">
+      <button id="closeSendPascadeModal" class="icon-btn card-detail-close" type="button">✕</button>
+      <h3 class="lieu-panel-title">Offrir des pascades à <span id="pascadeGiftPartnerName"></span></h3>
+      <p class="lieu-hint">Les pascades envoyées seront retirées de ton solde.</p>
+      <div class="pascade-gift-stepper">
+        <button id="pascadeGiftMinus" class="pascade-gift-step" type="button" aria-label="Moins">−</button>
+        <span class="pascade-gift-value"><span id="pascadeGiftAmount">1</span><img class="pascade-icon" src="medias/Pascade.png" alt="" /></span>
+        <button id="pascadeGiftPlus" class="pascade-gift-step" type="button" aria-label="Plus">+</button>
+      </div>
+      <p class="pascade-gift-balance">Ton solde : <span id="pascadeGiftBalance">0</span></p>
+      <button id="submitPascadeGiftBtn" class="btn-primary" type="button">Envoyer</button>
     </div>
   </div>
 
@@ -403,6 +461,7 @@
     </div>
   </div>
 
+  <div id="toastBackdrop" class="toast-backdrop hidden"></div>
   <div id="toast" class="toast hidden"></div>
 
   <!-- Firebase (compat SDK, no build step needed) -->
