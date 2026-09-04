@@ -206,7 +206,7 @@ LOCATION_CARD_DEFS.push({
   icon: '💰',
   file: 'Caverne.png',
   bg: 'Caverne-BG.png',
-  description: 'Pour chaque booster que vous ouvrez, obtenez une récompense aléatoire.',
+  description: "Ouvre-toi, Sésame ! Chaque booster ouvert révèle en prime un trésor tiré au hasard dans la caverne : crédits, gemmes, pascades, ou un objet de la boutique.",
 });
 
 // ============================================================
@@ -1680,11 +1680,9 @@ const ALIBABA_REWARD_POOL = [
   { kind: 'credits', amount: 1 },
   { kind: 'credits', amount: 3 },
   { kind: 'credits', amount: 5 },
-  { kind: 'credits', amount: 10 },
   { kind: 'gems', amount: 1 },
   { kind: 'gems', amount: 1 },
   { kind: 'gems', amount: 3 },
-  { kind: 'gems', amount: 5 },
   { kind: 'pascades', amount: 1 },
   { kind: 'pascades', amount: 1 },
   { kind: 'pascades', amount: 3 },
