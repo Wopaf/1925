@@ -350,7 +350,7 @@ function buildAchievements() {
   ].forEach(([threshold, gems]) => {
     list.push({
       id: `gift-pascades-${threshold}`,
-      label: `Offrir ${threshold} Pascade${threshold > 1 ? 's' : ''} à un joueur`,
+      label: `Offrir ${threshold} Pascades`,
       counterKey: 'totalPascadesGifted',
       threshold,
       reward: { type: 'gems', amount: gems },
