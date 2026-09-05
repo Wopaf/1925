@@ -1,4 +1,9 @@
 // ============================================================
+//  VERSION DE L'APP (affichée sur l'écran de chargement)
+// ============================================================
+const APP_VERSION = '1.3.0';
+
+// ============================================================
 //  CONFIGURATION FIREBASE
 // ============================================================
 const FIREBASE_CONFIG = {
@@ -320,6 +325,38 @@ function buildAchievements() {
     });
   });
 
+  // Une quête par extension : toutes ses cartes, tous types confondus
+  // (personnages, spéciales, lieux).
+  list.push({
+    id: 'ext-classic',
+    label: "Collectionner toutes les cartes de l'extension Classic",
+    cardIds: ALL_CARD_DEFS.filter((c) => c.extension === 'classic').map((c) => c.id),
+    reward: { type: 'gems', amount: 20 },
+  });
+  list.push({
+    id: 'ext-ext2',
+    label: "Collectionner toutes les cartes de l'extension Across the verse",
+    cardIds: ALL_CARD_DEFS.filter((c) => c.extension === 'ext2').map((c) => c.id),
+    reward: { type: 'gems', amount: 15 },
+  });
+
+  // Quêtes à palier basées sur un compteur cumulé (pas un ensemble de cartes) :
+  // le total de pascades offertes au fil du temps, toutes cibles confondues.
+  [
+    [10, 5],
+    [50, 15],
+    [100, 30],
+    [1000, 300],
+  ].forEach(([threshold, gems]) => {
+    list.push({
+      id: `gift-pascades-${threshold}`,
+      label: `Offrir ${threshold} Pascade${threshold > 1 ? 's' : ''} à un joueur`,
+      counterKey: 'totalPascadesGifted',
+      threshold,
+      reward: { type: 'gems', amount: gems },
+    });
+  });
+
   return list;
 }
 const ACHIEVEMENTS = buildAchievements();
@@ -428,6 +465,59 @@ const RECYCLE_ICON_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -96
 const LOCK_ICON_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor"><path d="M240-80q-33 0-56.5-23.5T160-160v-400q0-33 23.5-56.5T240-640h40v-80q0-83 58.5-141.5T480-920q83 0 141.5 58.5T680-720v80h40q33 0 56.5 23.5T800-560v400q0 33-23.5 56.5T720-80H240Zm0-80h480v-400H240v400Zm296.5-143.5Q560-327 560-360t-23.5-56.5Q513-440 480-440t-56.5 23.5Q400-393 400-360t23.5 56.5Q447-280 480-280t56.5-23.5ZM360-640h240v-80q0-50-35-85t-85-35q-50 0-85 35t-35 85v80ZM240-160v-400 400Z"/></svg>';
 
 const AVATAR_OPTIONS = ['PP/Defaut.png', 'PP/Matthias1.png', 'PP/Valentin1.png', 'PP/Denis1.png', 'PP/Elodie1.png', 'PP/Anais1.png', 'PP/Louis1.png', 'PP/Louann1.png', 'PP/Val1.png', 'PP/Bichu1.png', 'PP/Emilie1.png', 'PP/Matthias2.png', 'PP/Valentin2.png', 'PP/Denis2.png', 'PP/Elodie2.png', 'PP/Anais2.png', 'PP/Louis2.png', 'PP/Louann2.png', 'PP/Val2.png', 'PP/Bichu2.png', 'PP/Emilie2.png', 'PP/Denis3.png', 'PP/Aveyron.png', 'PP/Johnny.png', 'PP/Phillipe.png', 'PP/Tete1.png', 'PP/Tete2.png', 'PP/William.png', 'PP/Romain.png', 'PP/Ugo.png', 'PP/Maho.png', 'PP/Gabin.png', 'Pascade.png'];
+
+// ============================================================
+//  COULEUR PAR PHOTO DE PROFIL
+// ============================================================
+// Une couleur par photo précise (chaque entrée de AVATAR_OPTIONS a la
+// sienne) — Matthias1.png et Matthias2.png ont donc des couleurs distinctes.
+const AVATAR_COLORS = {
+  'PP/Defaut.png': '#292929',
+  'PP/Matthias1.png': '#29557c',
+  'PP/Matthias2.png': '#c18a5a',
+  'PP/Valentin1.png': '#bb6740',
+  'PP/Valentin2.png': '#b47647',
+  'PP/Denis1.png': '#f29dbb',
+  'PP/Denis2.png': '#2a5a89',
+  'PP/Denis3.png': '#dfc556',
+  'PP/Elodie1.png': '#d3a15d',
+  'PP/Elodie2.png': '#cca055',
+  'PP/Anais1.png': '#eb8658',
+  'PP/Anais2.png': '#aa9984',
+  'PP/Louis1.png': '#3770ae',
+  'PP/Louis2.png': '#6aa1de',
+  'PP/Louann1.png': '#c3a382',
+  'PP/Louann2.png': '#ddb385',
+  'PP/Val1.png': '#b5345b',
+  'PP/Val2.png': '#996030',
+  'PP/Bichu1.png': '#344830',
+  'PP/Bichu2.png': '#7f3c38',
+  'PP/Emilie1.png': '#2f241c',
+  'PP/Emilie2.png': '#a81809',
+  'PP/Aveyron.png': '#90853d',
+  'PP/Johnny.png': '#f7e9ac',
+  'PP/Phillipe.png': '#393f54',
+  'PP/Tete1.png': '#597680',
+  'PP/Tete2.png': '#60899a',
+  'PP/William.png': '#3a93d7',
+  'PP/Romain.png': '#101c37',
+  'PP/Ugo.png': '#101c37',
+  'PP/Maho.png': '#882a3d',
+  'PP/Gabin.png': '#b76963',
+  'Pascade.png': '#ffad49',
+};
+
+function getAvatarColor(avatarPath) {
+  return AVATAR_COLORS[avatarPath] || AVATAR_COLORS['PP/Defaut.png'];
+}
+
+function hexToRgba(hex, alpha) {
+  const clean = hex.replace('#', '');
+  const r = parseInt(clean.slice(0, 2), 16);
+  const g = parseInt(clean.slice(2, 4), 16);
+  const b = parseInt(clean.slice(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
 
 // Roue quotidienne : 10 cases (3x1, 3x5, 3x10, 1x30 crédits), tirage équiprobable
 const WHEEL_SLOTS = [
@@ -548,6 +638,12 @@ const el = (id) => document.getElementById(id);
 const loadingScreen = el('loadingScreen');
 const authScreen = el('authScreen');
 const appShell = el('appShell');
+const loaderStatus = el('loaderStatus');
+const loaderVersion = el('loaderVersion');
+if (loaderVersion) loaderVersion.textContent = `v${APP_VERSION}`;
+function setLoaderStatus(text) {
+  if (loaderStatus) loaderStatus.textContent = text;
+}
 
 const authForm = el('authForm');
 const authEmail = el('authEmail');
@@ -1005,8 +1101,11 @@ profileModal.addEventListener('click', (e) => { if (e.target === profileModal) c
 auth.onAuthStateChanged(async (user) => {
   if (user) {
     showScreen('loadingScreen');
+    setLoaderStatus('Connexion...');
     try {
+      setLoaderStatus('Chargement de vos données...');
       await loadUserData(user);
+      setLoaderStatus('Synchronisation...');
       await persistUser();
     } catch (err) {
       console.error('Lecture des données joueur refusée :', err);
@@ -1016,6 +1115,7 @@ auth.onAuthStateChanged(async (user) => {
       auth.signOut();
       return;
     }
+    setLoaderStatus("Préparation de l'interface...");
     renderAll();
     await wait(LOADING_SCREEN_MIN_MS);
     showScreen('appShell');
@@ -1068,6 +1168,7 @@ async function loadUserData(user) {
       ownedTitles: data.ownedTitles || {},
       equippedTitle: data.equippedTitle || null,
       bubbleText: typeof data.bubbleText === 'string' ? data.bubbleText : '',
+      totalPascadesGifted: typeof data.totalPascadesGifted === 'number' ? data.totalPascadesGifted : 0,
     };
   } else {
     isNewAccountThisSession = true;
@@ -1097,6 +1198,7 @@ async function loadUserData(user) {
       ownedTitles: {},
       equippedTitle: null,
       bubbleText: '',
+      totalPascadesGifted: 0,
     };
     await persistUser();
   }
@@ -1136,6 +1238,7 @@ function persistUser() {
     ownedTitles: state.ownedTitles,
     equippedTitle: state.equippedTitle,
     bubbleText: state.bubbleText || '',
+    totalPascadesGifted: state.totalPascadesGifted || 0,
   }).catch((err) => {
     console.error('Sauvegarde des données joueur refusée :', err);
     showToast('Erreur de sauvegarde — vérifiez les règles Firebase.');
@@ -2481,11 +2584,18 @@ newsModal.addEventListener('click', (e) => { if (e.target === newsModal) closeNe
 // ============================================================
 //  QUÊTES / SUCCÈS DE COLLECTION (modale)
 // ============================================================
+// Deux formes de quête : un ensemble de cartes à posséder (a.cardIds), ou un
+// compteur numérique cumulé à atteindre (a.counterKey / a.threshold).
+function achievementTotal(a) {
+  return a.cardIds ? a.cardIds.length : a.threshold;
+}
 function achievementOwnedCount(a) {
-  return a.cardIds.reduce((n, id) => n + ((state.cards[id] || 0) > 0 ? 1 : 0), 0);
+  if (a.cardIds) return a.cardIds.reduce((n, id) => n + ((state.cards[id] || 0) > 0 ? 1 : 0), 0);
+  return Math.min(state[a.counterKey] || 0, a.threshold);
 }
 function achievementComplete(a) {
-  return a.cardIds.length > 0 && achievementOwnedCount(a) === a.cardIds.length;
+  const total = achievementTotal(a);
+  return total > 0 && achievementOwnedCount(a) === total;
 }
 function achievementClaimable(a) {
   return achievementComplete(a) && !state.claimedAchievements[a.id];
@@ -2503,7 +2613,7 @@ function updateQuestsBadge() {
 
 function questItemHtml(a) {
   const owned = achievementOwnedCount(a);
-  const total = a.cardIds.length;
+  const total = achievementTotal(a);
   const done = owned === total;
   const claimed = !!state.claimedAchievements[a.id];
   const claimable = done && !claimed;
@@ -2634,8 +2744,15 @@ function switchView(view, { instant } = {}) {
   if (scroller) scroller.scrollTop = 0;
   document.querySelectorAll('.nav-btn').forEach((b) => b.classList.toggle('active', b.dataset.view === view));
   appShell.classList.toggle('home-view', view === 'home');
-  if (view === 'collection') renderCollection(true);
-  if (view === 'community') { renderPlayerList(); }
+  if (view === 'collection') {
+    renderCollection(true);
+    renderExtFilters(true);
+    animateRarityFilterChips();
+  }
+  if (view === 'community') {
+    renderPlayerList();
+    animateCommunityStaticElements();
+  }
   if (view === 'boutique') renderBoutique();
   quickRecycleBtn.classList.toggle('hidden', view !== 'collection');
   if (view !== 'collection' && !quickRecycleModal.classList.contains('hidden')) closeQuickRecycleModal();
@@ -2657,8 +2774,16 @@ function revealQuestsLaunchRow(onHome) {
 // ============================================================
 //  COLLECTION
 // ============================================================
+// Rejoue une petite animation de rebond au clic (boutons de filtre).
+function bouncePress(elm) {
+  elm.classList.remove('chip-bounce');
+  void elm.offsetWidth; // force reflow pour pouvoir rejouer l'animation
+  elm.classList.add('chip-bounce');
+}
+
 document.querySelectorAll('.filter-chip').forEach((chip) => {
   chip.addEventListener('click', () => {
+    bouncePress(chip);
     new Audio('medias/Clic2.wav').play().catch(() => {});
     document.querySelectorAll('.filter-chip').forEach((c) => c.classList.remove('active'));
     chip.classList.add('active');
@@ -2669,17 +2794,55 @@ document.querySelectorAll('.filter-chip').forEach((chip) => {
 
 // Filtre par extension (généré depuis EXTENSIONS pour rester synchro avec les noms)
 const extFilters = el('extFilters');
-function renderExtFilters() {
+function renderExtFilters(animate = false) {
   if (!extFilters) return;
   // On masque les extensions « à venir » (aucune carte) de la liste des filtres.
   const opts = [{ id: 'all', name: 'Toutes' }, ...EXTENSIONS.filter((e) => extensionAvailable(e))];
   extFilters.innerHTML = opts
-    .map((o) => `<button type="button" class="ext-filter-chip ${o.id === currentExtFilter ? 'active' : ''}" data-ext="${o.id}">${escapeHtml(o.name)}</button>`)
+    .map((o, i) => `<button type="button" class="ext-filter-chip${o.id === currentExtFilter ? ' active' : ''}${animate ? ' filter-chip-pop' : ''}" data-ext="${o.id}"${animate ? ` style="animation-delay:${i * 60}ms"` : ''}>${escapeHtml(o.name)}</button>`)
     .join('');
+}
+
+// Rejoue l'animation d'entrée un-à-un des chips de filtre de rareté (statiques
+// dans le HTML) chaque fois que l'onglet Collection est affiché.
+function animateRarityFilterChips() {
+  const chips = document.querySelectorAll('#view-collection .rarity-filters:not(.ext-filters) .filter-chip');
+  chips.forEach((chip) => chip.classList.remove('filter-chip-pop'));
+  void el('view-collection')?.offsetWidth; // force reflow avant de rejouer l'animation
+  chips.forEach((chip, i) => {
+    chip.style.animationDelay = `${i * 60}ms`;
+    chip.classList.add('filter-chip-pop');
+  });
+}
+
+// Rejoue l'animation d'entrée des éléments statiques de l'onglet Communauté
+// (séparateur, recherche, tri) chaque fois que l'onglet est affiché. La liste
+// des joueurs (#playerList / #myPlayerRow) s'anime elle-même via renderPlayerRows.
+function animateCommunityStaticElements() {
+  const slideItems = [
+    document.querySelector('#view-community .ornate-divider'),
+    el('playerSearch'),
+  ].filter(Boolean);
+  const popItems = [
+    document.querySelector('.player-sort-label'),
+    ...document.querySelectorAll('.player-sort-chip'),
+  ].filter(Boolean);
+  slideItems.forEach((elm) => elm.classList.remove('row-slide-in'));
+  popItems.forEach((elm) => elm.classList.remove('filter-chip-pop'));
+  void el('view-community')?.offsetWidth; // force reflow avant de rejouer l'animation
+  slideItems.forEach((elm, i) => {
+    elm.style.animationDelay = `${i * 60}ms`;
+    elm.classList.add('row-slide-in');
+  });
+  popItems.forEach((elm, i) => {
+    elm.style.animationDelay = `${(slideItems.length + i) * 60}ms`;
+    elm.classList.add('filter-chip-pop');
+  });
 }
 extFilters?.addEventListener('click', (e) => {
   const chip = e.target.closest('.ext-filter-chip[data-ext]');
   if (!chip) return;
+  bouncePress(chip);
   new Audio('medias/Clic2.wav').play().catch(() => {});
   currentExtFilter = chip.dataset.ext;
   extFilters.querySelectorAll('.ext-filter-chip').forEach((c) => c.classList.toggle('active', c === chip));
@@ -3030,11 +3193,12 @@ function buildPlayerRow(r, delay, maxPascades) {
   const title = titleName(r.equippedTitle);
   const isPascadePro = maxPascades > 0 && (r.pascades || 0) === maxPascades;
   const bubble = (r.bubbleText || '').trim();
+  const avatarTint = hexToRgba(getAvatarColor(avatar), 0.4);
   return `
     <div class="player-row row-slide-in" style="animation-delay:${delay}ms" data-uid="${r.uid}">
-      ${bubble ? `<div class="player-bubble">${escapeHtml(bubble)}</div>` : ''}
-      <div class="player-card${isMe ? ' player-row-me' : ''}${isGold ? ' player-row-gold' : ''}">
-      <div class="player-header">
+      ${bubble ? `<div class="player-bubble bubble-pop-in" style="--bubble-tint: ${avatarTint}; animation-delay:${delay}ms;">${escapeHtml(bubble)}</div>` : ''}
+      <div class="player-card${isMe ? ' player-row-me' : ''}${isGold ? ' player-row-gold' : ''}${isPascadePro ? ' player-card-pascade-pro' : ''}">
+      <div class="player-header" style="background: linear-gradient(135deg, ${avatarTint} 0%, var(--bg-app) 100%);">
         <img class="player-avatar" src="medias/${avatar}" alt="" />
         <div class="player-name-block">
           <span class="player-name">${escapeHtml(r.displayName || 'Joueur')}${isMe ? ' (toi)' : ''}</span>
@@ -3119,6 +3283,7 @@ function syncPlayerSortChips() {
 document.querySelectorAll('.player-sort-chip').forEach((chip) => {
   chip.addEventListener('click', () => {
     if (chip.classList.contains('active')) return;
+    bouncePress(chip);
     new Audio('medias/Clic2.wav').play().catch(() => {});
     playerSort = chip.dataset.sort;
     try {
@@ -3411,8 +3576,10 @@ submitPascadeGiftBtn.addEventListener('click', async () => {
   }
 
   state.pascades -= amount;
+  state.totalPascadesGifted = (state.totalPascadesGifted || 0) + amount;
   await persistUser();
   updatePascadesUI();
+  updateQuestsBadge();
   showToast(`${amount} pascade${amount > 1 ? 's' : ''} envoyée${amount > 1 ? 's' : ''} !`);
   closeSendPascadeModal();
 });
