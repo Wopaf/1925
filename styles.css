@@ -1136,6 +1136,11 @@ button, input {
   border-radius: 999px;
   box-shadow: 0 0 8px rgba(120,222,150,.4);
 }
+.player-badge-pro img {
+  width: 10px;
+  height: 13px;
+  object-fit: contain;
+}
 .player-sort {
   display: flex;
   align-items: center;
@@ -1180,7 +1185,9 @@ button, input {
 }
 
 .player-list { display: flex; flex-direction: column; gap: 16px; }
-.player-row {
+/* .player-row : simple conteneur (bulle + card), pas de fond/bordure propre. */
+.player-row { display: flex; flex-direction: column; }
+.player-card {
   position: relative;
   display: flex;
   flex-direction: column;
@@ -1191,6 +1198,7 @@ button, input {
   border: 1px solid var(--border-hex);
   box-shadow: 0 4px 4px rgba(0, 0, 0, 0.28);
 }
+
 .player-header {
   display: flex;
   align-items: center;
@@ -1201,15 +1209,10 @@ button, input {
   border-bottom: 1px solid var(--border-hex);
   box-shadow: 0 4px 4px rgba(0, 0, 0, 0.28);
 }
-.player-row .player-name-block { gap: 4px; }
+.player-card .player-name-block { gap: 4px; }
 /* Réserve la place de l'étoile favoris (en haut à droite) */
-.player-row:not(.player-row-me) .player-header { padding-right: 44px; }
+.player-card:not(.player-row-me) .player-header { padding-right: 44px; }
 
-/* Bulle de dialogue affichée au-dessus du perso */
-.player-row.has-bubble .player-header {
-  margin-top: 0;
-  border-radius: 12px;
-}
 .player-bubble {
   position: relative;
   align-self: flex-start;

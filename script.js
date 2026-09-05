@@ -239,8 +239,8 @@ const RAW_EXT2_CARDS = [
   ['Matthias-LeCringe', 'Matthias Le Cringe', 'common'],
   ['Valentin-LeCringe', 'Valentin Le Cringe', 'common'],
   ['Val-Shaolin', 'Val Moine Shaolin', 'rare'],
-  ['Emilie-Catcheur.PNG', 'Emilie Catcheur', 'rare'],
-  ['Elodie-degre.PNG', 'Elodie 1er Degré', 'common'],
+  ['Emilie-Catcheur', 'Emilie Catcheur', 'rare'],
+  ['Elodie-degre', 'Elodie 1er Degré', 'common'],
   ['Louis-Bouzelouf', 'Louis Bouzelouf', 'epic'],
   ['Bichu-2249', 'Bichu 2249', 'rare'],
   ['Valentin-train', 'Valentin fan de train', 'epic'],
@@ -427,7 +427,7 @@ const RECYCLE_ICON_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -96
 
 const LOCK_ICON_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor"><path d="M240-80q-33 0-56.5-23.5T160-160v-400q0-33 23.5-56.5T240-640h40v-80q0-83 58.5-141.5T480-920q83 0 141.5 58.5T680-720v80h40q33 0 56.5 23.5T800-560v400q0 33-23.5 56.5T720-80H240Zm0-80h480v-400H240v400Zm296.5-143.5Q560-327 560-360t-23.5-56.5Q513-440 480-440t-56.5 23.5Q400-393 400-360t23.5 56.5Q447-280 480-280t56.5-23.5ZM360-640h240v-80q0-50-35-85t-85-35q-50 0-85 35t-35 85v80ZM240-160v-400 400Z"/></svg>';
 
-const AVATAR_OPTIONS = ['PP/Defaut.png', 'PP/Matthias.png', 'PP/Valentin.png', 'PP/Denis.png', 'PP/Elodie.png', 'PP/Anais.png', 'PP/Louis.png', 'PP/Louann.png', 'PP/Val.png', 'PP/Bichu.png', 'PP/Emilie.png'];
+const AVATAR_OPTIONS = ['PP/Defaut.png', 'PP/Matthias1.png', 'PP/Valentin1.png', 'PP/Denis1.png', 'PP/Elodie1.png', 'PP/Anais1.png', 'PP/Louis1.png', 'PP/Louann1.png', 'PP/Val1.png', 'PP/Bichu1.png', 'PP/Emilie1.png', 'PP/Matthias2.png', 'PP/Valentin2.png', 'PP/Denis2.png', 'PP/Elodie2.png', 'PP/Anais2.png', 'PP/Louis2.png', 'PP/Louann2.png', 'PP/Val2.png', 'PP/Bichu2.png', 'PP/Emilie2.png', 'PP/Denis3.png', 'PP/Aveyron.png', 'PP/Johnny.png', 'PP/Phillipe.png', 'PP/Tete1.png', 'PP/Tete2.png', 'PP/William.png', 'PP/Romain.png', 'PP/Ugo.png', 'PP/Maho.png', 'PP/Gabin.png', 'Pascade.png'];
 
 // Roue quotidienne : 10 cases (3x1, 3x5, 3x10, 1x30 crédits), tirage équiprobable
 const WHEEL_SLOTS = [
@@ -3031,14 +3031,15 @@ function buildPlayerRow(r, delay, maxPascades) {
   const isPascadePro = maxPascades > 0 && (r.pascades || 0) === maxPascades;
   const bubble = (r.bubbleText || '').trim();
   return `
-    <div class="player-row row-slide-in${isMe ? ' player-row-me' : ''}${isGold ? ' player-row-gold' : ''}${bubble ? ' has-bubble' : ''}" style="animation-delay:${delay}ms" data-uid="${r.uid}">
+    <div class="player-row row-slide-in" style="animation-delay:${delay}ms" data-uid="${r.uid}">
       ${bubble ? `<div class="player-bubble">${escapeHtml(bubble)}</div>` : ''}
+      <div class="player-card${isMe ? ' player-row-me' : ''}${isGold ? ' player-row-gold' : ''}">
       <div class="player-header">
         <img class="player-avatar" src="medias/${avatar}" alt="" />
         <div class="player-name-block">
           <span class="player-name">${escapeHtml(r.displayName || 'Joueur')}${isMe ? ' (toi)' : ''}</span>
           ${title ? `<span class="player-title">${escapeHtml(title)}</span>` : ''}
-          ${isPascadePro ? '<span class="player-badge-pro">Pascade Pro</span>' : ''}
+          ${isPascadePro ? '<span class="player-badge-pro"><img src="medias/Pascade.png" alt="" />Pascade Pro</span>' : ''}
         </div>
         ${isMe ? `<button type="button" class="player-bubble-edit" data-act="bubble" aria-label="Éditer ma bulle de dialogue">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor"><path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T845-624L318-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z"/></svg>
@@ -3065,6 +3066,7 @@ function buildPlayerRow(r, delay, maxPascades) {
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor"><path d="M160-160v-360q-33 0-56.5-23.5T80-600v-80q0-33 23.5-56.5T160-760h128q-5-9-6.5-19t-1.5-21q0-50 35-85t85-35q23 0 43 8.5t37 23.5q17-16 37-24t43-8q50 0 85 35t35 85q0 11-2 20.5t-6 19.5h128q33 0 56.5 23.5T880-680v80q0 33-23.5 56.5T800-520v360q0 33-23.5 56.5T720-80H240q-33 0-56.5-23.5T160-160Zm371.5-668.5Q520-817 520-800t11.5 28.5Q543-760 560-760t28.5-11.5Q600-783 600-800t-11.5-28.5Q577-840 560-840t-28.5 11.5ZM360-800q0 17 11.5 28.5T400-760q17 0 28.5-11.5T440-800q0-17-11.5-28.5T400-840q-17 0-28.5 11.5T360-800ZM160-680v80h280v-80H160Zm280 520v-360H240v360h200Zm80 0h200v-360H520v360Zm280-440v-80H520v80h280Z"/></svg>
           <span class="player-gift-btn-label">Cadeau</span>
         </button>`}
+      </div>
       </div>
     </div>`;
 }
