@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>1925 TCG</title>
+  <title>Copain TCG</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -61,19 +61,20 @@
           <span id="playerTitle" class="player-title hidden"></span>
         </div>
       </div>
-      <div class="currency-pill currency-pill-pascades">
+      <div class="currency-pill currency-pill-pascades" data-currency="pascades">
         <img class="coin-icon" src="medias/Pascade.png" alt="pascades" />
         <span id="pascadesValue">0</span>
       </div>
-      <div class="currency-pill currency-pill-gems">
+      <div class="currency-pill currency-pill-gems" data-currency="gems">
         <img class="coin-icon" src="medias/Gemme.png" alt="gemmes" />
         <span id="gemsValue">0</span>
       </div>
-      <div class="currency-pill">
+      <div class="currency-pill" data-currency="credits">
         <img class="coin-icon" src="medias/Credit.png" alt="crédits" />
         <span id="creditsValue">0</span>
       </div>
     </header>
+    <div id="currencyTip" class="currency-tip hidden"></div>
 
     <main class="views">
       <!-- HOME -->
@@ -135,12 +136,8 @@
             <button id="addCreditsBtn" class="btn-dev" type="button">+10 crédits</button>
             <button id="addGemsBtn" class="btn-dev" type="button">+5 gemmes</button>
             <button id="addPascadesBtn" class="btn-dev" type="button">+5 pascades</button>
-            <button id="resetCreditsBtn" class="btn-dev" type="button">Reset crédits</button>
-            <button id="resetGemsBtn" class="btn-dev" type="button">Reset gemmes</button>
-            <button id="resetPascadesBtn" class="btn-dev" type="button">Reset pascades (tous)</button>
             <button id="resetWheelBtn" class="btn-dev" type="button">Réinitialiser roue</button>
-            <button id="resetQuestsBtn" class="btn-dev" type="button">Reset quêtes récupérées</button>
-            <button id="addExt2LieuxBtn" class="btn-dev" type="button">+ Cartes lieux Across the verse</button>
+            <button id="cleanUndefinedCardsBtn" class="btn-dev" type="button">Nettoyer cartes "undefined" (tous)</button>
           </div>
         </div>
 
@@ -181,21 +178,7 @@
 
       <!-- COLLECTION -->
       <section id="view-collection" class="view">
-        <div class="home-stats">
-          <div class="stat-box"><span id="statOwned">0</span><small>Cartes possédées</small></div>
-          <div class="stat-box"><span id="statUnique">0</span><small>Cartes uniques</small></div>
-        </div>
-        <span class="filter-caption filter-caption-top">Extension</span>
-        <div id="extFilters" class="rarity-filters ext-filters"></div>
-        <span class="filter-caption filter-caption-top">Filtres</span>
-        <div class="rarity-filters">
-          <button class="filter-chip" data-rarity="default" aria-label="Tri par défaut"><svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="currentColor"><path d="M160-240q-17 0-28.5-11.5T120-280q0-17 11.5-28.5T160-320h160q17 0 28.5 11.5T360-280q0 17-11.5 28.5T320-240H160Zm0-200q-17 0-28.5-11.5T120-480q0-17 11.5-28.5T160-520h400q17 0 28.5 11.5T600-480q0 17-11.5 28.5T560-440H160Zm0-200q-17 0-28.5-11.5T120-680q0-17 11.5-28.5T160-720h640q17 0 28.5 11.5T840-680q0 17-11.5 28.5T800-640H160Z"/></svg></button>
-          <button class="filter-chip active" data-rarity="all">Toutes</button>
-          <button class="filter-chip" data-rarity="common">Commune</button>
-          <button class="filter-chip" data-rarity="rare">Rare</button>
-          <button class="filter-chip" data-rarity="epic">Épique</button>
-          <button class="filter-chip" data-rarity="legendary">Légendaire</button>
-        </div>
+        <input id="cardSearch" class="card-search" type="text" placeholder="Rechercher une carte…" autocomplete="off" />
         <div id="cardGrid" class="card-grid"></div>
       </section>
 
@@ -216,20 +199,22 @@
 
       <!-- BOUTIQUE -->
       <section id="view-boutique" class="view">
-        <div id="gemPackGrid" class="gem-pack-grid"></div>
-        <p class="gem-pack-disclaimer">(Il n'y a rien à vendre sur cette application, c'est juste une blague)</p>
-
-        <div class="ornate-divider"><span class="ornate-divider-diamond">◆</span></div>
-
-        <h2 class="home-section-title">Objets</h2>
-        <p class="home-section-subtitle">Dépensez vos gemmes ou vos crédits contre des bonus bien utiles.</p>
-        <div id="shopItemList" class="shop-grid"></div>
-
-        <div class="ornate-divider"><span class="ornate-divider-diamond">◆</span></div>
-
-        <h2 class="home-section-title">Titres</h2>
-        <p class="home-section-subtitle">Achetez des titres avec vos crédits, puis équipez-en un depuis votre profil.</p>
-        <div id="titleShopList" class="title-shop-list"></div>
+        <div class="shop-hero">
+          <img class="shop-merchant-img" src="medias/Marchand.png" alt="Le marchand" />
+          <h2 class="shop-hero-title">La Boutique</h2>
+        </div>
+        <div class="shop-tabs">
+          <button class="shop-tab active" type="button" data-shop="objets">Objets</button>
+          <button class="shop-tab" type="button" data-shop="titres">Titres</button>
+        </div>
+        <div id="shopSection-objets" class="shop-section">
+          <p class="home-section-subtitle">Dépensez vos gemmes ou vos crédits contre des bonus bien utiles.</p>
+          <div id="shopItemList" class="shop-grid"></div>
+        </div>
+        <div id="shopSection-titres" class="shop-section hidden">
+          <p class="home-section-subtitle">Achetez des titres avec vos crédits, puis équipez-en un depuis votre profil.</p>
+          <div id="titleShopList" class="title-shop-list"></div>
+        </div>
       </section>
     </main>
 
@@ -252,10 +237,42 @@
       </button>
     </nav>
 
-    <button id="quickRecycleBtn" class="quick-recycle-fab hidden" type="button">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor"><path d="M160-479q0 85 42.5 158T318-204q14 9 19.5 24.5T335-150q-8 15-24.5 19.5T279-134q-93-54-146-146T80-479q0-26 3.5-51t9.5-50l-13 8q-14 9-30 4.5T26-586q-8-14-3.5-30.5T41-641l121-70q14-8 30.5-3.5T217-696l70 120q8 14 3.5 30.5T272-521q-14 8-30.5 3.5T217-536l-34-59q-11 28-17 57t-6 59Zm320-321q-41 0-81 10.5T323-759q-15 8-31.5 5.5T267-770q-9-16-4-32.5t21-25.5q45-26 94.5-39T480-880q79 0 151.5 29.5T761-765v-15q0-17 11.5-28.5T801-820q17 0 28.5 11.5T841-780v140q0 17-11.5 28.5T801-600H661q-17 0-28.5-11.5T621-640q0-17 11.5-28.5T661-680h69q-46-57-111-88.5T480-800Zm242 531q38-44 58-97t20-111q0-17 11.5-30t28.5-13q17 0 28.5 13t11.5 30q0 65-20.5 125.5T800-239q-39 52-92.5 89T591-95l10 6q14 8 18 24.5T615-34q-8 14-24 18t-30-4L439-90q-14-8-18.5-24.5T424-145l70-121q8-14 24-18t30 4q14 8 18.5 24.5T563-225l-37 63q57-8 107.5-35.5T722-269Z"/></svg>
-      Recyclage rapide
-    </button>
+    <div id="collectionStatsMenu" class="collection-fab-menu hidden">
+      <div class="stats-menu-row"><span>Cartes possédées</span><span id="statOwned">0</span></div>
+      <div class="stats-menu-row"><span>Cartes uniques</span><span id="statUnique">0</span></div>
+      <div class="stats-menu-sep"></div>
+      <div class="stats-menu-row"><span class="rarity-common">Communes</span><span id="statCommon">0</span></div>
+      <div class="stats-menu-row"><span class="rarity-rare">Rares</span><span id="statRare">0</span></div>
+      <div class="stats-menu-row"><span class="rarity-epic">Épiques</span><span id="statEpic">0</span></div>
+      <div class="stats-menu-row"><span class="rarity-legendary">Légendaires</span><span id="statLegendary">0</span></div>
+    </div>
+
+    <div id="collectionFilterMenu" class="collection-fab-menu hidden">
+      <span class="filter-caption filter-caption-top">Extension</span>
+      <div id="extFilters" class="rarity-filters ext-filters"></div>
+      <span class="filter-caption filter-caption-top">Filtres</span>
+      <div class="rarity-filters">
+        <button class="filter-chip" data-rarity="default" aria-label="Tri par défaut"><svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="currentColor"><path d="M160-240q-17 0-28.5-11.5T120-280q0-17 11.5-28.5T160-320h160q17 0 28.5 11.5T360-280q0 17-11.5 28.5T320-240H160Zm0-200q-17 0-28.5-11.5T120-480q0-17 11.5-28.5T160-520h400q17 0 28.5 11.5T600-480q0 17-11.5 28.5T560-440H160Zm0-200q-17 0-28.5-11.5T120-680q0-17 11.5-28.5T160-720h640q17 0 28.5 11.5T840-680q0 17-11.5 28.5T800-640H160Z"/></svg></button>
+        <button class="filter-chip active" data-rarity="all">Toutes</button>
+        <button class="filter-chip" data-rarity="common">Commune</button>
+        <button class="filter-chip" data-rarity="rare">Rare</button>
+        <button class="filter-chip" data-rarity="epic">Épique</button>
+        <button class="filter-chip" data-rarity="legendary">Légendaire</button>
+      </div>
+    </div>
+
+    <div id="collectionFabs" class="collection-fabs hidden">
+      <button id="collectionStatsFab" class="collection-fab-icon" type="button" aria-label="Statistiques" aria-expanded="false">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor"><path d="M640-160v-280h160v280H640Zm-240 0v-640h160v640H400Zm-240 0v-440h160v440H160Z"/></svg>
+      </button>
+      <button id="quickRecycleBtn" class="quick-recycle-fab" type="button">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor"><path d="M160-479q0 85 42.5 158T318-204q14 9 19.5 24.5T335-150q-8 15-24.5 19.5T279-134q-93-54-146-146T80-479q0-26 3.5-51t9.5-50l-13 8q-14 9-30 4.5T26-586q-8-14-3.5-30.5T41-641l121-70q14-8 30.5-3.5T217-696l70 120q8 14 3.5 30.5T272-521q-14 8-30.5 3.5T217-536l-34-59q-11 28-17 57t-6 59Zm320-321q-41 0-81 10.5T323-759q-15 8-31.5 5.5T267-770q-9-16-4-32.5t21-25.5q45-26 94.5-39T480-880q79 0 151.5 29.5T761-765v-15q0-17 11.5-28.5T801-820q17 0 28.5 11.5T841-780v140q0 17-11.5 28.5T801-600H661q-17 0-28.5-11.5T621-640q0-17 11.5-28.5T661-680h69q-46-57-111-88.5T480-800Zm242 531q38-44 58-97t20-111q0-17 11.5-30t28.5-13q17 0 28.5 13t11.5 30q0 65-20.5 125.5T800-239q-39 52-92.5 89T591-95l10 6q14 8 18 24.5T615-34q-8 14-24 18t-30-4L439-90q-14-8-18.5-24.5T424-145l70-121q8-14 24-18t30 4q14 8 18.5 24.5T563-225l-37 63q57-8 107.5-35.5T722-269Z"/></svg>
+        Recyclage rapide
+      </button>
+      <button id="collectionFilterFab" class="collection-fab-icon" type="button" aria-label="Filtres" aria-expanded="false">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor"><path d="M440-160q-17 0-28.5-11.5T400-200v-240L168-736q-15-20-4.5-42t36.5-22h560q26 0 36.5 22t-4.5 42L560-440v240q0 17-11.5 28.5T520-160h-80Z"/></svg>
+      </button>
+    </div>
   </div>
 
   <!-- Quick recycle modal -->
@@ -291,6 +308,8 @@
     <div class="card-detail">
       <button id="closeCardDetail" class="icon-btn card-detail-close" type="button">✕</button>
       <div class="card-detail-art">
+        <img id="cardDetailPrev" class="card-detail-side card-detail-prev hidden" src="" alt="" aria-hidden="true" />
+        <img id="cardDetailNext" class="card-detail-side card-detail-next hidden" src="" alt="" aria-hidden="true" />
         <img id="cardDetailImg" class="cardDetailImg" src="" alt="" />
         <div id="cardDetailLieuArt" class="lieu-art hidden"><span id="cardDetailLieuIcon" class="lieu-art-icon"></span></div>
       </div>
@@ -380,26 +399,18 @@
     </div>
     <div class="shop-item-detail">
       <button id="closeShopItemModal" class="icon-btn card-detail-close" type="button">✕</button>
-      <img id="shopItemModalIcon" class="shop-item-detail-icon" src="" alt="" />
+      <span class="shop-item-detail-icon-wrap">
+        <img id="shopItemModalIcon" class="shop-item-detail-icon" src="" alt="" />
+        <span id="shopItemModalLot" class="shop-item-detail-lot hidden"></span>
+      </span>
       <h3 id="shopItemModalName" class="lieu-panel-title"></h3>
       <div class="ornate-divider"><span class="ornate-divider-diamond">◆</span></div>
       <p id="shopItemModalDesc" class="shop-item-detail-desc"></p>
-      <p id="shopItemModalUsage" class="shop-item-detail-usage hidden"></p>
       <p id="shopItemModalNote" class="shop-item-detail-note hidden"></p>
       <button id="shopItemModalBuy" class="btn-primary shop-item-detail-buy" type="button"></button>
     </div>
   </div>
 
-  <!-- Gem pack joke modal -->
-  <div id="gemJokeModal" class="modal hidden">
-    <div class="gem-joke-panel">
-      <button id="closeGemJokeModal" class="icon-btn card-detail-close" type="button">✕</button>
-      <img class="gem-joke-emoji" src="medias/Gemme.png" alt="gemmes" />
-      <h3 class="lieu-panel-title">Vraiment ?</h3>
-      <p class="gem-joke-text">Bien évidemment que c'est une blague. Passe ton chemin.</p>
-      <button id="gemJokeDismiss" class="btn-primary" type="button">Je m'en doutais</button>
-    </div>
-  </div>
 
   <!-- Bulle de dialogue modal -->
   <div id="bubbleEditModal" class="modal hidden">

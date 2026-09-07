@@ -1,4 +1,21 @@
 // ============================================================
+//  RAFRAÎCHISSEMENT FORCÉ (1 fois par lancement d'app)
+// ============================================================
+// Au tout premier chargement d'une session d'onglet, on recharge la page une
+// seule fois (le drapeau en sessionStorage empêche la boucle ; il est effacé
+// à la fermeture de l'onglet, donc ça rejoue au prochain lancement).
+(() => {
+  try {
+    if (!sessionStorage.getItem('appLaunchRefreshed')) {
+      sessionStorage.setItem('appLaunchRefreshed', '1');
+      location.reload();
+    }
+  } catch {
+    /* sessionStorage indisponible : on ne force pas le rechargement */
+  }
+})();
+
+// ============================================================
 //  VERSION DE L'APP (affichée sur l'écran de chargement)
 // ============================================================
 const APP_VERSION = '1.3.0';
@@ -399,12 +416,6 @@ const DAILY_QUEST_GEM_REWARD = 10;
 // ============================================================
 //  BOUTIQUE (gemmes = monnaie premium, obtenue via les quêtes)
 // ============================================================
-// Les packs de gemmes sont une blague : aucun paiement réel n'est possible.
-const GEM_PACKS = [
-  { id: 'poignee', gems: 100, price: '4,99 €', img: 'G1.png', tier: 'poignee', tag: '' },
-  { id: 'coffre', gems: 550, price: '19,99 €', img: 'G2.png', tier: 'coffre', tag: 'Populaire', bonus: '+10% offert' },
-  { id: 'tresor', gems: 1500, price: '49,99 €', img: 'G3.png', tier: 'tresor', tag: 'Meilleure offre', bonus: '+25% offert' },
-];
 const CREDIT_MULTIPLIER_FACTOR = 2;
 const CREDIT_MULTIPLIER_DURATION_MS = 60 * 60 * 1000; // 1 heure
 const SHOP_ITEMS = {
@@ -459,8 +470,6 @@ const RECYCLE_RULES = {
   epic: { minOwned: 2, cost: 1, reward: 3 },
   legendary: { minOwned: 2, cost: 1, reward: 5 },
 };
-
-const RECYCLE_ICON_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor"><path d="M160-479q0 85 42.5 158T318-204q14 9 19.5 24.5T335-150q-8 15-24.5 19.5T279-134q-93-54-146-146T80-479q0-26 3.5-51t9.5-50l-13 8q-14 9-30 4.5T26-586q-8-14-3.5-30.5T41-641l121-70q14-8 30.5-3.5T217-696l70 120q8 14 3.5 30.5T272-521q-14 8-30.5 3.5T217-536l-34-59q-11 28-17 57t-6 59Zm320-321q-41 0-81 10.5T323-759q-15 8-31.5 5.5T267-770q-9-16-4-32.5t21-25.5q45-26 94.5-39T480-880q79 0 151.5 29.5T761-765v-15q0-17 11.5-28.5T801-820q17 0 28.5 11.5T841-780v140q0 17-11.5 28.5T801-600H661q-17 0-28.5-11.5T621-640q0-17 11.5-28.5T661-680h69q-46-57-111-88.5T480-800Zm242 531q38-44 58-97t20-111q0-17 11.5-30t28.5-13q17 0 28.5 13t11.5 30q0 65-20.5 125.5T800-239q-39 52-92.5 89T591-95l10 6q14 8 18 24.5T615-34q-8 14-24 18t-30-4L439-90q-14-8-18.5-24.5T424-145l70-121q8-14 24-18t30 4q14 8 18.5 24.5T563-225l-37 63q57-8 107.5-35.5T722-269Z"/></svg>';
 
 const LOCK_ICON_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor"><path d="M240-80q-33 0-56.5-23.5T160-160v-400q0-33 23.5-56.5T240-640h40v-80q0-83 58.5-141.5T480-920q83 0 141.5 58.5T680-720v80h40q33 0 56.5 23.5T800-560v400q0 33-23.5 56.5T720-80H240Zm0-80h480v-400H240v400Zm296.5-143.5Q560-327 560-360t-23.5-56.5Q513-440 480-440t-56.5 23.5Q400-393 400-360t23.5 56.5Q447-280 480-280t56.5-23.5ZM360-640h240v-80q0-50-35-85t-85-35q-50 0-85 35t-35 85v80ZM240-160v-400 400Z"/></svg>';
 
@@ -619,7 +628,7 @@ const NEWS_ITEMS = [
   },
   {
     date: '2026-08-27',
-    title: 'Lancement de la version 1.0.0 de 1925 TCG',
+    title: 'Lancement de la version 1.0.0 de Copain TCG',
     body: [
       "Nous sommes ravis de vous présenter ce jeu, nous espérons qu'il vous plaira.",
       "Pour commencer votre aventure de collectionneur, nous vous avons laissé 100 crédits. Rassurez-vous, vous en gagnerez bien davantage durant votre aventure. Amusez-vous bien !",
@@ -683,12 +692,8 @@ const boosterNextBtn = el('boosterNext');
 const luckPotionActiveLabel = el('luckPotionActiveLabel');
 const addCreditsBtn = el('addCreditsBtn');
 const addPascadesBtn = el('addPascadesBtn');
-const resetCreditsBtn = el('resetCreditsBtn');
-const resetGemsBtn = el('resetGemsBtn');
-const resetPascadesBtn = el('resetPascadesBtn');
 const resetWheelBtn = el('resetWheelBtn');
-const resetQuestsBtn = el('resetQuestsBtn');
-const addExt2LieuxBtn = el('addExt2LieuxBtn');
+const cleanUndefinedCardsBtn = el('cleanUndefinedCardsBtn');
 const statOwned = el('statOwned');
 const statUnique = el('statUnique');
 const johnnyDivider = el('johnnyDivider');
@@ -750,6 +755,8 @@ const revealRays = el('revealRays');
 const cardDetailModal = el('cardDetailModal');
 const closeCardDetail = el('closeCardDetail');
 const cardDetailImg = el('cardDetailImg');
+const cardDetailPrev = el('cardDetailPrev');
+const cardDetailNext = el('cardDetailNext');
 const cardDetailLieuArt = el('cardDetailLieuArt');
 const cardDetailLieuIcon = el('cardDetailLieuIcon');
 const cardDetailEffect = el('cardDetailEffect');
@@ -759,6 +766,11 @@ const cardDetailCount = el('cardDetailCount');
 const recycleBtn = el('recycleBtn');
 const recycleHint = el('recycleHint');
 const quickRecycleBtn = el('quickRecycleBtn');
+const collectionFabs = el('collectionFabs');
+const collectionFilterFab = el('collectionFilterFab');
+const collectionFilterMenu = el('collectionFilterMenu');
+const collectionStatsFab = el('collectionStatsFab');
+const collectionStatsMenu = el('collectionStatsMenu');
 const quickRecycleModal = el('quickRecycleModal');
 const closeQuickRecycleModalBtn = el('closeQuickRecycleModal');
 const quickRecycleBody = el('quickRecycleBody');
@@ -794,21 +806,17 @@ const multiplierBanner = el('multiplierBanner');
 const multiplierBannerTimer = el('multiplierBannerTimer');
 const gemsValue = el('gemsValue');
 const pascadesValue = el('pascadesValue');
-const gemPackGrid = el('gemPackGrid');
 const shopItemList = el('shopItemList');
-const gemJokeModal = el('gemJokeModal');
-const closeGemJokeModalBtn = el('closeGemJokeModal');
-const gemJokeDismissBtn = el('gemJokeDismiss');
 const addGemsBtn = el('addGemsBtn');
 const shopItemModal = el('shopItemModal');
 const closeShopItemModalBtn = el('closeShopItemModal');
 const shopItemModalIcon = el('shopItemModalIcon');
+const shopItemModalLot = el('shopItemModalLot');
 const shopItemModalBalance = el('shopItemModalBalance');
 const shopItemModalBalanceLabel = el('shopItemModalBalanceLabel');
 const shopItemModalBalanceIcon = el('shopItemModalBalanceIcon');
 const shopItemModalName = el('shopItemModalName');
 const shopItemModalDesc = el('shopItemModalDesc');
-const shopItemModalUsage = el('shopItemModalUsage');
 const shopItemModalNote = el('shopItemModalNote');
 const shopItemModalBuy = el('shopItemModalBuy');
 
@@ -828,6 +836,7 @@ let state = null; // { uid, email, displayName, credits, lastClaim, cards }
 let isNewAccountThisSession = false;
 let currentFilter = 'all';
 let currentExtFilter = 'all'; // 'all' | id d'extension
+let cardSearchQuery = '';
 let tickInterval = null;
 let toastTimeout = null;
 let toastHideTimeout = null;
@@ -1035,6 +1044,56 @@ let selectedAvatar = null;
 
 avatarImg.addEventListener('click', openProfileModal);
 
+// ---- Infobulle des monnaies (topbar) ----
+const CURRENCY_TIPS = {
+  credits: "Servent à ouvrir des boosters, acheter des titres et des pascades. La réserve se recharge toute seule avec le temps.",
+  gems: "Monnaie premium. Se gagnent en accomplissant des quêtes, se dépensent en boutique (Potion de Chance, Tourne-vis...).",
+  pascades: "À offrir aux autres joueurs dans l'onglet Communauté. Celui qui en possède le plus décroche la mention « Pascade Pro ».",
+};
+const currencyTip = el('currencyTip');
+let currencyTipTimer = null;
+
+function showCurrencyTip(pill) {
+  if (!currencyTip) return;
+  const kind = pill.dataset.currency;
+  const text = CURRENCY_TIPS[kind];
+  if (!text) return;
+  currencyTip.textContent = text;
+  currencyTip.classList.remove('hidden');
+  const pr = pill.getBoundingClientRect();
+  const ar = appShell.getBoundingClientRect();
+  const tipW = currencyTip.offsetWidth;
+  const pillCenter = pr.left - ar.left + pr.width / 2;
+  const half = tipW / 2;
+  const left = Math.max(half + 6, Math.min(ar.width - half - 6, pillCenter));
+  currencyTip.style.left = `${left}px`;
+  currencyTip.style.top = `${pr.bottom - ar.top + 9}px`;
+  currencyTip.style.setProperty('--arrow-x', `${pillCenter - left}px`);
+  currencyTip.classList.remove('show');
+  void currencyTip.offsetWidth;
+  currencyTip.classList.add('show');
+  clearTimeout(currencyTipTimer);
+  currencyTipTimer = setTimeout(hideCurrencyTip, 4000);
+}
+function hideCurrencyTip() {
+  if (currencyTip) currencyTip.classList.add('hidden');
+  clearTimeout(currencyTipTimer);
+}
+
+document.querySelectorAll('.currency-pill[data-currency]').forEach((pill) => {
+  pill.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (!currencyTip.classList.contains('hidden') && currencyTip.dataset.for === pill.dataset.currency) {
+      hideCurrencyTip();
+      return;
+    }
+    currencyTip.dataset.for = pill.dataset.currency;
+    new Audio('medias/Clic2.wav').play().catch(() => {});
+    showCurrencyTip(pill);
+  });
+});
+document.addEventListener('click', hideCurrencyTip);
+
 function openProfileModal() {
   if (!state) return;
   profileNameInput.value = state.displayName;
@@ -1142,6 +1201,10 @@ async function loadUserData(user) {
   const snap = await db.ref(`users/${user.uid}`).once('value');
   if (snap.exists()) {
     const data = snap.val();
+    // Auto-nettoyage : une carte à la clé "undefined" (bug historique) est retirée
+    // au chargement ; persistUser() plus bas la supprimera définitivement.
+    const cleanCards = data.cards || {};
+    if (Object.prototype.hasOwnProperty.call(cleanCards, 'undefined')) delete cleanCards.undefined;
     state = {
       uid: user.uid,
       email: user.email,
@@ -1152,7 +1215,7 @@ async function loadUserData(user) {
       creditMultiplierUntil: typeof data.creditMultiplierUntil === 'number' ? data.creditMultiplierUntil : 0,
       lastClaim: data.lastClaim || Date.now(),
       reserve: typeof data.reserve === 'number' ? data.reserve : 0,
-      cards: data.cards || {},
+      cards: cleanCards,
       avatar: AVATAR_OPTIONS.includes(data.avatar) ? data.avatar : AVATAR_OPTIONS[0],
       lastWheelSpinDate: data.lastWheelSpinDate || null,
       equippedLieuId: data.equippedLieuId || null,
@@ -1433,25 +1496,15 @@ function updateMultiplierBanner() {
 }
 
 function renderBoutique() {
-  if (!state || !gemPackGrid) return;
+  if (!state || !shopItemList) return;
   updateGemUI();
-
-  gemPackGrid.innerHTML = GEM_PACKS.map((p) => `
-    <button type="button" class="gem-pack gem-pack-${p.tier}" data-pack="${p.id}" style="background-image:url('medias/${encodeURIComponent(p.img)}')">
-      <span class="gem-pack-shine"></span>
-      ${p.tag ? `<span class="gem-pack-tag">${escapeHtml(p.tag)}</span>` : ''}
-      <span class="gem-pack-info">
-        <span class="gem-pack-amount"><img class="gem-icon-img" src="medias/Gemme.png" alt="" />${p.gems.toLocaleString('fr-FR')}</span>
-        <span class="gem-pack-sub">${p.bonus ? escapeHtml(p.bonus) : 'gemmes'}</span>
-      </span>
-      <span class="gem-pack-price">${p.price}</span>
-    </button>`).join('');
 
   shopItemList.innerHTML = getShopItems().map((it) => `
     <button type="button" class="shop-tile ${it.blocked ? 'shop-tile-locked' : ''}" data-item="${it.id}">
       <span class="shop-tile-name">${escapeHtml(it.name)}</span>
       <span class="shop-tile-art">
         <img class="shop-tile-icon" src="medias/${encodeURIComponent(it.img)}" alt="${escapeHtml(it.name)}" />
+        ${it.lot > 1 ? `<span class="shop-tile-lot">x${it.lot}</span>` : ''}
       </span>
       <span class="shop-tile-price shop-tile-price-${it.currency === 'credits' ? 'credits' : 'gems'}">${currencyIconImg(it.currency)}${it.cost}</span>
     </button>`).join('');
@@ -1475,9 +1528,9 @@ function getShopItems() {
       id: 'credits',
       img: 'Credit.png',
       name: 'Crédits',
-      desc: `Échangez ${SHOP_ITEMS.credits.cost} gemmes contre ${SHOP_ITEMS.credits.credits} crédits.`,
-      usage: 'Les crédits servent à ouvrir des boosters, acheter des titres et des pascades.',
+      desc: `${SHOP_ITEMS.credits.credits} Crédits`,
       currency: 'gems',
+      lot: SHOP_ITEMS.credits.credits,
       cost: SHOP_ITEMS.credits.cost,
       disabled: state.gems < SHOP_ITEMS.credits.cost,
       blocked: false,
@@ -1487,9 +1540,9 @@ function getShopItems() {
       id: 'gems',
       img: 'Gemme.png',
       name: 'Gemmes',
-      desc: `Échangez ${SHOP_ITEMS.gems.cost} crédits contre ${SHOP_ITEMS.gems.gems} gemmes.`,
-      usage: 'Les gemmes servent à acheter les objets de la boutique (Tourne-vis, Potion de Chance). On en gagne aussi via les quêtes.',
+      desc: `${SHOP_ITEMS.gems.gems} Gemmes`,
       currency: 'credits',
+      lot: SHOP_ITEMS.gems.gems,
       cost: SHOP_ITEMS.gems.cost,
       disabled: state.credits < SHOP_ITEMS.gems.cost,
       blocked: false,
@@ -1512,9 +1565,9 @@ function getShopItems() {
       id: `pascade-${i}`,
       img: 'Pascade.png',
       name: `${p.pascades} Pascade${p.pascades > 1 ? 's' : ''}`,
-      desc: `Échangez ${p.cost} crédit${p.cost > 1 ? 's' : ''} contre ${p.pascades} pascade${p.pascades > 1 ? 's' : ''}.`,
-      usage: 'Offrez des pascades aux autres joueurs. Celui qui en possède le plus décroche la mention « Pascade Pro ».',
+      desc: "La pascade est une spécialité aveyronnaise : une grosse crêpe épaisse et moelleuse cuite au four, traditionnellement préparée pour Pâques (d'où son nom). Ici, c'est la monnaie qu'on s'offre entre copains.",
       currency: 'credits',
+      lot: p.pascades,
       cost: p.cost,
       disabled: state.credits < p.cost,
       blocked: false,
@@ -1557,14 +1610,16 @@ function renderShopItemModal(id) {
   }
   shopItemModalIcon.src = `medias/${encodeURIComponent(it.img)}`;
   shopItemModalIcon.alt = it.name;
+  if (shopItemModalLot) {
+    shopItemModalLot.textContent = it.lot > 1 ? `x${it.lot}` : '';
+    shopItemModalLot.classList.toggle('hidden', !(it.lot > 1));
+  }
   shopItemModalName.textContent = it.name;
   shopItemModalDesc.textContent = it.desc;
-  shopItemModalUsage.textContent = it.usage || '';
-  shopItemModalUsage.classList.toggle('hidden', !it.usage);
   shopItemModalNote.textContent = it.note;
   shopItemModalNote.classList.toggle('hidden', !it.note);
   shopItemModalBuy.disabled = it.disabled;
-  shopItemModalBuy.innerHTML = `Acheter ${currencyIconImg(it.currency)}${it.cost}`;
+  shopItemModalBuy.innerHTML = `Acheter pour ${it.cost} ${currencyIconImg(it.currency)}`;
 }
 
 function openShopItemModal(id) {
@@ -1636,29 +1691,23 @@ async function buyShopItem(id) {
   return true;
 }
 
-gemPackGrid.addEventListener('click', (e) => {
-  if (!e.target.closest('.gem-pack')) return;
-  new Audio('medias/Clic2.wav').play().catch(() => {});
-  gemJokeModal.classList.remove('hidden');
-  gemJokeModal.getBoundingClientRect();
-  gemJokeModal.classList.add('open');
-});
-
-async function closeGemJokeModal() {
-  new Audio('medias/Clic2.wav').play().catch(() => {});
-  gemJokeModal.classList.remove('open');
-  await wait(300);
-  gemJokeModal.classList.add('hidden');
-}
-closeGemJokeModalBtn.addEventListener('click', closeGemJokeModal);
-gemJokeDismissBtn.addEventListener('click', closeGemJokeModal);
-gemJokeModal.addEventListener('click', (e) => { if (e.target === gemJokeModal) closeGemJokeModal(); });
-
 shopItemList.addEventListener('click', (e) => {
   const tile = e.target.closest('.shop-tile');
   if (!tile || !state) return;
   new Audio('medias/Clic2.wav').play().catch(() => {});
   openShopItemModal(tile.dataset.item);
+});
+
+// Bascule Objets / Titres dans la boutique
+document.querySelectorAll('.shop-tab').forEach((tab) => {
+  tab.addEventListener('click', () => {
+    if (tab.classList.contains('active')) return;
+    new Audio('medias/Clic2.wav').play().catch(() => {});
+    document.querySelectorAll('.shop-tab').forEach((t) => t.classList.toggle('active', t === tab));
+    document.querySelectorAll('.shop-section').forEach((s) => {
+      s.classList.toggle('hidden', s.id !== `shopSection-${tab.dataset.shop}`);
+    });
+  });
 });
 
 shopItemModalBuy.addEventListener('click', async () => {
@@ -1681,15 +1730,6 @@ addGemsBtn.addEventListener('click', async () => {
   flyGemToBalance(addGemsBtn, 5);
 });
 
-resetGemsBtn.addEventListener('click', async () => {
-  if (!state) return;
-  state.gems = 0;
-  updateGemUI();
-  renderBoutique();
-  await persistUser();
-  showToast('Gemmes remises à 0 (dev)');
-});
-
 addPascadesBtn.addEventListener('click', async () => {
   if (!state) return;
   state.pascades = (state.pascades || 0) + 5;
@@ -1699,23 +1739,41 @@ addPascadesBtn.addEventListener('click', async () => {
   flyPascadeToBalance(addPascadesBtn, 5);
 });
 
-// Reset des pascades pour TOUS les joueurs (via publicProfiles).
-resetPascadesBtn.addEventListener('click', async () => {
+// Retire des cartes de TOUS les joueurs (via publicProfiles) toute carte dont
+// la clé est "undefined". Ne touche à rien d'autre.
+cleanUndefinedCardsBtn?.addEventListener('click', async () => {
   if (!state) return;
-  if (!confirm('Remettre à 0 les pascades de TOUS les joueurs ?')) return;
+  if (!confirm('Retirer les cartes "undefined" de tous les joueurs ?')) return;
   try {
     const snap = await db.ref('publicProfiles').once('value');
     const updates = {};
-    snap.forEach((child) => { updates[`${child.key}/pascades`] = 0; });
-    if (Object.keys(updates).length) await db.ref('publicProfiles').update(updates);
-    state.pascades = 0;
-    updatePascadesUI();
-    await persistUser();
-    renderPlayerList();
-    showToast('Pascades de tous les joueurs remises à 0 (dev)');
+    let players = 0;
+    let removed = 0;
+    snap.forEach((child) => {
+      const cards = child.val() && child.val().cards;
+      if (cards && Object.prototype.hasOwnProperty.call(cards, 'undefined')) {
+        updates[`${child.key}/cards/undefined`] = null;
+        players += 1;
+        removed += Number(cards.undefined) || 0;
+      }
+    });
+    if (Object.keys(updates).length) {
+      await db.ref('publicProfiles').update(updates);
+      // Nettoie aussi notre propre nœud users/{uid} (seul qu'on puisse écrire).
+      if (state.cards && Object.prototype.hasOwnProperty.call(state.cards, 'undefined')) {
+        delete state.cards.undefined;
+        await persistUser();
+        updateHomeStats();
+        renderCollection(true);
+      }
+      renderPlayerList();
+      showToast(`${players} joueur(s) nettoyé(s), ${removed} carte(s) "undefined" retirée(s).`);
+    } else {
+      showToast('Aucune carte "undefined" trouvée.');
+    }
   } catch (e) {
-    console.error('Reset global des pascades refusé :', e);
-    showToast('Reset global refusé (règles Firebase).');
+    console.error('Nettoyage des cartes "undefined" refusé :', e);
+    showToast('Nettoyage refusé (règles Firebase).');
   }
 });
 
@@ -2347,46 +2405,12 @@ addCreditsBtn.addEventListener('click', async () => {
   flyCoinToCredits(addCreditsBtn, 10);
 });
 
-resetCreditsBtn.addEventListener('click', async () => {
-  if (!state) return;
-  state.credits = 0;
-  updateCreditUI();
-  updateHomeStats();
-  await persistUser();
-  showToast('Crédits remis à 0 (dev)');
-});
-
 resetWheelBtn.addEventListener('click', async () => {
   if (!state) return;
   state.lastWheelSpinDate = null;
   updateWheelUI();
   await persistUser();
   showToast('Roue réinitialisée (dev)');
-});
-
-// Remet à zéro les quêtes de collection déjà récupérées.
-resetQuestsBtn.addEventListener('click', async () => {
-  if (!state) return;
-  state.claimedAchievements = {};
-  updateHomeStats();
-  updateQuestsBadge();
-  renderQuests();
-  await persistUser();
-  showToast('Quêtes récupérées réinitialisées (dev)');
-});
-
-// Débloque pour soi-même les 2 nouvelles cartes lieu d'Across the verse (dev).
-addExt2LieuxBtn?.addEventListener('click', async () => {
-  if (!state) return;
-  ['lieu-aveyron', 'lieu-alibaba'].forEach((id) => {
-    state.cards[id] = (state.cards[id] || 0) + 1;
-  });
-  updateHomeStats();
-  updateQuestsBadge();
-  if (!lieuModal.classList.contains('hidden')) renderLieuList();
-  renderCollection(true);
-  await persistUser();
-  showToast('Cartes lieux Aveyron + Caverne d\'Alibaba ajoutées (dev)');
 });
 
 function wait(ms) {
@@ -2746,16 +2770,18 @@ function switchView(view, { instant } = {}) {
   appShell.classList.toggle('home-view', view === 'home');
   if (view === 'collection') {
     renderCollection(true);
-    renderExtFilters(true);
-    animateRarityFilterChips();
+    renderExtFilters();
   }
   if (view === 'community') {
     renderPlayerList();
     animateCommunityStaticElements();
   }
   if (view === 'boutique') renderBoutique();
-  quickRecycleBtn.classList.toggle('hidden', view !== 'collection');
-  if (view !== 'collection' && !quickRecycleModal.classList.contains('hidden')) closeQuickRecycleModal();
+  collectionFabs.classList.toggle('hidden', view !== 'collection');
+  if (view !== 'collection') {
+    closeCollectionFilterMenu();
+    if (!quickRecycleModal.classList.contains('hidden')) closeQuickRecycleModal();
+  }
   revealQuestsLaunchRow(view === 'home');
 }
 
@@ -2789,31 +2815,63 @@ document.querySelectorAll('.filter-chip').forEach((chip) => {
     chip.classList.add('active');
     currentFilter = chip.dataset.rarity === 'default' ? null : chip.dataset.rarity;
     renderCollection(true);
+    closeCollectionFilterMenu();
   });
+});
+
+// Barre de recherche des cartes (par nom, insensible aux accents).
+const cardSearch = el('cardSearch');
+cardSearch?.addEventListener('input', () => {
+  cardSearchQuery = cardSearch.value;
+  renderCollection(true);
 });
 
 // Filtre par extension (généré depuis EXTENSIONS pour rester synchro avec les noms)
 const extFilters = el('extFilters');
-function renderExtFilters(animate = false) {
+function renderExtFilters() {
   if (!extFilters) return;
   // On masque les extensions « à venir » (aucune carte) de la liste des filtres.
   const opts = [{ id: 'all', name: 'Toutes' }, ...EXTENSIONS.filter((e) => extensionAvailable(e))];
   extFilters.innerHTML = opts
-    .map((o, i) => `<button type="button" class="ext-filter-chip${o.id === currentExtFilter ? ' active' : ''}${animate ? ' filter-chip-pop' : ''}" data-ext="${o.id}"${animate ? ` style="animation-delay:${i * 60}ms"` : ''}>${escapeHtml(o.name)}</button>`)
+    .map((o) => `<button type="button" class="ext-filter-chip${o.id === currentExtFilter ? ' active' : ''}" data-ext="${o.id}">${escapeHtml(o.name)}</button>`)
     .join('');
 }
 
-// Rejoue l'animation d'entrée un-à-un des chips de filtre de rareté (statiques
-// dans le HTML) chaque fois que l'onglet Collection est affiché.
-function animateRarityFilterChips() {
-  const chips = document.querySelectorAll('#view-collection .rarity-filters:not(.ext-filters) .filter-chip');
-  chips.forEach((chip) => chip.classList.remove('filter-chip-pop'));
-  void el('view-collection')?.offsetWidth; // force reflow avant de rejouer l'animation
-  chips.forEach((chip, i) => {
-    chip.style.animationDelay = `${i * 60}ms`;
-    chip.classList.add('filter-chip-pop');
+// ---- Sous-menus flottants de l'onglet Collection (filtres + stats) ----
+const COLLECTION_FAB_MENUS = [
+  { menu: collectionFilterMenu, fab: collectionFilterFab, onOpen: renderExtFilters },
+  { menu: collectionStatsMenu, fab: collectionStatsFab, onOpen: updateHomeStats },
+];
+function closeCollectionFabMenus(except) {
+  COLLECTION_FAB_MENUS.forEach(({ menu, fab }) => {
+    if (!menu || menu === except) return;
+    menu.classList.add('hidden');
+    fab?.classList.remove('menu-open');
+    fab?.setAttribute('aria-expanded', 'false');
   });
 }
+function closeCollectionFilterMenu() { closeCollectionFabMenus(); }
+function openCollectionFabMenu(entry) {
+  if (!entry.menu) return;
+  closeCollectionFabMenus(entry.menu);
+  entry.onOpen?.();
+  entry.menu.classList.remove('hidden');
+  entry.menu.style.animation = 'none';
+  void entry.menu.offsetWidth;
+  entry.menu.style.animation = '';
+  entry.fab?.classList.add('menu-open');
+  entry.fab?.setAttribute('aria-expanded', 'true');
+}
+COLLECTION_FAB_MENUS.forEach((entry) => {
+  entry.fab?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    new Audio('medias/Clic2.wav').play().catch(() => {});
+    if (entry.menu.classList.contains('hidden')) openCollectionFabMenu(entry);
+    else closeCollectionFabMenus();
+  });
+  entry.menu?.addEventListener('click', (e) => e.stopPropagation());
+});
+document.addEventListener('click', () => closeCollectionFabMenus());
 
 // Rejoue l'animation d'entrée des éléments statiques de l'onglet Communauté
 // (séparateur, recherche, tri) chaque fois que l'onglet est affiché. La liste
@@ -2847,6 +2905,7 @@ extFilters?.addEventListener('click', (e) => {
   currentExtFilter = chip.dataset.ext;
   extFilters.querySelectorAll('.ext-filter-chip').forEach((c) => c.classList.toggle('active', c === chip));
   renderCollection(true);
+  closeCollectionFilterMenu();
 });
 renderExtFilters();
 
@@ -2863,7 +2922,6 @@ function cardArtHtml(card, alt) {
 function cardTileHtml(card, delayIndex) {
   const count = state.cards[card.id] || 0;
   const owned = count > 0;
-  const recyclable = owned && count >= RECYCLE_RULES[card.rarity].minOwned;
   const art = owned ? cardArtHtml(card, escapeHtml(card.name)) : `<img src="medias/dos-cartes.png" alt="carte non obtenue" />`;
   const animClass = delayIndex != null ? ' card-pop-in' : '';
   const animStyle = delayIndex != null ? ` style="animation-delay:${Math.min(delayIndex * 20, 500)}ms"` : '';
@@ -2871,8 +2929,7 @@ function cardTileHtml(card, delayIndex) {
     <div class="card-tile-wrap ${owned ? '' : 'locked'}${animClass}" ${owned ? `data-card-id="${card.id}"` : ''}${animStyle}>
       <div class="card-tile rarity-${card.rarity}">
         ${art}
-        ${recyclable ? `<span class="recycle-badge" title="Recyclage disponible">${RECYCLE_ICON_SVG}</span>` : ''}
-        ${owned ? `<span class="card-count">x${count}</span>` : ''}
+        ${count > 1 ? `<span class="card-count">x${count}</span>` : ''}
       </div>
       <div class="card-caption">
         <span class="card-caption-name">${owned ? escapeHtml(card.name) : '???'}</span>
@@ -2884,15 +2941,27 @@ function cardTileHtml(card, delayIndex) {
 function renderCollection(animate = false) {
   if (!state) return;
   const byExt = currentExtFilter === 'all' ? ALL_CARD_DEFS : ALL_CARD_DEFS.filter((c) => c.extension === currentExtFilter);
-  const filtered = (currentFilter === null || currentFilter === 'all') ? byExt : byExt.filter((c) => c.rarity === currentFilter);
-  cardGrid.classList.toggle('hide-captions', currentFilter !== null);
+  let filtered = (currentFilter === null || currentFilter === 'all') ? byExt : byExt.filter((c) => c.rarity === currentFilter);
+  const q = normalizeStr(cardSearchQuery.trim());
+  if (q) filtered = filtered.filter((c) => normalizeStr(c.name).includes(q));
+
+  // Regroupement par personnage seulement en tri par défaut ET sans recherche.
+  const grouped = currentFilter === null && !q;
+  cardGrid.classList.toggle('hide-captions', currentFilter !== null && !q);
 
   let cardIndex = 0;
   const tileHtml = (card) => cardTileHtml(card, animate ? cardIndex++ : null);
 
-  if (currentFilter === null) {
+  if (!filtered.length) {
+    collectionOrderedCards = [];
+    cardGrid.innerHTML = '<p class="card-grid-empty">Aucune carte ne correspond.</p>';
+    return;
+  }
+
+  if (grouped) {
     const groupLabel = (c) => c.type === 'special' ? 'Cartes Spécial' : c.character;
     const groups = [...new Set(filtered.map(groupLabel))];
+    collectionOrderedCards = groups.flatMap((group) => filtered.filter((c) => groupLabel(c) === group));
     cardGrid.innerHTML = groups
       .map((group) => {
         const tiles = filtered.filter((c) => groupLabel(c) === group).map(tileHtml).join('');
@@ -2900,6 +2969,7 @@ function renderCollection(animate = false) {
       })
       .join('');
   } else {
+    collectionOrderedCards = filtered;
     cardGrid.innerHTML = filtered.map(tileHtml).join('');
   }
 }
@@ -2908,6 +2978,11 @@ function renderCollection(animate = false) {
 //  CARD DETAIL / RECYCLAGE
 // ============================================================
 let detailCardId = null;
+// Cartes de la collection dans l'ordre affiché (rempli par renderCollection) ;
+// on ne navigue dans le détail que parmi celles possédées.
+let collectionOrderedCards = [];
+let detailNavCards = [];
+let detailNavIndex = -1;
 
 cardGrid.addEventListener('click', (e) => {
   const wrap = e.target.closest('.card-tile-wrap[data-card-id]');
@@ -2916,12 +2991,64 @@ cardGrid.addEventListener('click', (e) => {
 });
 
 function openCardDetail(cardId) {
+  const source = collectionOrderedCards.length ? collectionOrderedCards : ALL_CARD_DEFS;
+  detailNavCards = source.filter((c) => (state.cards[c.id] || 0) > 0);
+  detailNavIndex = detailNavCards.findIndex((c) => c.id === cardId);
   detailCardId = cardId;
+  cardDetailImg.style.animation = '';
+  cardDetailLieuArt.style.animation = '';
   renderCardDetail();
   cardDetailModal.classList.remove('hidden');
   cardDetailModal.getBoundingClientRect(); // force layout so the fade/scale-in transition plays
   cardDetailModal.classList.add('open');
 }
+
+// Navigation gauche/droite dans le détail de carte (swipe ou flèches clavier).
+function navigateCardDetail(dir) {
+  if (detailNavIndex < 0 || detailNavCards.length < 2) return;
+  detailNavIndex = (detailNavIndex + dir + detailNavCards.length) % detailNavCards.length;
+  detailCardId = detailNavCards[detailNavIndex].id;
+  new Audio('medias/WooshSwitch.wav').play().catch(() => {});
+  renderCardDetail();
+  // La carte entre en rotation 3D, dans le sens du swipe.
+  const anim = dir > 0 ? 'cardSwapNext' : 'cardSwapPrev';
+  [cardDetailImg, cardDetailLieuArt].forEach((elm) => {
+    if (!elm || elm.classList.contains('hidden')) return;
+    elm.style.animation = 'none';
+    void elm.offsetWidth;
+    elm.style.animation = `${anim} .38s cubic-bezier(.22, 1, .36, 1)`;
+  });
+}
+
+// Swipe tactile sur la carte affichée en grand.
+(() => {
+  const panel = cardDetailModal.querySelector('.card-detail');
+  if (!panel) return;
+  let startX = null;
+  let startY = null;
+  panel.addEventListener('touchstart', (e) => {
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+  }, { passive: true });
+  panel.addEventListener('touchend', (e) => {
+    if (startX === null) return;
+    const dx = e.changedTouches[0].clientX - startX;
+    const dy = e.changedTouches[0].clientY - startY;
+    startX = startY = null;
+    if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy)) {
+      navigateCardDetail(dx < 0 ? 1 : -1);
+    }
+  }, { passive: true });
+})();
+
+document.addEventListener('keydown', (e) => {
+  if (cardDetailModal.classList.contains('hidden')) return;
+  if (e.key === 'ArrowLeft') navigateCardDetail(-1);
+  else if (e.key === 'ArrowRight') navigateCardDetail(1);
+});
+
+cardDetailPrev?.addEventListener('click', () => navigateCardDetail(-1));
+cardDetailNext?.addEventListener('click', () => navigateCardDetail(1));
 
 async function closeCardDetailModal() {
   new Audio('medias/Clic2.wav').play().catch(() => {});
@@ -2951,6 +3078,19 @@ function renderCardDetail() {
     cardDetailImg.src = `medias/${encodeURIComponent(card.file)}`;
     cardDetailImg.alt = card.name;
   }
+
+  // Aperçus des cartes précédente / suivante en retrait.
+  if (cardDetailPrev && cardDetailNext) {
+    const n = detailNavCards.length;
+    const show = n >= 2 && detailNavIndex >= 0;
+    const sideSrc = (c) => `medias/${encodeURIComponent(c.file || 'dos-cartes.png')}`;
+    if (show) {
+      cardDetailPrev.src = sideSrc(detailNavCards[(detailNavIndex - 1 + n) % n]);
+      cardDetailNext.src = sideSrc(detailNavCards[(detailNavIndex + 1) % n]);
+    }
+    cardDetailPrev.classList.toggle('hidden', !show);
+    cardDetailNext.classList.toggle('hidden', !show);
+  }
   if (card.type === 'lieu') {
     cardDetailEffect.textContent = card.description;
     cardDetailEffect.classList.remove('hidden');
@@ -2965,7 +3105,7 @@ function renderCardDetail() {
   const rule = RECYCLE_RULES[card.rarity];
   if (count > 1) {
     recycleBtn.classList.remove('hidden');
-    recycleBtn.textContent = `Recycler ${rule.cost} → +${rule.reward} crédit${rule.reward > 1 ? 's' : ''}`;
+    recycleBtn.innerHTML = `Recycler un exemplaire pour ${rule.reward} <img class="coin-icon" src="medias/Credit.png" alt="crédits" />`;
     const eligible = count >= rule.minOwned;
     recycleBtn.disabled = !eligible;
     recycleHint.classList.remove('hidden');
@@ -3709,12 +3849,25 @@ async function renderGiftsHistory() {
 // ============================================================
 //  RENDER ALL (au login)
 // ============================================================
+const STAT_RARITY_ELS = {
+  common: el('statCommon'),
+  rare: el('statRare'),
+  epic: el('statEpic'),
+  legendary: el('statLegendary'),
+};
+
 function updateHomeStats() {
   if (!state) return;
   const uniqueOwned = Object.keys(state.cards).length;
   const totalOwned = Object.values(state.cards).reduce((a, b) => a + b, 0);
-  statOwned.textContent = totalOwned;
-  statUnique.textContent = `${uniqueOwned}/${ALL_CARD_DEFS.length}`;
+  if (statOwned) statOwned.textContent = totalOwned;
+  if (statUnique) statUnique.textContent = `${uniqueOwned}/${ALL_CARD_DEFS.length}`;
+  Object.entries(STAT_RARITY_ELS).forEach(([rarity, span]) => {
+    if (!span) return;
+    const defs = ALL_CARD_DEFS.filter((c) => c.rarity === rarity);
+    const owned = defs.filter((c) => (state.cards[c.id] || 0) > 0).length;
+    span.textContent = `${owned}/${defs.length}`;
+  });
   creditsValue.textContent = state.credits;
   updateQuestsBadge();
 }
