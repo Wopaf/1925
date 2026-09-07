@@ -4,10 +4,14 @@
 // Au tout premier chargement d'une session d'onglet, on recharge la page une
 // seule fois (le drapeau en sessionStorage empêche la boucle ; il est effacé
 // à la fermeture de l'onglet, donc ça rejoue au prochain lancement).
+// `appReloading` gèle toute logique métier (auth, crédits, sauvegardes) sur la
+// passe vouée au rechargement, pour éviter les effets de bord (double accrual).
+let appReloading = false;
 (() => {
   try {
     if (!sessionStorage.getItem('appLaunchRefreshed')) {
       sessionStorage.setItem('appLaunchRefreshed', '1');
+      appReloading = true;
       location.reload();
     }
   } catch {
@@ -1159,6 +1163,7 @@ closeProfileModalBtn.addEventListener('click', closeProfileModal);
 profileModal.addEventListener('click', (e) => { if (e.target === profileModal) closeProfileModal(); });
 
 auth.onAuthStateChanged(async (user) => {
+  if (appReloading) return; // passe vouée au rechargement : on ne touche à rien
   if (user) {
     showScreen('loadingScreen');
     setLoaderStatus('Connexion...');
@@ -2801,7 +2806,15 @@ function switchView(view, { instant } = {}) {
     renderPlayerList();
     animateCommunityStaticElements();
   }
-  if (view === 'boutique') renderBoutique();
+  if (view === 'boutique') {
+    renderBoutique();
+    const hero = document.querySelector('.shop-hero');
+    if (hero) {
+      hero.classList.remove('animate-in');
+      void hero.offsetWidth; // reflow pour rejouer l'animation à chaque ouverture
+      hero.classList.add('animate-in');
+    }
+  }
   collectionFabs.classList.toggle('hidden', view !== 'collection');
   if (view !== 'collection') {
     closeCollectionFilterMenu();

@@ -598,11 +598,11 @@ button, input {
 /* Icône Potion de Chance qui flotte en haut à droite du booster quand elle est active */
 .luck-potion-booster-badge {
   position: absolute;
-  top: -6px;
-  right: -2px;
+  top: 300px;
+  right: -20px;
   z-index: 25;
-  width: 46px;
-  height: 46px;
+  width: 66px;
+  height: 66px;
   object-fit: contain;
   pointer-events: none;
   filter: drop-shadow(0 4px 10px rgba(0,0,0,.55)) drop-shadow(0 0 12px rgba(143,211,244,.75));
@@ -952,6 +952,16 @@ button, input {
   position: relative;
   width: calc(100% + 32px);
   margin: 0 -16px 14px;
+}
+/* Ouverture de la boutique : fondu rapide du marchand, puis descente
+   depuis -200px avec un rebond. */
+.shop-hero.animate-in {
+  animation: shopHeroIn .75s cubic-bezier(.34, 1.55, .64, 1) both;
+}
+@keyframes shopHeroIn {
+  0%   { opacity: 0; transform: translateY(-200px); }
+  22%  { opacity: 1; transform: translateY(-200px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
 .shop-merchant-img {
   display: block;
