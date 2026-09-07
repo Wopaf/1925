@@ -595,6 +595,23 @@ button, input {
   justify-content: center;
   perspective: 1100px;
 }
+/* Icône Potion de Chance qui flotte en haut à droite du booster quand elle est active */
+.luck-potion-booster-badge {
+  position: absolute;
+  top: -6px;
+  right: -2px;
+  z-index: 25;
+  width: 46px;
+  height: 46px;
+  object-fit: contain;
+  pointer-events: none;
+  filter: drop-shadow(0 4px 10px rgba(0,0,0,.55)) drop-shadow(0 0 12px rgba(143,211,244,.75));
+  animation: luckPotionFloat 2.6s ease-in-out infinite;
+}
+@keyframes luckPotionFloat {
+  0%, 100% { transform: translateY(0) rotate(-6deg); }
+  50% { transform: translateY(-7px) rotate(6deg); }
+}
 .light-rays {
   position: absolute;
   top: 50%;

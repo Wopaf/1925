@@ -690,6 +690,7 @@ const boosterExtDots = el('boosterExtDots');
 const boosterPrevBtn = el('boosterPrev');
 const boosterNextBtn = el('boosterNext');
 const luckPotionActiveLabel = el('luckPotionActiveLabel');
+const luckPotionBoosterBadge = el('luckPotionBoosterBadge');
 const addCreditsBtn = el('addCreditsBtn');
 const addPascadesBtn = el('addPascadesBtn');
 const resetWheelBtn = el('resetWheelBtn');
@@ -1424,8 +1425,9 @@ function updatePascadesUI() {
 }
 
 function updateLuckPotionLabel() {
-  if (!luckPotionActiveLabel) return;
-  luckPotionActiveLabel.classList.toggle('hidden', !state || !state.luckyBoosterPending);
+  const active = !!state && !!state.luckyBoosterPending;
+  if (luckPotionActiveLabel) luckPotionActiveLabel.classList.toggle('hidden', !active);
+  if (luckPotionBoosterBadge) luckPotionBoosterBadge.classList.toggle('hidden', !active);
 }
 
 // ---- Titres ----
@@ -2088,9 +2090,9 @@ openBoosterBtn.addEventListener('click', async () => {
   });
 
   // Lieu équipé à effet déclenché à l'ouverture (Aveyron / Caverne d'Alibaba) :
-  // ajoute une "carte" bonus après le paquet, sans la collectionner.
-  const bonusReward = computeBoosterBonusReward(getEquippedLieu());
-  const revealCardsList = bonusReward ? [...drawn, bonusReward] : drawn;
+  // la récompense est appliquée à l'état ici, puis montrée dans une modale
+  // dédiée une fois la révélation du booster terminée (voir finishBoosterReveal).
+  pendingBoosterReward = computeBoosterBonusReward(getEquippedLieu());
 
   markDailyQuest('openBooster');
   updateCreditUI();
@@ -2098,10 +2100,11 @@ openBoosterBtn.addEventListener('click', async () => {
   updateGemUI();
   updatePascadesUI();
   updateWheelUI();
-  if (usedLuckPotion || bonusReward) renderBoutique();
+  updateLuckPotionLabel(); // la récompense a pu (ré)activer une potion de chance
+  if (usedLuckPotion || pendingBoosterReward) renderBoutique();
   await persistUser();
 
-  showBoosterReveal(revealCardsList, newCardIds, ext);
+  showBoosterReveal(drawn, newCardIds, ext);
   boosterPack.classList.remove('opening');
   refreshOpenBoosterBtnState();
 });
@@ -2420,6 +2423,9 @@ function wait(ms) {
 let revealQueue = [];
 let revealIndex = 0;
 let revealNewCardIds = new Set();
+// Récompense de lieu (Aveyron / Caverne d'Alibaba) à montrer une fois le
+// booster refermé, dans une modale type "cadeau reçu".
+let pendingBoosterReward = null;
 
 function updateRevealProgress() {
   revealProgress.innerHTML = revealQueue
@@ -2531,6 +2537,25 @@ async function finishBoosterReveal() {
   await wait(300); // matches the CSS transition duration
   boosterModal.classList.add('hidden');
   renderCollection();
+  if (pendingBoosterReward) {
+    const reward = pendingBoosterReward;
+    pendingBoosterReward = null;
+    await wait(180);
+    showBoosterRewardModal(reward);
+  }
+}
+
+// Modale de récompense de lieu, calquée sur celle des cadeaux reçus.
+function showBoosterRewardModal(reward) {
+  giftModalShowing = true;
+  giftReceivedArt.innerHTML = `<img src="medias/${encodeURIComponent(reward.rewardIconFile)}" alt="" class="gift-received-pascade" />`;
+  giftReceivedName.textContent = reward.name;
+  giftReceivedRarity.textContent = '';
+  giftReceivedRarity.className = 'card-detail-rarity';
+  giftReceivedFrom.textContent = 'Bonus de ton lieu équipé';
+  giftReceivedModal.classList.remove('hidden');
+  giftReceivedModal.getBoundingClientRect();
+  giftReceivedModal.classList.add('open');
 }
 
 // ============================================================
